@@ -706,12 +706,14 @@ export function registerRoutes(app: Express): Server {
       }
 
       // ボンギンカン株式会社のWebサイトからニュースを取得
-      const response = await fetch("https://www.bonginkan.co.jp/news/");
+      console.log("Fetching news from bonginkan.ai...");
+      const response = await fetch("https://bonginkan.ai/news/");
       if (!response.ok) {
-        throw new Error("ニュースの取得に失敗しました");
+        throw new Error(`ニュースの取得に失敗しました: ${response.statusText}`);
       }
 
       const html = await response.text();
+      console.log("Parsing HTML content...");
       const $ = cheerio.load(html);
       const newsItems: Array<{
         title: string;
@@ -721,17 +723,19 @@ export function registerRoutes(app: Express): Server {
         category: string;
       }> = [];
 
-      // ニュース一覧を取得（実際のHTML構造に合わせて調整）
-      $('.news-list .news-item').each((_, element) => {
+      // ニュース一覧を取得
+      $('.news-article').each((_, element) => {
         const $item = $(element);
         newsItems.push({
-          title: $item.find('.news-title').text().trim(),
-          url: new URL($item.find('a').attr('href') || '', 'https://www.bonginkan.co.jp').toString(),
-          content: $item.find('.news-content').text().trim(),
-          date: $item.find('.news-date').text().trim(),
-          category: $item.find('.news-category').text().trim(),
+          title: $item.find('h2').text().trim(),
+          url: new URL($item.find('a').attr('href') || '', 'https://bonginkan.ai').toString(),
+          content: $item.find('.article-content').text().trim(),
+          date: $item.find('.article-date').text().trim(),
+          category: $item.find('.article-category').text().trim(),
         });
       });
+
+      console.log(`Found ${newsItems.length} news items`);
 
       // 競合他社に関連するニュースをフィルタリング
       const relevantNews = newsItems.filter(news => {
@@ -741,6 +745,8 @@ export function registerRoutes(app: Express): Server {
           news.content.toLowerCase().includes(keyword.toLowerCase())
         );
       });
+
+      console.log(`Found ${relevantNews.length} relevant news items`);
 
       // 更新情報を保存
       const updates = await Promise.all(relevantNews.map(async (news) => {
@@ -775,6 +781,7 @@ export function registerRoutes(app: Express): Server {
         .set({ last_updated: new Date() })
         .where(eq(competitors.id, competitor.id));
 
+      console.log(`Saved ${updates.length} updates to database`);
       res.json(updates);
     } catch (error) {
       console.error("Error refreshing competitor data:", error);
