@@ -18,6 +18,11 @@ interface ConceptStage {
 
 interface WebAppRequirement {
   title: string;
+  purpose: {
+    background: string;
+    goals: string[];
+    expected_effects: string[];
+  };
   overview: string;
   target_users: string;
   features: {
@@ -25,6 +30,37 @@ interface WebAppRequirement {
     priority: "high" | "medium" | "low";
     description: string;
     acceptance_criteria: string[];
+  }[];
+  non_functional_requirements: {
+    performance: string[];
+    security: string[];
+    availability: string[];
+    scalability: string[];
+    maintainability: string[];
+  };
+  api_requirements: {
+    external_apis: {
+      name: string;
+      purpose: string;
+      endpoint: string;
+      auth_method: string;
+    }[];
+    internal_apis: {
+      name: string;
+      purpose: string;
+      endpoint: string;
+      request_response: string;
+    }[];
+  };
+  screen_structure: {
+    flow_description: string;
+    main_screens: string[];
+  };
+  screen_list: {
+    name: string;
+    path: string;
+    description: string;
+    main_features: string[];
   }[];
   tech_stack: {
     frontend: string[];
@@ -178,6 +214,11 @@ export async function generateWebAppRequirements(
           content: `以下のコンセプトと条件に基づいて、Webアプリケーションの要件定義書を生成してください。以下のJSON形式で出力してください：
 {
   "title": "プロジェクト名",
+  "purpose": {
+    "background": "プロジェクトの背景",
+    "goals": ["目標1", "目標2"],
+    "expected_effects": ["期待される効果1", "期待される効果2"]
+  },
   "overview": "プロジェクト概要",
   "target_users": "対象ユーザー",
   "features": [
@@ -186,6 +227,43 @@ export async function generateWebAppRequirements(
       "priority": "high" | "medium" | "low",
       "description": "機能の詳細説明",
       "acceptance_criteria": ["受け入れ基準1", "受け入れ基準2"]
+    }
+  ],
+  "non_functional_requirements": {
+    "performance": ["性能要件1", "性能要件2"],
+    "security": ["セキュリティ要件1", "セキュリティ要件2"],
+    "availability": ["可用性要件1", "可用性要件2"],
+    "scalability": ["拡張性要件1", "拡張性要件2"],
+    "maintainability": ["保守性要件1", "保守性要件2"]
+  },
+  "api_requirements": {
+    "external_apis": [
+      {
+        "name": "API名",
+        "purpose": "利用目的",
+        "endpoint": "エンドポイント",
+        "auth_method": "認証方式"
+      }
+    ],
+    "internal_apis": [
+      {
+        "name": "API名",
+        "purpose": "利用目的",
+        "endpoint": "エンドポイント",
+        "request_response": "リクエスト/レスポンス形式"
+      }
+    ]
+  },
+  "screen_structure": {
+    "flow_description": "画面遷移の概要説明",
+    "main_screens": ["メイン画面1", "メイン画面2"]
+  },
+  "screen_list": [
+    {
+      "name": "画面名",
+      "path": "パス",
+      "description": "画面説明",
+      "main_features": ["主要機能1", "主要機能2"]
     }
   ],
   "tech_stack": {
@@ -236,13 +314,23 @@ export async function generateWebAppRequirements(
 export async function generateMarkdownRequirements(requirements: WebAppRequirement): Promise<string> {
   const md = `# ${requirements.title} 要件定義書
 
-## 1. プロジェクト概要
+## 1. プロジェクトの目的
+### 背景
+${requirements.purpose.background}
+
+### 目標
+${requirements.purpose.goals.map(goal => `- ${goal}`).join('\n')}
+
+### 期待される効果
+${requirements.purpose.expected_effects.map(effect => `- ${effect}`).join('\n')}
+
+## 2. プロジェクト概要
 ${requirements.overview}
 
-## 2. 対象ユーザー
+## 3. 対象ユーザー
 ${requirements.target_users}
 
-## 3. 機能要件
+## 4. 機能要件
 ${requirements.features.map(feature => `
 ### ${feature.name}
 - 優先度: ${feature.priority === 'high' ? '高' : feature.priority === 'medium' ? '中' : '低'}
@@ -252,7 +340,56 @@ ${requirements.features.map(feature => `
 ${feature.acceptance_criteria.map(criteria => `- ${criteria}`).join('\n')}
 `).join('\n')}
 
-## 4. 技術スタック
+## 5. 非機能要件
+### 性能要件
+${requirements.non_functional_requirements.performance.map(req => `- ${req}`).join('\n')}
+
+### セキュリティ要件
+${requirements.non_functional_requirements.security.map(req => `- ${req}`).join('\n')}
+
+### 可用性要件
+${requirements.non_functional_requirements.availability.map(req => `- ${req}`).join('\n')}
+
+### 拡張性要件
+${requirements.non_functional_requirements.scalability.map(req => `- ${req}`).join('\n')}
+
+### 保守性要件
+${requirements.non_functional_requirements.maintainability.map(req => `- ${req}`).join('\n')}
+
+## 6. API要件
+### 外部API連携
+${requirements.api_requirements.external_apis.map(api => `
+#### ${api.name}
+- 目的: ${api.purpose}
+- エンドポイント: ${api.endpoint}
+- 認証方式: ${api.auth_method}
+`).join('\n')}
+
+### 内部API
+${requirements.api_requirements.internal_apis.map(api => `
+#### ${api.name}
+- 目的: ${api.purpose}
+- エンドポイント: ${api.endpoint}
+- リクエスト/レスポンス: ${api.request_response}
+`).join('\n')}
+
+## 7. 画面構成
+### 画面遷移の概要
+${requirements.screen_structure.flow_description}
+
+### メイン画面一覧
+${requirements.screen_structure.main_screens.map(screen => `- ${screen}`).join('\n')}
+
+## 8. 画面一覧
+${requirements.screen_list.map(screen => `
+### ${screen.name}
+- パス: ${screen.path}
+- 説明: ${screen.description}
+- 主要機能:
+${screen.main_features.map(feature => `  - ${feature}`).join('\n')}
+`).join('\n')}
+
+## 9. 技術スタック
 ### フロントエンド
 ${requirements.tech_stack.frontend.map(tech => `- ${tech}`).join('\n')}
 
@@ -265,7 +402,7 @@ ${requirements.tech_stack.database.map(tech => `- ${tech}`).join('\n')}
 ### インフラストラクチャ
 ${requirements.tech_stack.infrastructure.map(tech => `- ${tech}`).join('\n')}
 
-## 5. UI/UX要件
+## 10. UI/UX要件
 - デザインシステム: ${requirements.ui_ux_requirements.design_system}
 - レイアウト構成: ${requirements.ui_ux_requirements.layout}
 - レスポンシブ対応: ${requirements.ui_ux_requirements.responsive ? '必要' : '不要'}
@@ -276,7 +413,7 @@ ${requirements.ui_ux_requirements.accessibility.map(req => `- ${req}`).join('\n'
 ### 特別な機能要件
 ${requirements.ui_ux_requirements.special_features.map(feature => `- ${feature}`).join('\n')}
 
-## 6. 開発スケジュール
+## 11. 開発スケジュール
 ${requirements.schedule.phases.map(phase => `
 ### ${phase.name} (${phase.duration})
 ${phase.tasks.map(task => `- ${task}`).join('\n')}
