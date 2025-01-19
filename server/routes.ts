@@ -761,12 +761,40 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/competitors", async (req, res, next) => {
     try {
       const userCompetitors = await db
-        .select()
+        .select({
+          id: competitors.id,
+          user_id: competitors.user_id,
+          company_name: competitors.company_name,
+          website_url: competitors.website_url,
+          monitoring_keywords: competitors.monitoring_keywords,
+          last_updated: competitors.last_updated,
+          created_at: competitors.created_at,
+          updates: sql`json_agg(json_build_object(
+            'id', ${competitor_updates.id},
+            'update_type', ${competitor_updates.update_type},
+            'content', ${competitor_updates.content},
+            'source_url', ${competitor_updates.source_url},
+            'importance_score', ${competitor_updates.importance_score},
+            'is_notified', ${competitor_updates.is_notified},
+            'created_at', ${competitor_updates.created_at}
+          ) ORDER BY ${competitor_updates.created_at} DESC)`
+        })
         .from(competitors)
+        .leftJoin(
+          competitor_updates,
+          eq(competitors.id, competitor_updates.competitor_id)
+        )
         .where(eq(competitors.user_id, req.user?.id || 1))
+        .groupBy(competitors.id)
         .orderBy(competitors.created_at);
 
-      res.json(userCompetitors);
+      // NULLの更新情報を空配列に変換
+      const competitorsWithUpdates = userCompetitors.map(competitor => ({
+        ...competitor,
+        updates: competitor.updates[0] === null ? [] : competitor.updates
+      }));
+
+      res.json(competitorsWithUpdates);
     } catch (error) {
       next(error);
     }
