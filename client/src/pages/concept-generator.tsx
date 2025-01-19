@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAnalyses } from "@/hooks/use-analysis";
 import {
   Card,
@@ -37,6 +37,11 @@ interface GenerationStep {
   error?: string;
 }
 
+interface Requirements {
+  id: string;
+  // Add other necessary properties for requirements
+}
+
 export default function ConceptGenerator() {
   const { data: analyses, isLoading } = useAnalyses();
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
@@ -62,6 +67,7 @@ export default function ConceptGenerator() {
       status: "waiting",
     },
   ]);
+  const [requirements, setRequirements] = useState<Requirements | null>(null); // Added state for requirements
   const { toast } = useToast();
 
   const handleAnalysisSelect = (analysisId: string) => {
@@ -143,14 +149,15 @@ export default function ConceptGenerator() {
         throw new Error(await requirementsResponse.text());
       }
 
-      const requirements = await requirementsResponse.json();
+      const requirementsData = await requirementsResponse.json();
+      setRequirements(requirementsData); // Update requirements state
       updateStepStatus("requirements", "completed");
       toast({
         title: "要件書生成完了",
         description: "要件書が正常に生成されました。",
       });
 
-      // TODO: 要件書の表示画面に遷移
+
     } catch (error: any) {
       const currentStep = steps.find((step) => step.status === "processing");
       if (currentStep) {
@@ -165,6 +172,42 @@ export default function ConceptGenerator() {
       setIsGenerating(false);
     }
   };
+
+  const handleDownload = async (requirementId: string) => {
+    try {
+      const response = await fetch(`/api/requirements/${requirementId}/download`);
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = response.headers.get("content-disposition")?.split("filename=")[1].replace(/"/g, "") || "requirements.md";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "ダウンロード完了",
+        description: "要件書のダウンロードが完了しました。",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (requirements) {
+      handleDownload(requirements.id);
+    }
+  }, [requirements]);
 
   if (isLoading) {
     return (

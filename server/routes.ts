@@ -6,7 +6,7 @@ import fs from "fs";
 import { db } from "@db";
 import { analyses, comments, shared_analyses, concepts, concept_analyses, product_requirements, requirement_analyses } from "@db/schema";
 import { eq, and } from "drizzle-orm";
-import { generateConcept, refineConceptWithConditions, generateWebAppRequirements, refineRequirements } from "./lib/openai";
+import { generateConcept, refineConceptWithConditions, generateWebAppRequirements, refineRequirements, generateMarkdownRequirements } from "./lib/openai";
 import fetch from "node-fetch";
 
 // Configure multer for file upload
@@ -458,10 +458,10 @@ export function registerRoutes(app: Express): Server {
       // AIを使用して要件書を生成
       const requirements = await generateWebAppRequirements(
         {
-          title: concept.title,
-          value_proposition: concept.value_proposition,
-          target_customer: concept.target_customer,
-          advantage: concept.advantage,
+          title: concept.title || "",
+          value_proposition: concept.value_proposition || "",
+          target_customer: concept.target_customer || "",
+          advantage: concept.advantage || "",
         },
         conditions
       );
@@ -500,6 +500,30 @@ export function registerRoutes(app: Express): Server {
       );
 
       res.json(requirement);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 要件書のMarkdownダウンロード
+  app.get("/api/requirements/:id/download", async (req, res, next) => {
+    try {
+      const [requirement] = await db
+        .select()
+        .from(product_requirements)
+        .where(eq(product_requirements.id, req.params.id))
+        .limit(1);
+
+      if (!requirement) {
+        return res.status(404).send("Requirement not found");
+      }
+
+      const markdown = await generateMarkdownRequirements(requirement);
+      const filename = `basic_design_${requirement.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()}.md`;
+
+      res.setHeader("Content-Type", "text/markdown");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.send(markdown);
     } catch (error) {
       next(error);
     }

@@ -133,8 +133,12 @@ export async function refineConceptWithConditions(
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: "You will be generating a JSON response containing a refined product concept.",
+        },
+        {
           role: "user",
-          content: "Please adjust the product concept according to the given conditions and output in JSON format with the following structure: { title: string, value_proposition: string, target_customer: string, advantage: string }. Here is the data: " + JSON.stringify({ conceptData, conditions }),
+          content: `Please adjust the product concept according to the given conditions. Return the result in JSON format with the following structure: { title: string, value_proposition: string, target_customer: string, advantage: string }.\n\nData: ${JSON.stringify({ conceptData, conditions })}`,
         },
       ],
       response_format: { type: "json_object" },
@@ -162,69 +166,126 @@ export async function generateWebAppRequirements(
   }
 ): Promise<WebAppRequirement> {
   try {
-    // Step 1: 基本要件の生成
-    const basicRequirementsResponse = await openai.chat.completions.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You will be generating a JSON response containing web application requirements.",
+          content: "You will be generating a JSON response containing detailed web application requirements that match the WebAppRequirement interface structure.",
         },
         {
           role: "user",
-          content: `Generate a detailed web application requirements document in JSON format based on the following concept and conditions.\n\nConcept: ${JSON.stringify(concept)}\n\nConditions: ${JSON.stringify(conditions)}\n\nThe response should include:\n1. Title and overview\n2. Target users\n3. Core features with priorities\n4. Technical requirements\n5. UI/UX guidelines\n6. Development schedule\n\nPlease format the response in JSON matching the WebAppRequirement interface structure.`,
+          content: `Generate a web application requirements document based on the following concept and conditions. Format the response as JSON with the following structure:
+{
+  "title": "string",
+  "overview": "string",
+  "target_users": "string",
+  "features": [
+    {
+      "name": "string",
+      "priority": "high" | "medium" | "low",
+      "description": "string",
+      "acceptance_criteria": ["string"]
+    }
+  ],
+  "tech_stack": {
+    "frontend": ["string"],
+    "backend": ["string"],
+    "database": ["string"],
+    "infrastructure": ["string"]
+  },
+  "ui_ux_requirements": {
+    "design_system": "string",
+    "layout": "string",
+    "responsive": boolean,
+    "accessibility": ["string"],
+    "special_features": ["string"]
+  },
+  "schedule": {
+    "phases": [
+      {
+        "name": "string",
+        "duration": "string",
+        "tasks": ["string"]
+      }
+    ]
+  }
+}
+
+Concept: ${JSON.stringify(concept)}
+Conditions: ${JSON.stringify(conditions)}`,
         },
       ],
       response_format: { type: "json_object" },
     });
 
-    const requirements = JSON.parse(basicRequirementsResponse.choices[0].message.content || "{}");
+    const requirements = JSON.parse(response.choices[0].message.content || "{}");
 
-    // Step 2: 受け入れ基準の詳細化
-    const detailedResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You will be generating a JSON response with detailed acceptance criteria for each feature.",
-        },
-        {
-          role: "user",
-          content: `Enhance the acceptance criteria for each feature in the requirements. Return the result in JSON format.\n\nRequirements: ${JSON.stringify(requirements)}`,
-        },
-      ],
-      response_format: { type: "json_object" },
-    });
-
-    const detailedRequirements = JSON.parse(detailedResponse.choices[0].message.content || "{}");
-
-    // Step 3: 技術スタックの最適化
-    const techStackResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You will be generating a JSON response with optimized technical stack recommendations.",
-        },
-        {
-          role: "user",
-          content: `Optimize the technical stack based on the requirements and conditions. Return the result in JSON format.\n\nRequirements: ${JSON.stringify(detailedRequirements)}\n\nConditions: ${JSON.stringify(conditions)}\n\nConsider:\n- Team size and expertise\n- Budget constraints\n- Timeline\n- Scalability needs`,
-        },
-      ],
-      response_format: { type: "json_object" },
-    });
-
-    const finalRequirements = JSON.parse(techStackResponse.choices[0].message.content || "{}");
-
-    if (!finalRequirements.title || !finalRequirements.features) {
+    if (!requirements.title || !requirements.features) {
+      console.error("Invalid requirements format:", requirements);
       throw new Error("要件書の生成に失敗しました");
     }
 
-    return finalRequirements;
+    return requirements;
   } catch (error: any) {
     console.error("Error in requirements generation:", error);
     throw new Error(`要件書の生成中にエラーが発生しました: ${error.message}`);
   }
+}
+
+export async function generateMarkdownRequirements(requirements: WebAppRequirement): Promise<string> {
+  const md = `# ${requirements.title} 要件定義書
+
+## 1. 概要
+${requirements.overview}
+
+## 2. ターゲットユーザー
+${requirements.target_users}
+
+## 3. 機能要件
+${requirements.features.map(feature => `
+### ${feature.name} (優先度: ${feature.priority})
+${feature.description}
+
+受け入れ基準:
+${feature.acceptance_criteria.map(criteria => `- ${criteria}`).join('\n')}
+`).join('\n')}
+
+## 4. 技術スタック
+### フロントエンド
+${requirements.tech_stack.frontend.map(tech => `- ${tech}`).join('\n')}
+
+### バックエンド
+${requirements.tech_stack.backend.map(tech => `- ${tech}`).join('\n')}
+
+### データベース
+${requirements.tech_stack.database.map(tech => `- ${tech}`).join('\n')}
+
+### インフラストラクチャ
+${requirements.tech_stack.infrastructure.map(tech => `- ${tech}`).join('\n')}
+
+## 5. UI/UX要件
+- デザインシステム: ${requirements.ui_ux_requirements.design_system}
+- レイアウト: ${requirements.ui_ux_requirements.layout}
+- レスポンシブ対応: ${requirements.ui_ux_requirements.responsive ? '必要' : '不要'}
+
+### アクセシビリティ要件
+${requirements.ui_ux_requirements.accessibility.map(req => `- ${req}`).join('\n')}
+
+### 特別な機能要件
+${requirements.ui_ux_requirements.special_features.map(feature => `- ${feature}`).join('\n')}
+
+## 6. 開発スケジュール
+${requirements.schedule.phases.map(phase => `
+### ${phase.name} (${phase.duration})
+${phase.tasks.map(task => `- ${task}`).join('\n')}
+`).join('\n')}
+
+---
+生成日時: ${new Date().toLocaleString('ja-JP')}
+`;
+
+  return md;
 }
 
 export async function refineRequirements(
@@ -242,11 +303,11 @@ export async function refineRequirements(
       messages: [
         {
           role: "system",
-          content: "You will be generating a JSON response with refined web application requirements.",
+          content: "You will be generating a JSON response with refined web application requirements that match the WebAppRequirement interface structure.",
         },
         {
           role: "user",
-          content: `Refine the web application requirements based on the proposed updates. Return the result in JSON format.\n\nCurrent Requirements: ${JSON.stringify(requirements)}\n\nRequested Updates: ${JSON.stringify(updates)}`,
+          content: `Refine the web application requirements based on the proposed updates. Return the result in JSON format matching the WebAppRequirement interface structure.\n\nCurrent Requirements: ${JSON.stringify(requirements)}\n\nRequested Updates: ${JSON.stringify(updates)}`,
         },
       ],
       response_format: { type: "json_object" },
