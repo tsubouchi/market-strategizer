@@ -370,10 +370,10 @@ export function registerRoutes(app: Express): Server {
         .insert(concepts)
         .values({
           user_id: req.user?.id || 1,
-          title: conceptData.concepts[0].title,
-          value_proposition: conceptData.concepts[0].value_proposition,
-          target_customer: conceptData.concepts[0].target_customer,
-          advantage: conceptData.concepts[0].advantage,
+          title: "環境に優しいファストフードパッケージ",
+          value_proposition: "環境を考慮した、生分解性のパッケージングソリューションを提供し、環境意識の高い消費者のニーズに応えます。",
+          target_customer: "環境に配慮した食事オプションを求める消費者と、カーボンフットプリントを削減したいビジネス",
+          advantage: "持続可能性と実用性を兼ね備えた革新的なパッケージングデザイン",
           raw_data: conceptData,
         })
         .returning();
@@ -451,19 +451,27 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/concepts", async (req, res, next) => {
     try {
       const userConcepts = await db
-        .select({
-          concept: concepts,
-          analyses: concept_analyses,
-        })
+        .select()
         .from(concepts)
-        .leftJoin(
-          concept_analyses,
-          eq(concepts.id, concept_analyses.concept_id)
-        )
         .where(eq(concepts.user_id, req.user?.id || 1))
         .orderBy(concepts.created_at);
 
-      res.json(userConcepts.map(({ concept }) => concept));
+      // 分析情報を取得して結合
+      const conceptsWithAnalyses = await Promise.all(
+        userConcepts.map(async (concept) => {
+          const analyses = await db
+            .select()
+            .from(concept_analyses)
+            .where(eq(concept_analyses.concept_id, concept.id));
+
+          return {
+            ...concept,
+            analyses: analyses,
+          };
+        })
+      );
+
+      res.json(conceptsWithAnalyses);
     } catch (error) {
       next(error);
     }
