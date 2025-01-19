@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Home,
   ListChecks,
@@ -13,6 +13,7 @@ import {
   Search,
   FileText,
   Eye,
+  Menu,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -74,11 +75,11 @@ const analysisLinks = [
   },
 ];
 
-export default function Sidebar() {
+const SidebarContent = () => {
   const [location] = useLocation();
 
   return (
-    <div className="h-screen border-r bg-sidebar">
+    <div className="h-full flex flex-col">
       <div className="flex h-24 flex-col justify-center border-b px-6">
         <Link href="/" className="flex items-center gap-2 font-bold">
           <BarChart3 className="h-6 w-6" />
@@ -88,8 +89,8 @@ export default function Sidebar() {
           </div>
         </Link>
       </div>
-      <ScrollArea className="flex-1 py-4">
-        <nav className="grid gap-1 px-4">
+      <nav className="flex-1 py-4">
+        <div className="grid gap-1 px-4">
           {sidebarLinks.map((link) => (
             <Link key={link.href} href={link.href}>
               <Button
@@ -129,8 +130,33 @@ export default function Sidebar() {
               </Button>
             </Link>
           ))}
-        </nav>
-      </ScrollArea>
+        </div>
+      </nav>
     </div>
+  );
+};
+
+export default function Sidebar() {
+  return (
+    <>
+      {/* デスクトップサイドバー */}
+      <div className="hidden md:block h-screen w-64 border-r bg-sidebar">
+        <SidebarContent />
+      </div>
+
+      {/* モバイルハンバーガーメニュー */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0 bg-sidebar">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      </div>
+    </>
   );
 }

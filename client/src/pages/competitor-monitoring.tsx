@@ -199,15 +199,15 @@ export default function CompetitorMonitoring() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[80vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">競合他社モニタリング</h1>
           <p className="text-muted-foreground">
@@ -275,7 +275,7 @@ export default function CompetitorMonitoring() {
 
       <div className="grid gap-6">
         {competitors?.map((competitor) => (
-          <Card key={competitor.id} className="shadow-lg">
+          <Card key={competitor.id} className="shadow-sm">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
