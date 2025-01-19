@@ -128,7 +128,9 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       const formDataToSend = new FormData();
       formDataToSend.append("analysis_type", type);
       formDataToSend.append("content", JSON.stringify(formData));
-      formDataToSend.append("reference_url", referenceUrl);
+      if (referenceUrl) {
+        formDataToSend.append("reference_url", referenceUrl);
+      }
       if (file) {
         formDataToSend.append("attachment", file);
       }

@@ -29,19 +29,39 @@ export function registerRoutes(app: Express): Server {
   // Create new analysis
   app.post("/api/analyses", upload.single("attachment"), async (req, res, next) => {
     try {
-      const analysis_type = req.body.analysis_type;
-      const content = JSON.parse(req.body.content);
-      const reference_url = req.body.reference_url;
+      const { analysis_type, content, reference_url } = req.body;
+
+      if (!analysis_type || !content) {
+        return res.status(400).send("analysis_type and content are required");
+      }
+
+      let parsedContent;
+      try {
+        parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+      } catch (error) {
+        console.error('Content parsing error:', error);
+        return res.status(400).send("Invalid content format");
+      }
 
       // Get AI feedback
-      const aiFeedback = await analyzeBusinessStrategy(analysis_type, content);
+      let aiFeedback;
+      try {
+        aiFeedback = await analyzeBusinessStrategy(analysis_type, parsedContent);
+      } catch (error) {
+        console.error('AI analysis error:', error);
+        aiFeedback = JSON.stringify({
+          initial_analysis: { error: "AI分析中にエラーが発生しました" },
+          deep_analysis: { error: "詳細分析を実行できませんでした" },
+          recommendations: { error: "提案を生成できませんでした" }
+        });
+      }
 
       const [analysis] = await db
         .insert(analyses)
         .values({
           user_id: 1, // デモユーザー
           analysis_type,
-          content,
+          content: parsedContent,
           ai_feedback: aiFeedback,
           reference_url: reference_url || null,
           attachment_path: req.file?.path || null
@@ -50,6 +70,7 @@ export function registerRoutes(app: Express): Server {
 
       res.json(analysis);
     } catch (error) {
+      console.error('Route error:', error);
       next(error);
     }
   });
@@ -72,6 +93,10 @@ export function registerRoutes(app: Express): Server {
   // Get specific analysis
   app.get("/api/analyses/:id", async (req, res, next) => {
     try {
+      if (req.params.id === 'new') {
+        return res.status(404).send("Analysis not found");
+      }
+
       const [analysis] = await db
         .select()
         .from(analyses)
