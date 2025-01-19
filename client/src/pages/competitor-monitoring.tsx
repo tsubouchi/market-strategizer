@@ -47,6 +47,7 @@ interface Competitor {
   website_url: string;
   monitoring_keywords: string[];
   last_updated: string;
+  updates?: CompetitorUpdate[]; // Added updates property
 }
 
 interface CompetitorUpdate {
@@ -341,48 +342,30 @@ export default function CompetitorMonitoring() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {/* デモデータ */}
-                      <TableRow>
-                        <TableCell>ニュース</TableCell>
-                        <TableCell>
-                          新製品「AI戦略アシスタント」の発表。競合他社分析機能を強化し、
-                          リアルタイムモニタリング機能を追加。
-                        </TableCell>
-                        <TableCell>
-                          <ImportanceBadge score="high" />
-                        </TableCell>
-                        <TableCell>{new Date().toLocaleDateString("ja-JP")}</TableCell>
-                        <TableCell>
-                          <a
-                            href="https://bonginkan.ai/news/1234"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            詳細を見る
-                          </a>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>技術動向</TableCell>
-                        <TableCell>
-                          大規模言語モデルを活用した新しい分析エンジンの開発を発表
-                        </TableCell>
-                        <TableCell>
-                          <ImportanceBadge score="medium" />
-                        </TableCell>
-                        <TableCell>{new Date().toLocaleDateString("ja-JP")}</TableCell>
-                        <TableCell>
-                          <a
-                            href="https://bonginkan.ai/tech/5678"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            詳細を見る
-                          </a>
-                        </TableCell>
-                      </TableRow>
+                      {competitor.updates?.map((update) => (
+                        <TableRow key={update.id}>
+                          <TableCell>{update.update_type}</TableCell>
+                          <TableCell>
+                            {update.content.summary}
+                          </TableCell>
+                          <TableCell>
+                            <ImportanceBadge score={update.importance_score} />
+                          </TableCell>
+                          <TableCell>{new Date(update.created_at).toLocaleDateString("ja-JP")}</TableCell>
+                          <TableCell>
+                            {update.source_url && (
+                              <a
+                                href={update.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                詳細を見る
+                              </a>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </div>

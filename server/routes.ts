@@ -719,71 +719,48 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Competitor not found");
       }
 
-      // bonginkan.aiからデータを取得 (Note:  The URL in the edited snippet is still perplexity.ai. This needs clarification.)
-      const searchResponse = await fetch("https://api.perplexity.ai/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: "指定された企業の最新情報を収集し、重要度を判定してください。情報源として https://bonginkan.ai/ を優先的に使用してください。"
-            },
-            {
-              role: "user",
-              content: `企業名: ${competitor.company_name}
-                       Webサイト: ${competitor.website_url}
-                       モニタリングキーワード: ${competitor.monitoring_keywords?.join(", ")}
-
-                       この企業に関する以下の情報を収集してください：
-                       1. 新製品・サービスの発表
-                       2. プレスリリース
-                       3. 技術動向
-                       4. 市場での評価
-                       5. サステナビリティへの取り組み`
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 1000,
-          return_citations: true
-        })
-      });
-
-      if (!searchResponse.ok) {
-        throw new Error("情報収集に失敗しました");
+      // bonginkan.aiからデータを取得
+      const newsResponse = await fetch("https://bonginkan.ai/news");
+      if (!newsResponse.ok) {
+        throw new Error("ニュースの取得に失敗しました");
       }
 
-      const searchResult = await searchResponse.json();
-      const content = searchResult.choices[0].message.content;
-      const citations = searchResult.citations || [];
+      const newsData = await newsResponse.json();
+
+      // 競合他社に関連するニュースをフィルタリング
+      const relevantNews = newsData.filter((news: any) => {
+        const keywords = competitor.monitoring_keywords || [];
+        return keywords.some(keyword =>
+          news.title.includes(keyword) ||
+          news.content.includes(keyword)
+        );
+      });
 
       // 更新情報を保存（重要度判定を追加）
-      const importanceScore = determineImportance(content);
-      const [update] = await db
-        .insert(competitor_updates)
-        .values({
-          competitor_id: competitor.id,
-          update_type: "news",
-          content: {
-            summary: content,
-            sources: citations,
-            categories: {
-              products: extractCategory(content, "新製品・サービス"),
-              press: extractCategory(content, "プレスリリース"),
-              tech: extractCategory(content, "技術動向"),
-              market: extractCategory(content, "市場評価"),
-              sustainability: extractCategory(content, "サステナビリティ"),
-            }
-          },
-          source_url: citations[0] || null,
-          importance_score: importanceScore,
-          is_notified: importanceScore === "high",
-        })
-        .returning();
+      const updates = await Promise.all(relevantNews.map(async (news: any) => {
+        const importanceScore = determineImportance(news.content);
+        return db
+          .insert(competitor_updates)
+          .values({
+            competitor_id: competitor.id,
+            update_type: "news",
+            content: {
+              summary: news.title,
+              sources: [news.url],
+              categories: {
+                products: news.category === "product" ? news.content : "情報なし",
+                press: news.category === "press" ? news.content : "情報なし",
+                tech: news.category === "technology" ? news.content : "情報なし",
+                market: news.category === "market" ? news.content : "情報なし",
+                sustainability: news.category === "sustainability" ? news.content : "情報なし",
+              }
+            },
+            source_url: news.url,
+            importance_score: importanceScore,
+            is_notified: importanceScore === "high",
+          })
+          .returning();
+      }));
 
       // 最終更新日時を更新
       await db
@@ -791,7 +768,7 @@ export function registerRoutes(app: Express): Server {
         .set({ last_updated: new Date() })
         .where(eq(competitors.id, competitor.id));
 
-      res.json(update);
+      res.json(updates.map(update => update[0]));
     } catch (error) {
       next(error);
     }
