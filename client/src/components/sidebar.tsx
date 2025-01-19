@@ -10,6 +10,7 @@ import {
   PieChart,
   TrendingUp,
   Lightbulb,
+  Search,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -22,6 +23,11 @@ const sidebarLinks = [
     title: "作成履歴",
     icon: ListChecks,
     href: "/dashboard",
+  },
+  {
+    title: "深層検索",
+    icon: Search,
+    href: "/deep-search",
   },
   {
     title: "商品コンセプト",
@@ -40,16 +46,19 @@ const analysisLinks = [
     title: "3C分析",
     icon: BarChart3,
     href: "/analysis/new?type=3C",
+    description: "企業・顧客・競合の視点から戦略を立案（深層検索対応）",
   },
   {
     title: "4P分析",
     icon: PieChart,
     href: "/analysis/new?type=4P",
+    description: "マーケティングミックスを体系的に分析（深層検索対応）",
   },
   {
     title: "PEST分析",
     icon: TrendingUp,
     href: "/analysis/new?type=PEST",
+    description: "マクロ環境から事業機会とリスクを把握（深層検索対応）",
   },
 ];
 
@@ -92,12 +101,19 @@ export default function Sidebar() {
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start gap-2",
+                  "w-full justify-start gap-2 flex-col items-start",
                   location === link.href && "bg-sidebar-accent"
                 )}
               >
-                <link.icon className="h-4 w-4" />
-                {link.title}
+                <div className="flex items-center gap-2">
+                  <link.icon className="h-4 w-4" />
+                  {link.title}
+                </div>
+                {link.description && (
+                  <span className="text-xs text-muted-foreground ml-6">
+                    {link.description}
+                  </span>
+                )}
               </Button>
             </Link>
           ))}

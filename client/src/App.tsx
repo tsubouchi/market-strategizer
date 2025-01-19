@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Analysis from "@/pages/analysis";
 import Settings from "@/pages/settings";
 import Concepts from "@/pages/concepts";
+import DeepSearch from "@/pages/deep-search";
 import Sidebar from "@/components/sidebar";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
           <Route path="/analysis/:id" component={Analysis} />
           <Route path="/settings" component={Settings} />
           <Route path="/concepts" component={Concepts} />
+          <Route path="/deep-search" component={DeepSearch} />
           <Route component={NotFound} />
         </Switch>
       </main>
