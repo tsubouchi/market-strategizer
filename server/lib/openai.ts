@@ -23,12 +23,8 @@ export async function generateConcept(analyses: Analysis[]) {
       model: "gpt-4o",
       messages: [
         {
-          role: "system",
-          content: "3C分析、4P分析、PEST分析の結果を要約し、重要なポイントを抽出してJSON形式で出力してください。以下のような形式で返してください：{ summary: { key_points: string[], opportunities: string[], challenges: string[] } }",
-        },
-        {
           role: "user",
-          content: JSON.stringify(analyses),
+          content: "Please provide the output in JSON format with the following structure: { summary: { key_points: string[], opportunities: string[], challenges: string[] } }. Here are the analyses: " + JSON.stringify(analyses),
         },
       ],
       response_format: { type: "json_object" },
@@ -41,12 +37,8 @@ export async function generateConcept(analyses: Analysis[]) {
       model: "gpt-4o",
       messages: [
         {
-          role: "system",
-          content: "各分析フレームワーク間の関連性を分析し、潜在的な課題や機会を抽出してJSON形式で出力してください。以下のような形式で返してください：{ correlations: { insights: string[], opportunities: string[], risks: string[] } }",
-        },
-        {
           role: "user",
-          content: JSON.stringify({ summary, analyses }),
+          content: "Please analyze the relationships between frameworks and extract potential issues and opportunities in JSON format with the following structure: { correlations: { insights: string[], opportunities: string[], risks: string[] } }. Here is the data: " + JSON.stringify({ summary, analyses }),
         },
       ],
       response_format: { type: "json_object" },
@@ -59,20 +51,8 @@ export async function generateConcept(analyses: Analysis[]) {
       model: "gpt-4o",
       messages: [
         {
-          role: "system",
-          content: "分析結果に基づいて、以下のJSONフォーマットで3つの商品コンセプト案を生成してください：\n" +
-            "{\n" +
-            '  "concepts": [{\n' +
-            '    "title": "コンセプトのタイトル",\n' +
-            '    "value_proposition": "提供価値の説明",\n' +
-            '    "target_customer": "対象顧客の定義",\n' +
-            '    "advantage": "競合優位性の説明"\n' +
-            "  }]\n" +
-            "}"
-        },
-        {
           role: "user",
-          content: JSON.stringify({ summary, correlation }),
+          content: "Based on the analysis, generate three product concept proposals in JSON format with the following structure: { concepts: [{ title: string, value_proposition: string, target_customer: string, advantage: string }] }. Here is the data: " + JSON.stringify({ summary, correlation }),
         },
       ],
       response_format: { type: "json_object" },
@@ -109,18 +89,8 @@ export async function refineConceptWithConditions(
       model: "gpt-4o",
       messages: [
         {
-          role: "system",
-          content: `ユーザーの条件を考慮して、最適な商品コンセプトを調整し、以下のJSONフォーマットで出力してください：
-{
-  "title": "コンセプトのタイトル",
-  "value_proposition": "提供価値の説明",
-  "target_customer": "対象顧客の定義",
-  "advantage": "競合優位性の説明"
-}`
-        },
-        {
           role: "user",
-          content: JSON.stringify({ conceptData, conditions }),
+          content: "Please adjust the product concept according to the given conditions and output in JSON format with the following structure: { title: string, value_proposition: string, target_customer: string, advantage: string }. Here is the data: " + JSON.stringify({ conceptData, conditions }),
         },
       ],
       response_format: { type: "json_object" },
