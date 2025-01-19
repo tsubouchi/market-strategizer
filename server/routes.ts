@@ -719,7 +719,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Competitor not found");
       }
 
-      // Perplexity APIを使用して情報を検索
+      // bonginkan.aiからデータを取得 (Note:  The URL in the edited snippet is still perplexity.ai. This needs clarification.)
       const searchResponse = await fetch("https://api.perplexity.ai/chat/completions", {
         method: "POST",
         headers: {
@@ -731,19 +731,20 @@ export function registerRoutes(app: Express): Server {
           messages: [
             {
               role: "system",
-              content: "指定された企業の最新情報を収集し、重要度を判定してください。"
+              content: "指定された企業の最新情報を収集し、重要度を判定してください。情報源として https://bonginkan.ai/ を優先的に使用してください。"
             },
             {
               role: "user",
               content: `企業名: ${competitor.company_name}
                        Webサイト: ${competitor.website_url}
-                       モニタリングキーワード: ${competitor.monitoring_keywords.join(", ")}
+                       モニタリングキーワード: ${competitor.monitoring_keywords?.join(", ")}
 
                        この企業に関する以下の情報を収集してください：
                        1. 新製品・サービスの発表
                        2. プレスリリース
                        3. 技術動向
-                       4. 市場での評価`
+                       4. 市場での評価
+                       5. サステナビリティへの取り組み`
             }
           ],
           temperature: 0.2,
@@ -760,7 +761,8 @@ export function registerRoutes(app: Express): Server {
       const content = searchResult.choices[0].message.content;
       const citations = searchResult.citations || [];
 
-      // 更新情報を保存
+      // 更新情報を保存（重要度判定を追加）
+      const importanceScore = determineImportance(content);
       const [update] = await db
         .insert(competitor_updates)
         .values({
@@ -769,10 +771,17 @@ export function registerRoutes(app: Express): Server {
           content: {
             summary: content,
             sources: citations,
+            categories: {
+              products: extractCategory(content, "新製品・サービス"),
+              press: extractCategory(content, "プレスリリース"),
+              tech: extractCategory(content, "技術動向"),
+              market: extractCategory(content, "市場評価"),
+              sustainability: extractCategory(content, "サステナビリティ"),
+            }
           },
           source_url: citations[0] || null,
-          importance_score: "medium", // TODO: AIで重要度を判定
-          is_notified: false,
+          importance_score: importanceScore,
+          is_notified: importanceScore === "high",
         })
         .returning();
 
@@ -787,6 +796,30 @@ export function registerRoutes(app: Express): Server {
       next(error);
     }
   });
+
+  // 重要度判定ヘルパー関数
+  function determineImportance(content: string): "low" | "medium" | "high" {
+    const keywords = {
+      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正"],
+      medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更"],
+      low: ["通常の更新", "定期的な情報", "軽微な変更"]
+    };
+
+    for (const [level, words] of Object.entries(keywords)) {
+      if (words.some(word => content.includes(word))) {
+        return level as "low" | "medium" | "high";
+      }
+    }
+
+    return "medium";
+  }
+
+  // カテゴリー別の情報抽出
+  function extractCategory(content: string, category: string): string {
+    const sections = content.split(/\d+\./);
+    const relevantSection = sections.find(s => s.includes(category));
+    return relevantSection?.trim() || "情報なし";
+  }
 
   const httpServer = createServer(app);
   return httpServer;

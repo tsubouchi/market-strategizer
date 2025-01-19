@@ -5,6 +5,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +29,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, RefreshCcw, Bell } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  RefreshCcw,
+  Bell,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 
 interface Competitor {
   id: string;
@@ -42,9 +52,19 @@ interface Competitor {
 interface CompetitorUpdate {
   id: string;
   update_type: string;
-  content: any;
+  content: {
+    summary: string;
+    sources: string[];
+    categories: {
+      products: string;
+      press: string;
+      tech: string;
+      market: string;
+      sustainability: string;
+    };
+  };
   source_url: string;
-  importance_score: string;
+  importance_score: "low" | "medium" | "high";
   is_notified: boolean;
   created_at: string;
 }
@@ -97,6 +117,35 @@ export default function CompetitorMonitoring() {
     },
   });
 
+  // 更新機能
+  const refreshCompetitorMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/competitors/${id}/refresh`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/competitors"] });
+      toast({
+        title: "情報を更新しました",
+        description: "最新の情報が反映されました",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "更新に失敗しました",
+        description: error.message,
+      });
+    },
+  });
+
   const handleAddCompetitor = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -118,6 +167,33 @@ export default function CompetitorMonitoring() {
       website_url,
       monitoring_keywords: keywords.split(",").map((k) => k.trim()),
     });
+  };
+
+  // 重要度に応じたバッジの表示
+  const ImportanceBadge = ({ score }: { score: CompetitorUpdate["importance_score"] }) => {
+    switch (score) {
+      case "high":
+        return (
+          <Badge variant="destructive" className="gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            重要
+          </Badge>
+        );
+      case "medium":
+        return (
+          <Badge variant="secondary" className="gap-1">
+            <Activity className="h-3 w-3" />
+            中程度
+          </Badge>
+        );
+      case "low":
+        return (
+          <Badge variant="outline" className="gap-1">
+            <CheckCircle className="h-3 w-3" />
+            軽微
+          </Badge>
+        );
+    }
   };
 
   if (isLoading) {
@@ -198,7 +274,7 @@ export default function CompetitorMonitoring() {
 
       <div className="grid gap-6">
         {competitors?.map((competitor) => (
-          <Card key={competitor.id}>
+          <Card key={competitor.id} className="shadow-lg">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
@@ -215,14 +291,26 @@ export default function CompetitorMonitoring() {
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <RefreshCcw className="h-4 w-4 mr-2" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refreshCompetitorMutation.mutate(competitor.id)}
+                    disabled={refreshCompetitorMutation.isPending}
+                  >
+                    {refreshCompetitorMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCcw className="h-4 w-4 mr-2" />
+                    )}
                     更新
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <Bell className="h-4 w-4 mr-2" />
-                    通知設定
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id={`notifications-${competitor.id}`}
+                      defaultChecked={true}
+                    />
+                    <Label htmlFor={`notifications-${competitor.id}`}>通知</Label>
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -246,18 +334,63 @@ export default function CompetitorMonitoring() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>種類</TableHead>
-                        <TableHead>内容</TableHead>
+                        <TableHead className="w-[40%]">内容</TableHead>
                         <TableHead>重要度</TableHead>
                         <TableHead>日時</TableHead>
+                        <TableHead>ソース</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {/* TODO: 更新情報の表示 */}
+                      {/* デモデータ */}
+                      <TableRow>
+                        <TableCell>ニュース</TableCell>
+                        <TableCell>
+                          新製品「AI戦略アシスタント」の発表。競合他社分析機能を強化し、
+                          リアルタイムモニタリング機能を追加。
+                        </TableCell>
+                        <TableCell>
+                          <ImportanceBadge score="high" />
+                        </TableCell>
+                        <TableCell>{new Date().toLocaleDateString("ja-JP")}</TableCell>
+                        <TableCell>
+                          <a
+                            href="https://bonginkan.ai/news/1234"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            詳細を見る
+                          </a>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>技術動向</TableCell>
+                        <TableCell>
+                          大規模言語モデルを活用した新しい分析エンジンの開発を発表
+                        </TableCell>
+                        <TableCell>
+                          <ImportanceBadge score="medium" />
+                        </TableCell>
+                        <TableCell>{new Date().toLocaleDateString("ja-JP")}</TableCell>
+                        <TableCell>
+                          <a
+                            href="https://bonginkan.ai/tech/5678"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            詳細を見る
+                          </a>
+                        </TableCell>
+                      </TableRow>
                     </TableBody>
                   </Table>
                 </div>
               </div>
             </CardContent>
+            <CardFooter className="text-sm text-muted-foreground">
+              最終更新: {new Date(competitor.last_updated).toLocaleString("ja-JP")}
+            </CardFooter>
           </Card>
         ))}
       </div>
