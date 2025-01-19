@@ -11,9 +11,10 @@ export default function Home() {
       description: "自社・顧客・競合他社の観点から戦略を導き出す",
       icon: BarChart3,
       details: [
-        "Company（自社）の強みと弱み",
-        "Customer（顧客）のニーズと行動",
-        "Competitor（競合）の分析と差別化"
+        "Company（自社）の強みと弱みを明確化",
+        "Customer（顧客）のニーズと行動を理解",
+        "Competitor（競合）との差別化要因を分析",
+        "3つの要素を総合的に分析し、競争優位性を確立"
       ],
     },
     {
@@ -22,10 +23,10 @@ export default function Home() {
       description: "マーケティングミックスの4つの要素を分析",
       icon: PieChart,
       details: [
-        "Product（製品）の特徴と価値",
-        "Price（価格）の戦略と設定",
-        "Place（流通）のチャネル選択",
-        "Promotion（販促）の効果的な手法"
+        "Product（製品）の特徴と価値提案を評価",
+        "Price（価格）の戦略的な設定と分析",
+        "Place（流通）のチャネル選択と最適化",
+        "Promotion（販促）の効果的な手法の検討"
       ],
     },
     {
@@ -34,10 +35,10 @@ export default function Home() {
       description: "マクロ環境要因から事業機会とリスクを特定",
       icon: TrendingUp,
       details: [
-        "Political（政治的要因）の影響",
-        "Economic（経済的要因）の動向",
-        "Social（社会的要因）の変化",
-        "Technological（技術的要因）の進展"
+        "Political（政治的要因）：法規制や政策の影響を分析",
+        "Economic（経済的要因）：景気動向や市場環境を評価",
+        "Social（社会的要因）：人口動態や価値観の変化を把握",
+        "Technological（技術的要因）：技術革新の影響を予測"
       ],
     },
   ];
@@ -103,9 +104,9 @@ export default function Home() {
               <div className="mb-4 text-primary">
                 <BarChart3 className="w-10 h-10 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">AIによる分析支援</h3>
+              <h3 className="text-xl font-semibold mb-2">多段階AI分析</h3>
               <p className="text-muted-foreground">
-                入力内容を基にAIが自動で分析し、戦略立案に役立つ提案を提供します
+                初期分析から深堀分析、具体的な提案まで、AIが段階的に戦略立案をサポート
               </p>
             </div>
             <div className="p-6">
@@ -121,9 +122,9 @@ export default function Home() {
               <div className="mb-4 text-primary">
                 <TrendingUp className="w-10 h-10 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">直感的な操作</h3>
+              <h3 className="text-xl font-semibold mb-2">参考資料の添付</h3>
               <p className="text-muted-foreground">
-                シンプルなインターフェースで、誰でも簡単に分析を始められます
+                URLや関連資料を添付し、より具体的な分析の根拠を残せます
               </p>
             </div>
           </div>
