@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Link as LinkIcon, Paperclip } from "lucide-react";
 
 const analysisFields = {
   "3C": [
@@ -35,23 +35,30 @@ interface AnalysisFormProps {
 
 export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [referenceUrl, setReferenceUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const createAnalysis = useCreateAnalysis();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      await createAnalysis.mutateAsync({
-        analysis_type: type,
-        content: formData,
-      });
-      
+      const formDataToSend = new FormData();
+      formDataToSend.append("analysis_type", type);
+      formDataToSend.append("content", JSON.stringify(formData));
+      formDataToSend.append("reference_url", referenceUrl);
+      if (file) {
+        formDataToSend.append("attachment", file);
+      }
+
+      await createAnalysis.mutateAsync(formDataToSend);
+
       toast({
         title: "Success",
         description: "Analysis created successfully",
       });
-      
+
       onComplete?.();
     } catch (error) {
       toast({
@@ -69,6 +76,33 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="reference_url" className="flex items-center gap-2">
+              <LinkIcon className="w-4 h-4" />
+              Reference URL
+            </Label>
+            <Input
+              id="reference_url"
+              type="url"
+              placeholder="https://..."
+              value={referenceUrl}
+              onChange={(e) => setReferenceUrl(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="attachment" className="flex items-center gap-2">
+              <Paperclip className="w-4 h-4" />
+              Attachment
+            </Label>
+            <Input
+              id="attachment"
+              type="file"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="cursor-pointer"
+            />
+          </div>
+
           {analysisFields[type].map(({ key, label, type: fieldType }) => (
             <div key={key} className="space-y-2">
               <Label htmlFor={key}>{label}</Label>

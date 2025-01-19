@@ -2,20 +2,20 @@ import { pgTable, text, serial, timestamp, jsonb, uuid } from "drizzle-orm/pg-co
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
-// Simple user table without auth
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });
 
-// Analysis table
 export const analyses = pgTable("analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
   user_id: serial("user_id").references(() => users.id).notNull(),
   analysis_type: text("analysis_type").notNull(), // '3C', '4P', 'PEST'
   content: jsonb("content").notNull(),
   ai_feedback: text("ai_feedback"),
+  reference_url: text("reference_url"),
+  attachment_path: text("attachment_path"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

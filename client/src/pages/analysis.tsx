@@ -3,7 +3,7 @@ import { useAnalysis } from "@/hooks/use-analysis";
 import AnalysisForm from "@/components/analysis-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Link as LinkIcon, Paperclip } from "lucide-react";
 
 export default function AnalysisPage() {
   const { id } = useParams<{ id: string }>();
@@ -63,6 +63,36 @@ export default function AnalysisPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
+              {/* Reference URL */}
+              {analysis.reference_url && (
+                <div className="flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4" />
+                  <a
+                    href={analysis.reference_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Reference URL
+                  </a>
+                </div>
+              )}
+
+              {/* Attachment */}
+              {analysis.attachment_path && (
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  <a
+                    href={`/api/uploads/${analysis.attachment_path.split("/").pop()}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    View Attachment
+                  </a>
+                </div>
+              )}
+
               {Object.entries(content).map(([key, value]) => (
                 <div key={key} className="space-y-2">
                   <h3 className="font-medium capitalize">{key}</h3>
