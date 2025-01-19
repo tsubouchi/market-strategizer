@@ -14,6 +14,8 @@ AIと多段分析でビジネスの方向性を明確化。3C・4P・PESTを統�
 - 入力内容の自動分析と要約
 - 多段階分析による深い洞察の提供
 - 具体的な改善提案の生成
+- Perplexity APIを活用した深層検索
+- 競合他社の自動モニタリング
 
 ### 3. コラボレーション機能
 - 分析結果の共有
@@ -42,6 +44,7 @@ AIと多段分析でビジネスの方向性を明確化。3C・4P・PESTを統�
 
 - AI/ML
   - OpenAI GPT-4
+  - Perplexity API (深層検索)
 
 ## ローカル開発環境のセットアップ
 
@@ -68,12 +71,25 @@ npm run dev
 
 ```
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-OPENAI_API_KEY=your-openai-api-key
+PERPLEXITY_API_KEY=your-perplexity-api-key  # Perplexity APIキー
 ```
 
-## デプロイ
+## Replitでのデプロイ
 
-このプロジェクトはReplitでホストされています。
+1. Replitでプロジェクトをインポート
+2. Secretsの設定:
+   - `PERPLEXITY_API_KEY`: Perplexity APIキー（[Perplexity AI](https://www.perplexity.ai/)から取得）
+3. データベースのプロビジョニング:
+   - Replitの「Tools > Database」からPostgreSQLデータベースを作成
+   - 自動的に`DATABASE_URL`環境変数が設定されます
+4. アプリケーションの起動:
+   - 「Run」ボタンをクリックしてアプリケーションを起動
+
+## セキュリティ注意事項
+
+- APIキーは必ずReplit Secretsまたは環境変数として設定し、コードにハードコーディングしないでください
+- `.env`ファイルをGitにコミットしないでください
+- 本番環境では適切なセキュリティ設定を行ってください
 
 ## ライセンス
 

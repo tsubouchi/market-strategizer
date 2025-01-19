@@ -6,7 +6,9 @@ node_modules
 # Environment
 .env
 .env.local
+.env.*
 .env.*.local
+*.env
 
 # IDE
 .idea/
@@ -37,6 +39,7 @@ vite.config.ts.*
 # Database
 *.sqlite
 *.db
+.data/
 
 # Test coverage
 coverage/
@@ -45,3 +48,10 @@ coverage/
 # Temporary files
 .temp
 .cache
+
+# Replit specific
+.replit/
+replit.nix
+.breakpoints
+.replit
+.config/
