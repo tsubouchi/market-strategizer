@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Link as LinkIcon, Paperclip, ArrowLeft, ArrowRight } from "lucide-react";
 
+export type AnalysisType = "3C" | "4P" | "PEST";
+
 const analysisSteps = {
   "3C": [
     {
@@ -81,11 +83,11 @@ const analysisSteps = {
       placeholder: "例：\n・技術トレンド\n・研究開発動向\n・特許状況\n・新技術の影響"
     }
   ]
-};
+} as const;
 
 interface AnalysisFormProps {
-  type: keyof typeof analysisSteps;
-  onComplete?: () => void;
+  type: AnalysisType;
+  onComplete?: (analysis: any) => void;
 }
 
 export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
@@ -135,14 +137,14 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
         formDataToSend.append("attachment", file);
       }
 
-      await createAnalysis.mutateAsync(formDataToSend);
+      const analysis = await createAnalysis.mutateAsync(formDataToSend);
 
       toast({
         title: "分析完了",
         description: "分析が正常に完了しました。",
       });
 
-      onComplete?.();
+      onComplete?.(analysis);
     } catch (error: any) {
       toast({
         variant: "destructive",

@@ -1,6 +1,6 @@
 import { useLocation, useParams } from "wouter";
 import { useAnalysis, useUpdateAnalysisVisibility } from "@/hooks/use-analysis";
-import AnalysisForm from "@/components/analysis-form";
+import AnalysisForm, { AnalysisType } from "@/components/analysis-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +8,6 @@ import {
   Link as LinkIcon,
   Paperclip,
   FileDown,
-  Share2,
   Globe,
   Lock,
 } from "lucide-react";
@@ -27,9 +26,9 @@ export default function AnalysisPage() {
   // 新規分析の場合
   if (id === "new") {
     const params = new URLSearchParams(window.location.search);
-    const type = params.get("type") as "3C" | "4P" | "PEST" | null;
+    const type = params.get("type") as AnalysisType;
 
-    if (!type) {
+    if (!type || !["3C", "4P", "PEST"].includes(type)) {
       navigate("/");
       return null;
     }
