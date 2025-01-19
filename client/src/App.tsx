@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -8,18 +8,9 @@ import Analysis from "@/pages/analysis";
 import Settings from "@/pages/settings";
 import Concepts from "@/pages/concepts";
 import DeepSearch from "@/pages/deep-search";
+import ConceptGenerator from "@/pages/concept-generator";
 import Sidebar from "@/components/sidebar";
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
-    },
-  },
-});
+import { queryClient } from "./lib/queryClient";
 
 function Router() {
   return (
@@ -33,6 +24,7 @@ function Router() {
           <Route path="/settings" component={Settings} />
           <Route path="/concepts" component={Concepts} />
           <Route path="/deep-search" component={DeepSearch} />
+          <Route path="/concept-generator" component={ConceptGenerator} />
           <Route component={NotFound} />
         </Switch>
       </main>

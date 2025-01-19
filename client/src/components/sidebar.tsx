@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Lightbulb,
   Search,
+  FileText,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -30,8 +31,13 @@ const sidebarLinks = [
     href: "/deep-search",
   },
   {
-    title: "商品コンセプト",
+    title: "コンセプト生成",
     icon: Lightbulb,
+    href: "/concept-generator",
+  },
+  {
+    title: "要件書",
+    icon: FileText,
     href: "/concepts",
   },
   {

@@ -58,6 +58,31 @@ export const shared_analyses = pgTable("shared_analyses", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
+// 要件書テーブル
+export const product_requirements = pgTable("product_requirements", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  user_id: serial("user_id").references(() => users.id).notNull(),
+  concept_id: uuid("concept_id").references(() => concepts.id).notNull(),
+  title: text("title").notNull(),
+  overview: text("overview").notNull(),
+  target_users: text("target_users").notNull(),
+  features: jsonb("features").notNull(), // 機能一覧、優先度などを含むJSON
+  tech_stack: jsonb("tech_stack"), // 技術スタック情報
+  ui_ux_requirements: jsonb("ui_ux_requirements"), // UI/UX要件
+  schedule: jsonb("schedule"), // 開発スケジュール
+  status: text("status").default("draft"), // draft, final など
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// 要件書と分析の関連付けテーブル
+export const requirement_analyses = pgTable("requirement_analyses", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  requirement_id: uuid("requirement_id").references(() => product_requirements.id).notNull(),
+  analysis_id: uuid("analysis_id").references(() => analyses.id).notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   analyses: many(analyses),
@@ -117,6 +142,30 @@ export const sharedAnalysesRelations = relations(shared_analyses, ({ one }) => (
   }),
 }));
 
+export const productRequirementsRelations = relations(product_requirements, ({ one, many }) => ({
+  user: one(users, {
+    fields: [product_requirements.user_id],
+    references: [users.id],
+  }),
+  concept: one(concepts, {
+    fields: [product_requirements.concept_id],
+    references: [concepts.id],
+  }),
+  analyses: many(requirement_analyses),
+}));
+
+export const requirementAnalysesRelations = relations(requirement_analyses, ({ one }) => ({
+  requirement: one(product_requirements, {
+    fields: [requirement_analyses.requirement_id],
+    references: [product_requirements.id],
+  }),
+  analysis: one(analyses, {
+    fields: [requirement_analyses.analysis_id],
+    references: [analyses.id],
+  }),
+}));
+
+
 // Export schemas and types
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -147,3 +196,13 @@ export const insertSharedAnalysisSchema = createInsertSchema(shared_analyses);
 export const selectSharedAnalysisSchema = createSelectSchema(shared_analyses);
 export type SharedAnalysis = typeof shared_analyses.$inferSelect;
 export type NewSharedAnalysis = typeof shared_analyses.$inferInsert;
+
+export const insertProductRequirementSchema = createInsertSchema(product_requirements);
+export const selectProductRequirementSchema = createSelectSchema(product_requirements);
+export type ProductRequirement = typeof product_requirements.$inferSelect;
+export type NewProductRequirement = typeof product_requirements.$inferInsert;
+
+export const insertRequirementAnalysisSchema = createInsertSchema(requirement_analyses);
+export const selectRequirementAnalysisSchema = createSelectSchema(requirement_analyses);
+export type RequirementAnalysis = typeof requirement_analyses.$inferSelect;
+export type NewRequirementAnalysis = typeof requirement_analyses.$inferInsert;
