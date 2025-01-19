@@ -8,6 +8,7 @@ import { analyses, comments, shared_analyses, concepts, concept_analyses, produc
 import { eq, and } from "drizzle-orm";
 import { generateConcept, refineConceptWithConditions, generateWebAppRequirements, refineRequirements, generateMarkdownRequirements } from "./lib/openai";
 import fetch from "node-fetch";
+import * as cheerio from 'cheerio';
 
 // Configure multer for file upload
 const upload = multer({
@@ -692,21 +693,6 @@ export function registerRoutes(app: Express): Server {
   });
 
   // 競合他社の更新情報を取得
-  app.get("/api/competitors/:id/updates", async (req, res, next) => {
-    try {
-      const updates = await db
-        .select()
-        .from(competitor_updates)
-        .where(eq(competitor_updates.competitor_id, req.params.id))
-        .orderBy(competitor_updates.created_at);
-
-      res.json(updates);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // 手動で競合他社の情報を更新
   app.post("/api/competitors/:id/refresh", async (req, res, next) => {
     try {
       const [competitor] = await db
@@ -719,40 +705,60 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Competitor not found");
       }
 
-      // bonginkan.aiからデータを取得
-      const newsResponse = await fetch("https://bonginkan.ai/news");
-      if (!newsResponse.ok) {
+      // ボンギンカン株式会社のWebサイトからニュースを取得
+      const response = await fetch("https://www.bonginkan.co.jp/news/");
+      if (!response.ok) {
         throw new Error("ニュースの取得に失敗しました");
       }
 
-      const newsData = await newsResponse.json();
+      const html = await response.text();
+      const $ = cheerio.load(html);
+      const newsItems: Array<{
+        title: string;
+        url: string;
+        content: string;
+        date: string;
+        category: string;
+      }> = [];
+
+      // ニュース一覧を取得（実際のHTML構造に合わせて調整）
+      $('.news-list .news-item').each((_, element) => {
+        const $item = $(element);
+        newsItems.push({
+          title: $item.find('.news-title').text().trim(),
+          url: new URL($item.find('a').attr('href') || '', 'https://www.bonginkan.co.jp').toString(),
+          content: $item.find('.news-content').text().trim(),
+          date: $item.find('.news-date').text().trim(),
+          category: $item.find('.news-category').text().trim(),
+        });
+      });
 
       // 競合他社に関連するニュースをフィルタリング
-      const relevantNews = newsData.filter((news: any) => {
+      const relevantNews = newsItems.filter(news => {
         const keywords = competitor.monitoring_keywords || [];
         return keywords.some(keyword =>
-          news.title.includes(keyword) ||
-          news.content.includes(keyword)
+          news.title.toLowerCase().includes(keyword.toLowerCase()) ||
+          news.content.toLowerCase().includes(keyword.toLowerCase())
         );
       });
 
-      // 更新情報を保存（重要度判定を追加）
-      const updates = await Promise.all(relevantNews.map(async (news: any) => {
+      // 更新情報を保存
+      const updates = await Promise.all(relevantNews.map(async (news) => {
         const importanceScore = determineImportance(news.content);
-        return db
+        const [update] = await db
           .insert(competitor_updates)
           .values({
             competitor_id: competitor.id,
-            update_type: "news",
+            update_type: news.category || "news",
             content: {
               summary: news.title,
               sources: [news.url],
               categories: {
-                products: news.category === "product" ? news.content : "情報なし",
-                press: news.category === "press" ? news.content : "情報なし",
-                tech: news.category === "technology" ? news.content : "情報なし",
-                market: news.category === "market" ? news.content : "情報なし",
-                sustainability: news.category === "sustainability" ? news.content : "情報なし",
+                products: categorizeNews(news, "product"),
+                press: categorizeNews(news, "press"),
+                tech: categorizeNews(news, "technology"),
+                market: categorizeNews(news, "market"),
+                sustainability: categorizeNews(news, "sustainability"),
               }
             },
             source_url: news.url,
@@ -760,6 +766,7 @@ export function registerRoutes(app: Express): Server {
             is_notified: importanceScore === "high",
           })
           .returning();
+        return update;
       }));
 
       // 最終更新日時を更新
@@ -768,13 +775,21 @@ export function registerRoutes(app: Express): Server {
         .set({ last_updated: new Date() })
         .where(eq(competitors.id, competitor.id));
 
-      res.json(updates.map(update => update[0]));
+      res.json(updates);
     } catch (error) {
+      console.error("Error refreshing competitor data:", error);
       next(error);
     }
   });
 
-  // 重要度判定ヘルパー関数
+  // ヘルパー関数
+  function categorizeNews(news: { category: string, content: string }, targetCategory: string): string {
+    if (news.category.toLowerCase().includes(targetCategory.toLowerCase())) {
+      return news.content;
+    }
+    return "情報なし";
+  }
+
   function determineImportance(content: string): "low" | "medium" | "high" {
     const keywords = {
       high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正"],
@@ -783,19 +798,12 @@ export function registerRoutes(app: Express): Server {
     };
 
     for (const [level, words] of Object.entries(keywords)) {
-      if (words.some(word => content.includes(word))) {
+      if (words.some(word => content.toLowerCase().includes(word.toLowerCase()))) {
         return level as "low" | "medium" | "high";
       }
     }
 
     return "medium";
-  }
-
-  // カテゴリー別の情報抽出
-  function extractCategory(content: string, category: string): string {
-    const sections = content.split(/\d+\./);
-    const relevantSection = sections.find(s => s.includes(category));
-    return relevantSection?.trim() || "情報なし";
   }
 
   const httpServer = createServer(app);
