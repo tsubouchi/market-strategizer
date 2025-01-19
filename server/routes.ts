@@ -27,6 +27,43 @@ const upload = multer({
   })
 });
 
+interface WebAppRequirement {
+  title: string;
+  purpose: {
+    background: string;
+    goals: string[];
+    expected_effects: string[];
+  };
+  overview: string;
+  target_users: string;
+  features: string[];
+  non_functional_requirements: {
+    performance: string[];
+    security: string[];
+    availability: string[];
+    scalability: string[];
+    maintainability: string[];
+  };
+  api_requirements: {
+    external_apis: string[];
+    internal_apis: string[];
+  };
+  screen_structure: {
+    flow_description: string;
+    main_screens: string[];
+  };
+  screen_list: {
+    name: string;
+    path: string;
+    description: string;
+    main_features: string[];
+  }[];
+  tech_stack: string[];
+  ui_ux_requirements: string;
+  schedule: string;
+}
+
+
 export function registerRoutes(app: Express): Server {
   // Create new analysis
   app.post("/api/analyses", upload.single("attachment"), async (req, res, next) => {
@@ -533,13 +570,51 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Requirement not found");
       }
 
-      const markdown = await generateMarkdownRequirements(requirement);
+      // データベースの要件書データをWebAppRequirementインターフェースの形式に変換
+      const webAppRequirement: WebAppRequirement = {
+        title: requirement.title,
+        purpose: {
+          background: "プロジェクトの背景情報",
+          goals: ["目標1"],
+          expected_effects: ["期待される効果1"]
+        },
+        overview: requirement.overview,
+        target_users: requirement.target_users,
+        features: requirement.features as WebAppRequirement["features"],
+        non_functional_requirements: {
+          performance: ["性能要件1"],
+          security: ["セキュリティ要件1"],
+          availability: ["可用性要件1"],
+          scalability: ["拡張性要件1"],
+          maintainability: ["保守性要件1"]
+        },
+        api_requirements: {
+          external_apis: [],
+          internal_apis: []
+        },
+        screen_structure: {
+          flow_description: "画面遷移の概要説明",
+          main_screens: ["メイン画面1"]
+        },
+        screen_list: [{
+          name: "画面1",
+          path: "/",
+          description: "画面の説明",
+          main_features: ["主要機能1"]
+        }],
+        tech_stack: requirement.tech_stack as WebAppRequirement["tech_stack"],
+        ui_ux_requirements: requirement.ui_ux_requirements as WebAppRequirement["ui_ux_requirements"],
+        schedule: requirement.schedule as WebAppRequirement["schedule"]
+      };
+
+      const markdown = await generateMarkdownRequirements(webAppRequirement);
       const filename = `basic_design_${requirement.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()}.md`;
 
       res.setHeader("Content-Type", "text/markdown");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       res.send(markdown);
     } catch (error) {
+      console.error("Error generating markdown:", error);
       next(error);
     }
   });
@@ -826,6 +901,12 @@ export function registerRoutes(app: Express): Server {
 
     return "medium";
   }
+
+  async function analyzeBusinessStrategy(analysis_type: string, content: any): Promise<string> {
+    //  This is a placeholder.  Replace with your actual AI analysis logic.
+    return JSON.stringify({ initial_analysis: "Initial Analysis", deep_analysis: "Deep Analysis", recommendations: "Recommendations" });
+  }
+
 
   const httpServer = createServer(app);
   return httpServer;
