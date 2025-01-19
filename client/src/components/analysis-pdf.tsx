@@ -1,11 +1,18 @@
-import { Document, Page, Text, View, StyleSheet, PDFViewer } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from "@react-pdf/renderer";
 import type { Analysis } from "@db/schema";
+
+// 日本語フォントの登録
+Font.register({
+  family: 'NotoSansJP',
+  src: 'https://fonts.gstatic.com/s/notosansjp/v52/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEj75g.ttf'
+});
 
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#ffffff",
     padding: 30,
+    fontFamily: "NotoSansJP",
   },
   section: {
     marginBottom: 20,
@@ -13,15 +20,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     marginBottom: 20,
+    fontFamily: "NotoSansJP",
   },
   subtitle: {
     fontSize: 18,
     marginBottom: 10,
+    fontFamily: "NotoSansJP",
   },
   text: {
     fontSize: 12,
     lineHeight: 1.5,
     marginBottom: 8,
+    fontFamily: "NotoSansJP",
   },
   aiSection: {
     marginTop: 20,
