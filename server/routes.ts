@@ -811,84 +811,74 @@ export function registerRoutes(app: Express): Server {
       }
 
       // 深層検索APIを使用して情報を収集
-      const searchResults = [];
-      for (const keyword of competitor.monitoring_keywords) {
-        const searchResponse = await fetch("https://api.perplexity.ai/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: "llama-3.1-sonar-small-128k-online",
-            messages: [
-              {
-                role: "system",
-                content: `${competitor.company_name}に関する最新の情報を収集し、以下のカテゴリーで分類してください：
-                - 製品・サービス開発
-                - プレスリリース・ニュース
-                - 技術革新
-                - 市場動向
-                - サステナビリティ・環境対応`
-              },
-              {
-                role: "user",
-                content: `${competitor.company_name} ${keyword}に関する最新の情報を詳しく教えてください。`
-              }
-            ],
-            temperature: 0.2,
-            max_tokens: 1000,
-            return_citations: true
-          })
-        });
+      const searchResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: `${competitor.company_name}に関する最新の情報を収集し、以下のカテゴリーで分類してください：
+              - 製品・サービス開発
+              - プレスリリース・ニュース
+              - 技術革新
+              - 市場動向
+              - サステナビリティ・環境対応`
+            },
+            {
+              role: "user",
+              content: `${competitor.company_name}に関する最新の情報を、以下のキーワードに関連して詳しく教えてください：${competitor.monitoring_keywords.join(', ')}`
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 1000,
+          return_citations: true
+        })
+      });
 
-        if (!searchResponse.ok) {
-          throw new Error(`Search API error: ${searchResponse.statusText}`);
-        }
-
-        const result = await searchResponse.json();
-        searchResults.push({
-          keyword,
-          content: result.choices[0].message.content,
-          citations: result.citations || []
-        });
+      if (!searchResponse.ok) {
+        throw new Error(`Search API error: ${searchResponse.statusText}`);
       }
 
+      const result = await searchResponse.json();
+
       // 検索結果を分析して更新情報を生成
-      const updates = await Promise.all(searchResults.map(async (result) => {
-        const content = result.content.split('\n').reduce((acc, cur) => {
-          const [key, value] = cur.split(':');
-          if(key && value){
-            acc[key.trim()] = value.trim();
-          }
-          return acc;
-        }, {} as Record<string, string>);
+      const content = result.choices[0].message.content.split('\n').reduce((acc: Record<string, string>, cur: string) => {
+        const [key, value] = cur.split(':');
+        if(key && value){
+          acc[key.trim()] = value.trim();
+        }
+        return acc;
+      }, {});
 
-        const importanceScore = determineImportance(content);
+      const importanceScore = determineImportance(content);
 
-        const [update] = await db
-          .insert(competitor_updates)
-          .values({
-            competitor_id: competitor.id,
-            update_type: "deep_search",
-            content: {
-              summary: `${result.keyword}に関する最新の動向`,
-              sources: result.citations,
-              categories: {
-                products: content.products || "情報なし",
-                press: content.press || "情報なし",
-                tech: content.tech || "情報なし",
-                market: content.market || "情報なし",
-                sustainability: content.sustainability || "情報なし",
-              }
-            },
-            source_url: result.citations[0] || null,
-            importance_score: importanceScore,
-            is_notified: importanceScore === "high",
-          })
-          .returning();
-        return update;
-      }));
+      // 更新情報を保存
+      const [update] = await db
+        .insert(competitor_updates)
+        .values({
+          competitor_id: competitor.id,
+          update_type: "deep_search",
+          content: {
+            summary: `${competitor.company_name}に関する最新の動向`,
+            sources: result.citations || [],
+            categories: {
+              products: content.products || "情報なし",
+              press: content.press || "情報なし",
+              tech: content.tech || "情報なし",
+              market: content.market || "情報なし",
+              sustainability: content.sustainability || "情報なし",
+            }
+          },
+          source_url: result.citations?.[0] || null,
+          importance_score: importanceScore,
+          is_notified: importanceScore === "high",
+        })
+        .returning();
 
       // 最終更新日時を更新
       await db
@@ -896,7 +886,7 @@ export function registerRoutes(app: Express): Server {
         .set({ last_updated: new Date() })
         .where(eq(competitors.id, competitor.id));
 
-      res.json(updates);
+      res.json([update]);
     } catch (error) {
       console.error("Error refreshing competitor data:", error);
       next(error);
