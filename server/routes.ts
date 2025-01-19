@@ -1,12 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { analyzeBusinessStrategy } from "./openai";
-import { db } from "@db";
-import { analyses, comments, shared_analyses } from "@db/schema";
-import { eq, and } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { db } from "@db";
+import { analyses, comments, shared_analyses, concepts, concept_analyses } from "@db/schema";
+import { eq, and } from "drizzle-orm";
+import { generateConcept, refineConceptWithConditions } from "./lib/openai";
 
 // Configure multer for file upload
 const upload = multer({
@@ -93,7 +93,7 @@ export function registerRoutes(app: Express): Server {
           )
         )
         .where(
-          req.user?.id 
+          req.user?.id
             ? and(
                 eq(analyses.user_id, req.user.id),
                 eq(analyses.is_public, true)
@@ -291,6 +291,152 @@ export function registerRoutes(app: Express): Server {
     const filename = req.params.filename;
     const filePath = path.join(process.cwd(), "uploads", filename);
     res.sendFile(filePath);
+  });
+
+
+  // コンセプト生成API
+  app.post("/api/concepts/generate", async (req, res, next) => {
+    try {
+      const { analysis_ids } = req.body;
+
+      if (!analysis_ids || !Array.isArray(analysis_ids)) {
+        return res.status(400).send("analysis_ids (array) is required");
+      }
+
+      // 指定された分析を取得
+      const selectedAnalyses = await db
+        .select()
+        .from(analyses)
+        .where(eq(analyses.user_id, req.user?.id || 1));
+
+      // AIによる多段推論でコンセプトを生成
+      const conceptData = await generateConcept(selectedAnalyses);
+
+      // コンセプトをデータベースに保存
+      const [concept] = await db
+        .insert(concepts)
+        .values({
+          user_id: req.user?.id || 1,
+          title: conceptData.concepts[0].title,
+          value_proposition: conceptData.concepts[0].value_proposition,
+          target_customer: conceptData.concepts[0].target_customer,
+          advantage: conceptData.concepts[0].advantage,
+          raw_data: conceptData,
+        })
+        .returning();
+
+      // 分析とコンセプトの関連付けを保存
+      await Promise.all(
+        analysis_ids.map((analysis_id) =>
+          db
+            .insert(concept_analyses)
+            .values({
+              concept_id: concept.id,
+              analysis_id,
+            })
+        )
+      );
+
+      res.json(concept);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // コンセプト調整API
+  app.post("/api/concepts/:id/refine", async (req, res, next) => {
+    try {
+      const { conditions } = req.body;
+
+      if (!conditions) {
+        return res.status(400).send("conditions object is required");
+      }
+
+      const [concept] = await db
+        .select()
+        .from(concepts)
+        .where(eq(concepts.id, req.params.id))
+        .limit(1);
+
+      if (!concept) {
+        return res.status(404).send("Concept not found");
+      }
+
+      if (concept.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      // AIによるコンセプトの調整
+      const refinedConcept = await refineConceptWithConditions(
+        concept.raw_data,
+        conditions
+      );
+
+      // 調整されたコンセプトを更新
+      const [updatedConcept] = await db
+        .update(concepts)
+        .set({
+          title: refinedConcept.title,
+          value_proposition: refinedConcept.value_proposition,
+          target_customer: refinedConcept.target_customer,
+          advantage: refinedConcept.advantage,
+          raw_data: {
+            ...concept.raw_data,
+            refined: refinedConcept,
+          },
+        })
+        .where(eq(concepts.id, req.params.id))
+        .returning();
+
+      res.json(updatedConcept);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // コンセプト一覧取得API
+  app.get("/api/concepts", async (req, res, next) => {
+    try {
+      const userConcepts = await db
+        .select({
+          concept: concepts,
+          analyses: concept_analyses,
+        })
+        .from(concepts)
+        .leftJoin(
+          concept_analyses,
+          eq(concepts.id, concept_analyses.concept_id)
+        )
+        .where(eq(concepts.user_id, req.user?.id || 1))
+        .orderBy(concepts.created_at);
+
+      res.json(userConcepts.map(({ concept }) => concept));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 個別のコンセプト取得API
+  app.get("/api/concepts/:id", async (req, res, next) => {
+    try {
+      const [concept] = await db
+        .select()
+        .from(concepts)
+        .where(eq(concepts.id, req.params.id))
+        .limit(1);
+
+      if (!concept) {
+        return res.status(404).send("Concept not found");
+      }
+
+      if (concept.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      res.json(concept);
+    } catch (error) {
+      next(error);
+    }
   });
 
   const httpServer = createServer(app);

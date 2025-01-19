@@ -21,6 +21,26 @@ export const analyses = pgTable("analyses", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+export const concepts = pgTable("concepts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  user_id: serial("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  value_proposition: text("value_proposition"),
+  target_customer: text("target_customer"),
+  advantage: text("advantage"),
+  raw_data: jsonb("raw_data"), // 多段推論の中間結果などを保存
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// 分析とコンセプトの中間テーブル
+export const concept_analyses = pgTable("concept_analyses", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  concept_id: uuid("concept_id").references(() => concepts.id).notNull(),
+  analysis_id: uuid("analysis_id").references(() => analyses.id).notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 export const comments = pgTable("comments", {
   id: uuid("id").defaultRandom().primaryKey(),
   analysis_id: uuid("analysis_id").references(() => analyses.id).notNull(),
@@ -43,6 +63,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   analyses: many(analyses),
   comments: many(comments),
   shared_analyses: many(shared_analyses),
+  concepts: many(concepts),
 }));
 
 export const analysesRelations = relations(analyses, ({ one, many }) => ({
@@ -52,6 +73,26 @@ export const analysesRelations = relations(analyses, ({ one, many }) => ({
   }),
   comments: many(comments),
   shared_with: many(shared_analyses),
+  used_in_concepts: many(concept_analyses),
+}));
+
+export const conceptsRelations = relations(concepts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [concepts.user_id],
+    references: [users.id],
+  }),
+  analyses: many(concept_analyses),
+}));
+
+export const conceptAnalysesRelations = relations(concept_analyses, ({ one }) => ({
+  concept: one(concepts, {
+    fields: [concept_analyses.concept_id],
+    references: [concepts.id],
+  }),
+  analysis: one(analyses, {
+    fields: [concept_analyses.analysis_id],
+    references: [analyses.id],
+  }),
 }));
 
 export const commentsRelations = relations(comments, ({ one }) => ({
@@ -86,6 +127,16 @@ export const insertAnalysisSchema = createInsertSchema(analyses);
 export const selectAnalysisSchema = createSelectSchema(analyses);
 export type Analysis = typeof analyses.$inferSelect;
 export type NewAnalysis = typeof analyses.$inferInsert;
+
+export const insertConceptSchema = createInsertSchema(concepts);
+export const selectConceptSchema = createSelectSchema(concepts);
+export type Concept = typeof concepts.$inferSelect;
+export type NewConcept = typeof concepts.$inferInsert;
+
+export const insertConceptAnalysisSchema = createInsertSchema(concept_analyses);
+export const selectConceptAnalysisSchema = createSelectSchema(concept_analyses);
+export type ConceptAnalysis = typeof concept_analyses.$inferSelect;
+export type NewConceptAnalysis = typeof concept_analyses.$inferInsert;
 
 export const insertCommentSchema = createInsertSchema(comments);
 export const selectCommentSchema = createSelectSchema(comments);
