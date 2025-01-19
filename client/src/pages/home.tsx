@@ -49,10 +49,10 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            ビジネス戦略分析支援ツール
+            戦略AIコンパス
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            AIを活用した多段階分析で、より深い洞察と具体的なアクションプランを導き出します
+            不確実な時代の羅針盤。AIと多段分析でビジネスの方向性を明確化し、次なるアクションプランを見える化します。
           </p>
         </div>
 
