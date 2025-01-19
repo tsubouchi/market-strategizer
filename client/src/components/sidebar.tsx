@@ -58,10 +58,13 @@ export default function Sidebar() {
 
   return (
     <div className="h-screen border-r bg-sidebar">
-      <div className="flex h-16 items-center border-b px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+      <div className="flex h-24 flex-col justify-center border-b px-6">
+        <Link href="/" className="flex items-center gap-2 font-bold">
           <BarChart3 className="h-6 w-6" />
-          <span>戦略分析支援ツール</span>
+          <div>
+            <div className="text-lg">戦略AIコンパス</div>
+            <div className="text-xs text-muted-foreground">不確実な時代の羅針盤。AIが導く最適解</div>
+          </div>
         </Link>
       </div>
       <ScrollArea className="flex-1 py-4">
