@@ -1,6 +1,5 @@
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -10,6 +9,17 @@ import Settings from "@/pages/settings";
 import Concepts from "@/pages/concepts";
 import DeepSearch from "@/pages/deep-search";
 import Sidebar from "@/components/sidebar";
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+      retry: false,
+    },
+  },
+});
 
 function Router() {
   return (
