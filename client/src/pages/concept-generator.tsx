@@ -19,7 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Settings } from "lucide-react";
+import { Loader2, Settings, CheckCircle2, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface RequirementsForm {
   timeline?: string;
@@ -28,11 +29,39 @@ interface RequirementsForm {
   technical_constraints?: string[];
 }
 
+interface GenerationStep {
+  id: string;
+  title: string;
+  description: string;
+  status: "waiting" | "processing" | "completed" | "error";
+  error?: string;
+}
+
 export default function ConceptGenerator() {
   const { data: analyses, isLoading } = useAnalyses();
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
   const [requirementsForm, setRequirementsForm] = useState<RequirementsForm>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [steps, setSteps] = useState<GenerationStep[]>([
+    {
+      id: "analyze",
+      title: "分析データの統合",
+      description: "選択された分析を統合し、要点を抽出します",
+      status: "waiting",
+    },
+    {
+      id: "concept",
+      title: "コンセプト生成",
+      description: "商品コンセプトの候補を生成します",
+      status: "waiting",
+    },
+    {
+      id: "requirements",
+      title: "要件書生成",
+      description: "詳細な要件定義を行います",
+      status: "waiting",
+    },
+  ]);
   const { toast } = useToast();
 
   const handleAnalysisSelect = (analysisId: string) => {
@@ -50,6 +79,16 @@ export default function ConceptGenerator() {
     }));
   };
 
+  const updateStepStatus = (stepId: string, status: GenerationStep["status"], error?: string) => {
+    setSteps((current) =>
+      current.map((step) =>
+        step.id === stepId
+          ? { ...step, status, ...(error ? { error } : {}) }
+          : step
+      )
+    );
+  };
+
   const handleGenerate = async () => {
     if (selectedAnalyses.length === 0) {
       toast({
@@ -62,6 +101,8 @@ export default function ConceptGenerator() {
 
     setIsGenerating(true);
     try {
+      // Step 1: コンセプト生成
+      updateStepStatus("analyze", "processing");
       const response = await fetch("/api/concepts/generate", {
         method: "POST",
         headers: {
@@ -78,12 +119,16 @@ export default function ConceptGenerator() {
       }
 
       const result = await response.json();
+      updateStepStatus("analyze", "completed");
+      updateStepStatus("concept", "processing");
       toast({
         title: "コンセプト生成完了",
         description: "商品コンセプトが正常に生成されました。",
       });
 
-      // 要件書の生成
+      // Step 2: 要件書の生成
+      updateStepStatus("concept", "completed");
+      updateStepStatus("requirements", "processing");
       const requirementsResponse = await fetch(`/api/concepts/${result.id}/requirements`, {
         method: "POST",
         headers: {
@@ -99,6 +144,7 @@ export default function ConceptGenerator() {
       }
 
       const requirements = await requirementsResponse.json();
+      updateStepStatus("requirements", "completed");
       toast({
         title: "要件書生成完了",
         description: "要件書が正常に生成されました。",
@@ -106,6 +152,10 @@ export default function ConceptGenerator() {
 
       // TODO: 要件書の表示画面に遷移
     } catch (error: any) {
+      const currentStep = steps.find((step) => step.status === "processing");
+      if (currentStep) {
+        updateStepStatus(currentStep.id, "error", error.message);
+      }
       toast({
         variant: "destructive",
         title: "エラー",
@@ -216,6 +266,48 @@ export default function ConceptGenerator() {
             </div>
           </CardContent>
         </Card>
+
+        {/* 生成ステップの表示 */}
+        {isGenerating && (
+          <Card>
+            <CardHeader>
+              <CardTitle>生成状況</CardTitle>
+              <CardDescription>
+                各ステップの処理状況を確認できます
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {steps.map((step) => (
+                <div
+                  key={step.id}
+                  className={cn(
+                    "flex items-start gap-4 p-4 rounded-lg transition-colors",
+                    step.status === "processing" && "bg-muted animate-pulse",
+                    step.status === "completed" && "bg-green-50",
+                    step.status === "error" && "bg-red-50"
+                  )}
+                >
+                  {step.status === "processing" ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-primary mt-0.5" />
+                  ) : step.status === "completed" ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+                  ) : step.status === "error" ? (
+                    <XCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                  ) : (
+                    <div className="h-5 w-5 rounded-full border-2 mt-0.5" />
+                  )}
+                  <div>
+                    <h4 className="font-medium">{step.title}</h4>
+                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                    {step.error && (
+                      <p className="text-sm text-red-500 mt-1">{step.error}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         <Button
           onClick={handleGenerate}

@@ -1,0 +1,25 @@
+chunk-XQLYTHWV.js?v=091e91e7:521 Warning: Encountered two children with the same key, `4fa07c47-bc11-4546-953c-9320f6a7f8ee`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at div
+    at div
+    at Concepts (https://c7112613-c3ed-496b-9162-5a474af12084-00-ln6ocm8m4zm2.pike.replit.dev/src/pages/concepts.tsx:28:41)
+    at Route (https://c7112613-c3ed-496b-9162-5a474af12084-00-ln6ocm8m4zm2.pike.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=091e91e7:323:16)
+    at Switch (https://c7112613-c3ed-496b-9162-5a474af12084-00-ln6ocm8m4zm2.pike.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=091e91e7:379:17)
+    at main
+    at div
+    at Router
+    at QueryClientProvider (https://c7112613-c3ed-496b-9162-5a474af12084-00-ln6ocm8m4zm2.pike.replit.de…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=091e91e7:2805:3)
+    at App
+
+chunk-XQLYTHWV.js?v=091e91e7:521 Warning: Encountered two children with the same key, `e1c57205-0a1e-4739-8f74-90207aa7b417`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at div
+    at div
+    at Concepts (https://c7112613-c3ed-496b-9162-5a474af12084-00-ln6ocm8m4zm2.pike.replit.dev/src/pages/concepts.tsx:28:41)
+    at Route (https://c7112613-c3ed-496b-9162-5a474af12084-00-ln6ocm8m4zm2.pike.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=091e91e7:323:16)
+    at Switch (https://c7112613-c3ed-496b-9162-5a474af12084-00-ln6ocm8m4zm2.pike.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=091e91e7:379:17)
+    at main
+    at div
+    at Router
+    at QueryClientProvider (https://c7112613-c3ed-496b-9162-5a474af12084-00-ln6ocm8m4zm2.pike.replit.de…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=091e91e7:2805:3)
+    at App
+﻿
+

@@ -55,8 +55,12 @@ export async function generateConcept(analyses: Analysis[]) {
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: "You will be generating a JSON response containing analysis summaries, insights, and concept proposals.",
+        },
+        {
           role: "user",
-          content: "Please provide the output in JSON format with the following structure: { summary: { key_points: string[], opportunities: string[], challenges: string[] } }. Here are the analyses: " + JSON.stringify(analyses),
+          content: `Please analyze the following business analyses and provide a summary in JSON format with the following structure: { summary: { key_points: string[], opportunities: string[], challenges: string[] } }.\n\nAnalyses: ${JSON.stringify(analyses)}`,
         },
       ],
       response_format: { type: "json_object" },
@@ -69,8 +73,12 @@ export async function generateConcept(analyses: Analysis[]) {
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: "You will be generating a JSON response analyzing relationships between frameworks.",
+        },
+        {
           role: "user",
-          content: "Please analyze the relationships between frameworks and extract potential issues and opportunities in JSON format with the following structure: { correlations: { insights: string[], opportunities: string[], risks: string[] } }. Here is the data: " + JSON.stringify({ summary, analyses }),
+          content: `Please analyze the relationships between frameworks and extract potential issues and opportunities in JSON format with the following structure: { correlations: { insights: string[], opportunities: string[], risks: string[] } }.\n\nData: ${JSON.stringify({ summary, analyses })}`,
         },
       ],
       response_format: { type: "json_object" },
@@ -83,8 +91,12 @@ export async function generateConcept(analyses: Analysis[]) {
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: "You will be generating a JSON response containing product concept proposals.",
+        },
+        {
           role: "user",
-          content: "Based on the analysis, generate three product concept proposals in JSON format with the following structure: { concepts: [{ title: string, value_proposition: string, target_customer: string, advantage: string }] }. Here is the data: " + JSON.stringify({ summary, correlation }),
+          content: `Based on the analysis, generate three product concept proposals in JSON format with the following structure: { concepts: [{ title: string, value_proposition: string, target_customer: string, advantage: string }] }.\n\nData: ${JSON.stringify({ summary, correlation })}`,
         },
       ],
       response_format: { type: "json_object" },
@@ -155,25 +167,12 @@ export async function generateWebAppRequirements(
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: "You will be generating a JSON response containing web application requirements.",
+        },
+        {
           role: "user",
-          content: `
-Generate a detailed web application requirements document in JSON format based on the following concept and conditions:
-
-Concept:
-${JSON.stringify(concept)}
-
-Conditions:
-${JSON.stringify(conditions)}
-
-Include:
-1. Overview and target users
-2. Core features with priorities
-3. Technical requirements
-4. UI/UX guidelines
-5. Development schedule
-
-Output should match the WebAppRequirement interface structure.
-          `,
+          content: `Generate a detailed web application requirements document in JSON format based on the following concept and conditions.\n\nConcept: ${JSON.stringify(concept)}\n\nConditions: ${JSON.stringify(conditions)}\n\nThe response should include:\n1. Title and overview\n2. Target users\n3. Core features with priorities\n4. Technical requirements\n5. UI/UX guidelines\n6. Development schedule\n\nPlease format the response in JSON matching the WebAppRequirement interface structure.`,
         },
       ],
       response_format: { type: "json_object" },
@@ -186,15 +185,12 @@ Output should match the WebAppRequirement interface structure.
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: "You will be generating a JSON response with detailed acceptance criteria for each feature.",
+        },
+        {
           role: "user",
-          content: `
-Enhance the acceptance criteria for each feature in the requirements:
-
-Requirements:
-${JSON.stringify(requirements)}
-
-Add detailed, testable acceptance criteria for each feature.
-          `,
+          content: `Enhance the acceptance criteria for each feature in the requirements. Return the result in JSON format.\n\nRequirements: ${JSON.stringify(requirements)}`,
         },
       ],
       response_format: { type: "json_object" },
@@ -207,22 +203,12 @@ Add detailed, testable acceptance criteria for each feature.
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: "You will be generating a JSON response with optimized technical stack recommendations.",
+        },
+        {
           role: "user",
-          content: `
-Optimize the technical stack based on the requirements and conditions:
-
-Requirements:
-${JSON.stringify(detailedRequirements)}
-
-Conditions:
-${JSON.stringify(conditions)}
-
-Consider:
-- Team size and expertise
-- Budget constraints
-- Timeline
-- Scalability needs
-          `,
+          content: `Optimize the technical stack based on the requirements and conditions. Return the result in JSON format.\n\nRequirements: ${JSON.stringify(detailedRequirements)}\n\nConditions: ${JSON.stringify(conditions)}\n\nConsider:\n- Team size and expertise\n- Budget constraints\n- Timeline\n- Scalability needs`,
         },
       ],
       response_format: { type: "json_object" },
@@ -255,18 +241,12 @@ export async function refineRequirements(
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: "You will be generating a JSON response with refined web application requirements.",
+        },
+        {
           role: "user",
-          content: `
-Please refine the web application requirements based on the proposed updates:
-
-Current Requirements:
-${JSON.stringify(requirements)}
-
-Requested Updates:
-${JSON.stringify(updates)}
-
-Ensure consistency and maintain the overall structure while incorporating the changes.
-          `,
+          content: `Refine the web application requirements based on the proposed updates. Return the result in JSON format.\n\nCurrent Requirements: ${JSON.stringify(requirements)}\n\nRequested Updates: ${JSON.stringify(updates)}`,
         },
       ],
       response_format: { type: "json_object" },
