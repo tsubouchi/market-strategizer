@@ -9,6 +9,7 @@ import {
   BarChart3,
   PieChart,
   TrendingUp,
+  Lightbulb,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -21,6 +22,11 @@ const sidebarLinks = [
     title: "作成履歴",
     icon: ListChecks,
     href: "/dashboard",
+  },
+  {
+    title: "商品コンセプト",
+    icon: Lightbulb,
+    href: "/concepts",
   },
   {
     title: "設定",

@@ -34,7 +34,7 @@ export async function generateConcept(analyses: Analysis[]) {
       response_format: { type: "json_object" },
     });
 
-    const summary = JSON.parse(summaryResponse.choices[0].message.content);
+    const summary = JSON.parse(summaryResponse.choices[0].message.content || "{}");
 
     // Step 2: 関連性分析 - フレームワーク間の関連性を分析
     const correlationResponse = await openai.chat.completions.create({
@@ -52,7 +52,7 @@ export async function generateConcept(analyses: Analysis[]) {
       response_format: { type: "json_object" },
     });
 
-    const correlation = JSON.parse(correlationResponse.choices[0].message.content);
+    const correlation = JSON.parse(correlationResponse.choices[0].message.content || "{}");
 
     // Step 3: コンセプト候補生成 - 複数の商品コンセプト案を生成
     const conceptsResponse = await openai.chat.completions.create({
@@ -60,7 +60,15 @@ export async function generateConcept(analyses: Analysis[]) {
       messages: [
         {
           role: "system",
-          content: "分析結果に基づいて、3つの商品コンセプト案を生成してください。各案には、タイトル、提供価値、ターゲット顧客、競合優位性を含めてください。JSON形式で出力してください。",
+          content: "分析結果に基づいて、以下のフォーマットで3つの商品コンセプト案を生成してください：\n" +
+            "{\n" +
+            '  "concepts": [{\n' +
+            '    "title": "コンセプトのタイトル",\n' +
+            '    "value_proposition": "提供価値の説明",\n' +
+            '    "target_customer": "対象顧客の定義",\n' +
+            '    "advantage": "競合優位性の説明"\n' +
+            "  }]\n" +
+            "}"
         },
         {
           role: "user",
@@ -70,12 +78,16 @@ export async function generateConcept(analyses: Analysis[]) {
       response_format: { type: "json_object" },
     });
 
-    const concepts = JSON.parse(conceptsResponse.choices[0].message.content);
+    const concepts = JSON.parse(conceptsResponse.choices[0].message.content || "{}");
+
+    if (!concepts.concepts || !concepts.concepts[0]) {
+      throw new Error("コンセプト生成に失敗しました");
+    }
 
     return {
       summary,
       correlation,
-      concepts,
+      concepts: concepts.concepts,
     };
   } catch (error: any) {
     console.error("Error in concept generation:", error);
@@ -98,7 +110,13 @@ export async function refineConceptWithConditions(
       messages: [
         {
           role: "system",
-          content: "ユーザーの条件（予算、開発期間、リソース、その他の要望）を考慮して、最適な商品コンセプトを1つ選択・調整してください。JSON形式で出力してください。",
+          content: `ユーザーの条件を考慮して、最適な商品コンセプトを調整してください。以下のフォーマットで出力してください：
+{
+  "title": "コンセプトのタイトル",
+  "value_proposition": "提供価値の説明",
+  "target_customer": "対象顧客の定義",
+  "advantage": "競合優位性の説明"
+}`
         },
         {
           role: "user",
@@ -108,7 +126,12 @@ export async function refineConceptWithConditions(
       response_format: { type: "json_object" },
     });
 
-    return JSON.parse(response.choices[0].message.content);
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    if (!result.title) {
+      throw new Error("コンセプト調整に失敗しました");
+    }
+
+    return result;
   } catch (error: any) {
     console.error("Error in concept refinement:", error);
     throw new Error(`コンセプト調整中にエラーが発生しました: ${error.message}`);
