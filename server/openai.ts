@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 export async function analyzeBusinessStrategy(
   analysisType: string,
   content: Record<string, any>
@@ -32,6 +32,10 @@ async function getOpenAIResponse(prompt: string): Promise<string> {
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" }
   });
+
+  if (!response.choices[0].message.content) {
+    throw new Error("No response from OpenAI");
+  }
 
   return response.choices[0].message.content;
 }
@@ -89,7 +93,7 @@ function createInitialAnalysisPrompt(analysisType: string, content: Record<strin
   "潜在的リスク": ["リスク1", "リスク2"]
 }`;
     default:
-      return ""; // Handle unsupported analysis types
+      throw new Error("Unsupported analysis type");
   }
 }
 
