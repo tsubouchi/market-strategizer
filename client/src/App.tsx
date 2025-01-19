@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Analysis from "@/pages/analysis";
+import Settings from "@/pages/settings";
 import Sidebar from "@/components/sidebar";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/analysis/:id" component={Analysis} />
+          <Route path="/settings" component={Settings} />
           <Route component={NotFound} />
         </Switch>
       </main>
