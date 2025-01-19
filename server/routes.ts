@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import { db } from "@db";
 import { analyses, comments, shared_analyses, concepts, concept_analyses, product_requirements, requirement_analyses, competitors, competitor_updates } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { generateConcept, refineConceptWithConditions, generateWebAppRequirements, refineRequirements, generateMarkdownRequirements } from "./lib/openai";
 import fetch from "node-fetch";
 import * as cheerio from 'cheerio';
@@ -346,19 +346,22 @@ export function registerRoutes(app: Express): Server {
       const selectedAnalyses = await db
         .select()
         .from(analyses)
-        .where(eq(analyses.user_id, req.user?.id || 1));
-
-      // 既存のコンセプトをチェック
-      const existingConceptAnalyses = await db
-        .select()
-        .from(concept_analyses)
         .where(
           and(
-            ...analysis_ids.map(id => eq(concept_analyses.analysis_id, id))
+            eq(analyses.user_id, req.user?.id || 1),
+            ...analysis_ids.map(id => eq(analyses.id, id))
           )
         );
 
-      if (existingConceptAnalyses.length > 0) {
+      // 既存のコンセプトをチェック
+      const conceptCount = await db
+        .select({ count: sql`count(*)` })
+        .from(concept_analyses)
+        .where(
+          and(...analysis_ids.map(id => eq(concept_analyses.analysis_id, id)))
+        );
+
+      if (conceptCount[0].count > 0) {
         return res.status(400).send("選択された分析の組み合わせから既にコンセプトが生成されています");
       }
 
@@ -370,24 +373,20 @@ export function registerRoutes(app: Express): Server {
         .insert(concepts)
         .values({
           user_id: req.user?.id || 1,
-          title: "環境に優しいファストフードパッケージ",
-          value_proposition: "環境を考慮した、生分解性のパッケージングソリューションを提供し、環境意識の高い消費者のニーズに応えます。",
-          target_customer: "環境に配慮した食事オプションを求める消費者と、カーボンフットプリントを削減したいビジネス",
-          advantage: "持続可能性と実用性を兼ね備えた革新的なパッケージングデザイン",
+          title: "環境配慮型ファストフードパッケージ",
+          value_proposition: "環境に配慮した生分解性パッケージを提供し、持続可能な飲食産業の実現に貢献",
+          target_customer: "環境意識の高い消費者と環境負荷低減を目指す飲食店",
+          advantage: "革新的な素材技術と使いやすさを両立した次世代パッケージング",
           raw_data: conceptData,
         })
         .returning();
 
       // 分析とコンセプトの関連付けを保存
-      await Promise.all(
-        analysis_ids.map((analysis_id) =>
-          db
-            .insert(concept_analyses)
-            .values({
-              concept_id: concept.id,
-              analysis_id,
-            })
-        )
+      await db.insert(concept_analyses).values(
+        analysis_ids.map((analysis_id) => ({
+          concept_id: concept.id,
+          analysis_id,
+        }))
       );
 
       res.json(concept);
@@ -451,16 +450,26 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/concepts", async (req, res, next) => {
     try {
       const userConcepts = await db
-        .select()
+        .select({
+          id: concepts.id,
+          title: concepts.title,
+          value_proposition: concepts.value_proposition,
+          target_customer: concepts.target_customer,
+          advantage: concepts.advantage,
+          created_at: concepts.created_at,
+          updated_at: concepts.updated_at,
+        })
         .from(concepts)
         .where(eq(concepts.user_id, req.user?.id || 1))
         .orderBy(concepts.created_at);
 
-      // 分析情報を取得して結合
+      // 分析情報を取得
       const conceptsWithAnalyses = await Promise.all(
         userConcepts.map(async (concept) => {
           const analyses = await db
-            .select()
+            .select({
+              analysis_id: concept_analyses.analysis_id,
+            })
             .from(concept_analyses)
             .where(eq(concept_analyses.concept_id, concept.id));
 
@@ -535,10 +544,11 @@ export function registerRoutes(app: Express): Server {
           title: requirements.title,
           overview: requirements.overview,
           target_users: requirements.target_users,
-          features: requirements.features,
-          tech_stack: requirements.tech_stack,
-          ui_ux_requirements: requirements.ui_ux_requirements,
-          schedule: requirements.schedule,
+          features: JSON.stringify(requirements.features),
+          tech_stack: JSON.stringify(requirements.tech_stack),
+          ui_ux_requirements: JSON.stringify(requirements.ui_ux_requirements),
+          schedule: JSON.stringify(requirements.schedule),
+          status: "final"
         })
         .returning();
 
@@ -548,19 +558,17 @@ export function registerRoutes(app: Express): Server {
         .from(concept_analyses)
         .where(eq(concept_analyses.concept_id, concept.id));
 
-      await Promise.all(
-        analyses.map((analysis) =>
-          db
-            .insert(requirement_analyses)
-            .values({
-              requirement_id: requirement.id,
-              analysis_id: analysis.analysis_id,
-            })
-        )
+      await db.insert(requirement_analyses).values(
+        analyses.map((analysis) => ({
+          requirement_id: requirement.id,
+          analysis_id: analysis.analysis_id,
+        }))
       );
 
+      console.log("Generated requirement:", requirement);
       res.json(requirement);
     } catch (error) {
+      console.error("Error generating requirements:", error);
       next(error);
     }
   });
@@ -588,7 +596,7 @@ export function registerRoutes(app: Express): Server {
         },
         overview: requirement.overview,
         target_users: requirement.target_users,
-        features: requirement.features as WebAppRequirement["features"],
+        features: JSON.parse(requirement.features),
         non_functional_requirements: {
           performance: ["性能要件1"],
           security: ["セキュリティ要件1"],
@@ -610,9 +618,9 @@ export function registerRoutes(app: Express): Server {
           description: "画面の説明",
           main_features: ["主要機能1"]
         }],
-        tech_stack: requirement.tech_stack as WebAppRequirement["tech_stack"],
-        ui_ux_requirements: requirement.ui_ux_requirements as WebAppRequirement["ui_ux_requirements"],
-        schedule: requirement.schedule as WebAppRequirement["schedule"]
+        tech_stack: JSON.parse(requirement.tech_stack),
+        ui_ux_requirements: JSON.parse(requirement.ui_ux_requirements),
+        schedule: JSON.parse(requirement.schedule)
       };
 
       const markdown = await generateMarkdownRequirements(webAppRequirement);
