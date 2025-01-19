@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { useAnalysis } from "@/hooks/use-analysis";
 import AnalysisForm from "@/components/analysis-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,24 +7,33 @@ import { Loader2, Link as LinkIcon, Paperclip } from "lucide-react";
 
 export default function AnalysisPage() {
   const { id } = useParams<{ id: string }>();
-  const [_, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { data: analysis, isLoading } = useAnalysis(id || "");
 
+  // 新規分析の場合
   if (id === "new") {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get("type") as "3C" | "4P" | "PEST" | null;
+
+    if (!type) {
+      navigate("/");
+      return null;
+    }
+
     return (
       <div className="container mx-auto py-8">
         <div className="max-w-3xl mx-auto">
           <div className="mb-6">
             <Button
               variant="ghost"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/")}
               className="mb-4"
             >
-              ← Back to Dashboard
+              ← トップに戻る
             </Button>
           </div>
           <AnalysisForm
-            type="3C"
+            type={type}
             onComplete={() => navigate("/dashboard")}
           />
         </div>
@@ -41,7 +50,7 @@ export default function AnalysisPage() {
   }
 
   if (!analysis) {
-    return <div>Analysis not found</div>;
+    return <div>分析が見つかりません</div>;
   }
 
   const content = analysis.content as Record<string, string>;
@@ -54,12 +63,12 @@ export default function AnalysisPage() {
           onClick={() => navigate("/dashboard")}
           className="mb-4"
         >
-          ← Back to Dashboard
+          ← ダッシュボードに戻る
         </Button>
 
         <Card>
           <CardHeader>
-            <CardTitle>{analysis.analysis_type} Analysis</CardTitle>
+            <CardTitle>{analysis.analysis_type}分析の結果</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -73,7 +82,7 @@ export default function AnalysisPage() {
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
                   >
-                    Reference URL
+                    参考URL
                   </a>
                 </div>
               )}
@@ -88,23 +97,25 @@ export default function AnalysisPage() {
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
                   >
-                    View Attachment
+                    添付資料を表示
                   </a>
                 </div>
               )}
 
+              {/* Analysis Content */}
               {Object.entries(content).map(([key, value]) => (
                 <div key={key} className="space-y-2">
                   <h3 className="font-medium capitalize">{key}</h3>
-                  <p className="text-muted-foreground">{value}</p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{value}</p>
                 </div>
               ))}
 
+              {/* AI Feedback */}
               {analysis.ai_feedback && (
                 <div className="mt-8">
-                  <h3 className="font-medium mb-2">AI Feedback</h3>
+                  <h3 className="font-medium mb-2">AI分析結果</h3>
                   <div className="bg-muted p-4 rounded-lg">
-                    <pre className="whitespace-pre-wrap">
+                    <pre className="whitespace-pre-wrap text-sm">
                       {analysis.ai_feedback}
                     </pre>
                   </div>
