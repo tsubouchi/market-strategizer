@@ -48,7 +48,7 @@ export default function AnalysisPage() {
           </div>
           <AnalysisForm
             type={type}
-            onComplete={() => navigate("/dashboard")}
+            onComplete={(analysis) => navigate(`/analysis/${analysis.id}`)}
           />
         </div>
       </div>
