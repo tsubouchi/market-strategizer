@@ -70,6 +70,17 @@ interface CompetitorUpdate {
   created_at: string;
 }
 
+const CategoryInfo = ({ category, content }: { category: string; content: string }) => {
+  if (!content || content === "情報なし") return null;
+
+  return (
+    <div className="space-y-2">
+      <h5 className="text-sm font-medium">{category}</h5>
+      <p className="text-sm text-muted-foreground">{content}</p>
+    </div>
+  );
+};
+
 export default function CompetitorMonitoring() {
   const [isAddingCompetitor, setIsAddingCompetitor] = useState(false);
   const { toast } = useToast();
@@ -344,24 +355,38 @@ export default function CompetitorMonitoring() {
                     <TableBody>
                       {competitor.updates?.map((update) => (
                         <TableRow key={update.id}>
-                          <TableCell>{update.update_type}</TableCell>
+                          <TableCell>{update.update_type === "deep_search" ? "AI分析" : update.update_type}</TableCell>
                           <TableCell>
-                            {update.content.summary}
+                            <div className="space-y-4">
+                              <p className="font-medium">{update.content.summary}</p>
+                              <div className="space-y-2">
+                                <CategoryInfo category="製品・サービス" content={update.content.categories.products} />
+                                <CategoryInfo category="プレス情報" content={update.content.categories.press} />
+                                <CategoryInfo category="技術革新" content={update.content.categories.tech} />
+                                <CategoryInfo category="市場動向" content={update.content.categories.market} />
+                                <CategoryInfo category="サステナビリティ" content={update.content.categories.sustainability} />
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <ImportanceBadge score={update.importance_score} />
                           </TableCell>
                           <TableCell>{new Date(update.created_at).toLocaleDateString("ja-JP")}</TableCell>
                           <TableCell>
-                            {update.source_url && (
-                              <a
-                                href={update.source_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                              >
-                                詳細を見る
-                              </a>
+                            {update.content.sources && update.content.sources.length > 0 && (
+                              <div className="space-y-1">
+                                {update.content.sources.map((source, index) => (
+                                  <a
+                                    key={index}
+                                    href={source}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline block"
+                                  >
+                                    ソース {index + 1}
+                                  </a>
+                                ))}
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>

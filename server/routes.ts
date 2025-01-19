@@ -810,69 +810,79 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Competitor not found");
       }
 
-      // ボンギンカン株式会社のWebサイトからニュースを取得
-      console.log("Fetching news from bonginkan.ai...");
-      const response = await fetch("https://bonginkan.ai/news/");
-      if (!response.ok) {
-        throw new Error(`ニュースの取得に失敗しました: ${response.statusText}`);
+      // 深層検索APIを使用して情報を収集
+      const searchResults = [];
+      for (const keyword of competitor.monitoring_keywords) {
+        const searchResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "llama-3.1-sonar-small-128k-online",
+            messages: [
+              {
+                role: "system",
+                content: `${competitor.company_name}に関する最新の情報を収集し、以下のカテゴリーで分類してください：
+                - 製品・サービス開発
+                - プレスリリース・ニュース
+                - 技術革新
+                - 市場動向
+                - サステナビリティ・環境対応`
+              },
+              {
+                role: "user",
+                content: `${competitor.company_name} ${keyword}に関する最新の情報を詳しく教えてください。`
+              }
+            ],
+            temperature: 0.2,
+            max_tokens: 1000,
+            return_citations: true
+          })
+        });
+
+        if (!searchResponse.ok) {
+          throw new Error(`Search API error: ${searchResponse.statusText}`);
+        }
+
+        const result = await searchResponse.json();
+        searchResults.push({
+          keyword,
+          content: result.choices[0].message.content,
+          citations: result.citations || []
+        });
       }
 
-      const html = await response.text();
-      console.log("Parsing HTML content...");
-      const $ = cheerio.load(html);
-      const newsItems: Array<{
-        title: string;
-        url: string;
-        content: string;
-        date: string;
-        category: string;
-      }> = [];
+      // 検索結果を分析して更新情報を生成
+      const updates = await Promise.all(searchResults.map(async (result) => {
+        const content = result.content.split('\n').reduce((acc, cur) => {
+          const [key, value] = cur.split(':');
+          if(key && value){
+            acc[key.trim()] = value.trim();
+          }
+          return acc;
+        }, {} as Record<string, string>);
 
-      // ニュース一覧を取得
-      $('.news-article').each((_, element) => {
-        const $item = $(element);
-        newsItems.push({
-          title: $item.find('h2').text().trim(),
-          url: new URL($item.find('a').attr('href') || '', 'https://bonginkan.ai').toString(),
-          content: $item.find('.article-content').text().trim(),
-          date: $item.find('.article-date').text().trim(),
-          category: $item.find('.article-category').text().trim(),
-        });
-      });
+        const importanceScore = determineImportance(content);
 
-      console.log(`Found ${newsItems.length} news items`);
-
-      // 競合他社に関連するニュースをフィルタリング
-      const relevantNews = newsItems.filter(news => {
-        const keywords = competitor.monitoring_keywords || [];
-        return keywords.some(keyword =>
-          news.title.toLowerCase().includes(keyword.toLowerCase()) ||
-          news.content.toLowerCase().includes(keyword.toLowerCase())
-        );
-      });
-
-      console.log(`Found ${relevantNews.length} relevant news items`);
-
-      // 更新情報を保存
-      const updates = await Promise.all(relevantNews.map(async (news) => {
-        const importanceScore = determineImportance(news.content);
         const [update] = await db
           .insert(competitor_updates)
           .values({
             competitor_id: competitor.id,
-            update_type: news.category || "news",
+            update_type: "deep_search",
             content: {
-              summary: news.title,
-              sources: [news.url],
+              summary: `${result.keyword}に関する最新の動向`,
+              sources: result.citations,
               categories: {
-                products: categorizeNews(news, "product"),
-                press: categorizeNews(news, "press"),
-                tech: categorizeNews(news, "technology"),
-                market: categorizeNews(news, "market"),
-                sustainability: categorizeNews(news, "sustainability"),
+                products: content.products || "情報なし",
+                press: content.press || "情報なし",
+                tech: content.tech || "情報なし",
+                market: content.market || "情報なし",
+                sustainability: content.sustainability || "情報なし",
               }
             },
-            source_url: news.url,
+            source_url: result.citations[0] || null,
             importance_score: importanceScore,
             is_notified: importanceScore === "high",
           })
@@ -886,7 +896,6 @@ export function registerRoutes(app: Express): Server {
         .set({ last_updated: new Date() })
         .where(eq(competitors.id, competitor.id));
 
-      console.log(`Saved ${updates.length} updates to database`);
       res.json(updates);
     } catch (error) {
       console.error("Error refreshing competitor data:", error);
@@ -894,23 +903,20 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // ヘルパー関数
-  function categorizeNews(news: { category: string, content: string }, targetCategory: string): string {
-    if (news.category.toLowerCase().includes(targetCategory.toLowerCase())) {
-      return news.content;
-    }
-    return "情報なし";
-  }
-
-  function determineImportance(content: string): "low" | "medium" | "high" {
+  // 重要度判定ロジックを改善
+  function determineImportance(content: Record<string, string>): "low" | "medium" | "high" {
     const keywords = {
-      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正"],
-      medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更"],
-      low: ["通常の更新", "定期的な情報", "軽微な変更"]
+      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新"],
+      medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更", "環境対応"],
+      low: ["通常の更新", "定期的な情報", "軽微な変更", "その他"]
     };
 
+    // 各カテゴリーの内容を結合
+    const allContent = Object.values(content).join(" ").toLowerCase();
+
+    // 重要度判定
     for (const [level, words] of Object.entries(keywords)) {
-      if (words.some(word => content.toLowerCase().includes(word.toLowerCase()))) {
+      if (words.some(word => allContent.includes(word.toLowerCase()))) {
         return level as "low" | "medium" | "high";
       }
     }
