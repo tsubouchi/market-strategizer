@@ -311,6 +311,20 @@ export function registerRoutes(app: Express): Server {
         .from(analyses)
         .where(eq(analyses.user_id, req.user?.id || 1));
 
+      // 既存のコンセプトをチェック
+      const existingConceptAnalyses = await db
+        .select()
+        .from(concept_analyses)
+        .where(
+          and(
+            ...analysis_ids.map(id => eq(concept_analyses.analysis_id, id))
+          )
+        );
+
+      if (existingConceptAnalyses.length > 0) {
+        return res.status(400).send("選択された分析の組み合わせから既にコンセプトが生成されています");
+      }
+
       // AIによる多段推論でコンセプトを生成
       const conceptData = await generateConcept(selectedAnalyses);
 
