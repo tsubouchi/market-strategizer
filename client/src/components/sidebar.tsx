@@ -28,7 +28,7 @@ const sidebarLinks = [
     href: "/dashboard",
   },
   {
-    title: "深層検索",
+    title: "深層検索エージェント",
     icon: Search,
     href: "/deep-search",
   },
@@ -152,7 +152,7 @@ export default function Sidebar() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar">
+          <SheetContent side="left" className="w-64 p-0 bg-sidebar/95 backdrop-blur-sm">
             <SidebarContent />
           </SheetContent>
         </Sheet>
