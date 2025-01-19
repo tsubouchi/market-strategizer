@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -11,13 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Link as LinkIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface SearchResult {
+  title: string;
+  url?: string;
+  summary: string;
+  citations?: string[];
+}
 
 export default function DeepSearch() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("all");
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const { toast } = useToast();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,14 +33,29 @@ export default function DeepSearch() {
 
     setIsSearching(true);
     try {
-      // TODO: 深層検索APIの実装
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setResults([
-        { title: "テスト結果1", url: "https://example.com", summary: "サマリー1" },
-        { title: "テスト結果2", url: "https://example.com", summary: "サマリー2" },
-      ]);
-    } catch (error) {
-      console.error("Search error:", error);
+      const response = await fetch("/api/deep-search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          searchType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const data = await response.json();
+      setResults(data);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "検索エラー",
+        description: error.message,
+      });
     } finally {
       setIsSearching(false);
     }
@@ -98,21 +121,45 @@ export default function DeepSearch() {
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold mb-4">検索結果</h2>
             {results.map((result, index) => (
-              <Card key={index}>
-                <CardContent className="py-4">
-                  <h3 className="font-semibold mb-2">
-                    <a
-                      href={result.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      {result.title}
-                    </a>
+              <Card key={index} className="overflow-hidden">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-semibold mb-2">
+                    {result.url ? (
+                      <a
+                        href={result.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline flex items-center gap-2"
+                      >
+                        {result.title}
+                        <LinkIcon className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      result.title
+                    )}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground whitespace-pre-wrap">
                     {result.summary}
                   </p>
+                  {result.citations && result.citations.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="font-semibold mb-2">参考文献：</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {result.citations.map((citation, idx) => (
+                          <li key={idx}>
+                            <a
+                              href={citation}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {citation}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
