@@ -61,10 +61,11 @@ export default function ConceptGenerator({ onComplete }: ConceptGeneratorProps) 
         description: "商品コンセプトが正常に生成されました。",
       });
     } catch (error: any) {
+      console.error("Concept generation error:", error);
       toast({
         variant: "destructive",
         title: "エラー",
-        description: error.message,
+        description: error.message || "コンセプト生成中にエラーが発生しました。",
       });
     }
   };
@@ -95,7 +96,7 @@ export default function ConceptGenerator({ onComplete }: ConceptGeneratorProps) 
                   />
                   <Label htmlFor={analysis.id}>
                     {analysis.analysis_type}分析（
-                    {new Date(analysis.created_at).toLocaleString()}）
+                    {new Date(analysis.created_at || "").toLocaleString()}）
                   </Label>
                 </div>
               ))}

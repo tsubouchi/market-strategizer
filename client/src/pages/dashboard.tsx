@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { Loader2, PlusCircle, Lightbulb } from "lucide-react";
 import ConceptGenerator from "@/components/concept-generator";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
 export default function Dashboard() {
   const { data: analyses, isLoading } = useAnalyses();
@@ -38,6 +38,9 @@ export default function Dashboard() {
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>商品コンセプト生成</DialogTitle>
+                <DialogDescription>
+                  既存の分析結果を選択し、商品コンセプトを生成します。予算や開発期間などの条件を指定することで、より具体的なコンセプトを作成できます。
+                </DialogDescription>
               </DialogHeader>
               <ConceptGenerator />
             </DialogContent>
