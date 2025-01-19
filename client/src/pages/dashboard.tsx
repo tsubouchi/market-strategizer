@@ -1,13 +1,13 @@
 import { useAnalyses } from "@/hooks/use-analysis";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 
 export default function Dashboard() {
   const { data: analyses, isLoading } = useAnalyses();
-  const [_, navigate] = useNavigate();
+  const [_, navigate] = useLocation();
 
   if (isLoading) {
     return (

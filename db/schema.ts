@@ -2,12 +2,14 @@ import { pgTable, text, serial, timestamp, jsonb, uuid } from "drizzle-orm/pg-co
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
+// Simple user table without auth
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });
 
+// Analysis table
 export const analyses = pgTable("analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
   user_id: serial("user_id").references(() => users.id).notNull(),
@@ -18,6 +20,7 @@ export const analyses = pgTable("analyses", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+// Relations
 export const usersRelations = relations(users, ({ many }) => ({
   analyses: many(analyses),
 }));
@@ -29,7 +32,7 @@ export const analysesRelations = relations(analyses, ({ one }) => ({
   }),
 }));
 
-// Export the schemas and types
+// Export schemas and types
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export type User = typeof users.$inferSelect;

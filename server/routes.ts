@@ -17,7 +17,7 @@ export function registerRoutes(app: Express): Server {
       const [analysis] = await db
         .insert(analyses)
         .values({
-          user_id: 1, // Use demo user
+          user_id: 1, // デモユーザー
           analysis_type,
           content,
           ai_feedback: aiFeedback
@@ -30,13 +30,13 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get analyses
-  app.get("/api/analyses", async (req, res, next) => {
+  // Get all analyses
+  app.get("/api/analyses", async (_req, res, next) => {
     try {
       const userAnalyses = await db
         .select()
         .from(analyses)
-        .where(eq(analyses.user_id, 1)) // Use demo user
+        .where(eq(analyses.user_id, 1)) // デモユーザー
         .orderBy(analyses.created_at);
 
       res.json(userAnalyses);
