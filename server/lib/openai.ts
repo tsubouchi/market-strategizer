@@ -24,7 +24,7 @@ export async function generateConcept(analyses: Analysis[]) {
       messages: [
         {
           role: "system",
-          content: "3C分析、4P分析、PEST分析の結果を要約し、重要なポイントを抽出してください。JSON形式で出力してください。",
+          content: "3C分析、4P分析、PEST分析の結果を要約し、重要なポイントを抽出してJSON形式で出力してください。以下のような形式で返してください：{ summary: { key_points: string[], opportunities: string[], challenges: string[] } }",
         },
         {
           role: "user",
@@ -42,7 +42,7 @@ export async function generateConcept(analyses: Analysis[]) {
       messages: [
         {
           role: "system",
-          content: "各分析フレームワーク間の関連性を分析し、潜在的な課題や機会を抽出してください。JSON形式で出力してください。",
+          content: "各分析フレームワーク間の関連性を分析し、潜在的な課題や機会を抽出してJSON形式で出力してください。以下のような形式で返してください：{ correlations: { insights: string[], opportunities: string[], risks: string[] } }",
         },
         {
           role: "user",
@@ -60,7 +60,7 @@ export async function generateConcept(analyses: Analysis[]) {
       messages: [
         {
           role: "system",
-          content: "分析結果に基づいて、以下のフォーマットで3つの商品コンセプト案を生成してください：\n" +
+          content: "分析結果に基づいて、以下のJSONフォーマットで3つの商品コンセプト案を生成してください：\n" +
             "{\n" +
             '  "concepts": [{\n' +
             '    "title": "コンセプトのタイトル",\n' +
@@ -110,7 +110,7 @@ export async function refineConceptWithConditions(
       messages: [
         {
           role: "system",
-          content: `ユーザーの条件を考慮して、最適な商品コンセプトを調整してください。以下のフォーマットで出力してください：
+          content: `ユーザーの条件を考慮して、最適な商品コンセプトを調整し、以下のJSONフォーマットで出力してください：
 {
   "title": "コンセプトのタイトル",
   "value_proposition": "提供価値の説明",

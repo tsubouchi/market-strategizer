@@ -1,0 +1,101 @@
+9:35:02 AM [express] serving on port 5000
+9:35:27 AM [express] GET /api/concepts 200 in 928ms :: []
+9:35:30 AM [express] GET /api/analyses 304 in 445ms :: [{"id":"b5a7ee7a-4507-432f-a982-528b3a74391d"…
+9:36:05 AM [express] GET /api/analyses/b5a7ee7a-4507-432f-a982-528b3a74391d 304 in 920ms :: {"id":"b…
+9:36:05 AM [express] GET /api/user 200 in 10ms
+9:36:05 AM [express] GET /api/analyses/b5a7ee7a-4507-432f-a982-528b3a74391d/comments 304 in 236ms ::…
+9:36:06 AM [express] GET /api/analyses 304 in 1157ms :: [{"id":"b5a7ee7a-4507-432f-a982-528b3a74391d…
+Error in concept generation: BadRequestError: 400 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:72:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:435:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:499:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async generateConcept (/home/runner/workspace/server/lib/openai.ts:58:30)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:313:27) {
+  status: 400,
+  headers: {
+    'access-control-expose-headers': 'X-Request-ID',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '9045d6b0bb443af8-BOM',
+    connection: 'keep-alive',
+    'content-length': '219',
+    'content-type': 'application/json',
+    date: 'Sun, 19 Jan 2025 09:36:08 GMT',
+    'openai-organization': 'remember-inc',
+    'openai-processing-ms': '20',
+    'openai-version': '2020-10-01',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=hkjO13JAxQL.gPksM1XqkBN3XWJ3GLOC2zGbm4AuPYY-1737279368-1.0.1.1-Awe2.HrQvppUm07mBfySqwYC9AEuFL1hGME6fRl5tGjdPNS4lYuiS7Yj6SUZqNMJj6NyE7xXPS5AkHSAEhbakg; path=/; expires=Sun, 19-Jan-25 10:06:08 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=eLl9gzjx.e6aZYT._OWM6HA87CS3lV_Z.ePmQtuzwHU-1737279368080-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    'x-ratelimit-limit-requests': '10000',
+    'x-ratelimit-limit-tokens': '30000000',
+    'x-ratelimit-remaining-requests': '9999',
+    'x-ratelimit-remaining-tokens': '29999016',
+    'x-ratelimit-reset-requests': '6ms',
+    'x-ratelimit-reset-tokens': '1ms',
+    'x-request-id': 'req_38284b525ca3e34a750241ca7c46953a'
+  },
+  request_id: 'req_38284b525ca3e34a750241ca7c46953a',
+  error: {
+    message: "'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.",
+    type: 'invalid_request_error',
+    param: 'messages',
+    code: null
+  },
+  code: null,
+  param: 'messages',
+  type: 'invalid_request_error'
+}
+9:36:08 AM [express] POST /api/concepts/generate 500 in 33926ms :: {"message":"コンセプト生成中にエラーが発生しました: …
+Error: コンセプト生成中にエラーが発生しました: 400 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.
+    at generateConcept (/home/runner/workspace/server/lib/openai.ts:94:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:313:27)
+Error in concept generation: BadRequestError: 400 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:72:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:435:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:499:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async generateConcept (/home/runner/workspace/server/lib/openai.ts:58:30)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:313:27) {
+  status: 400,
+  headers: {
+    'access-control-expose-headers': 'X-Request-ID',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '9045d74ffa453b25-BOM',
+    connection: 'keep-alive',
+    'content-length': '219',
+    'content-type': 'application/json',
+    date: 'Sun, 19 Jan 2025 09:36:33 GMT',
+    'openai-organization': 'remember-inc',
+    'openai-processing-ms': '14',
+    'openai-version': '2020-10-01',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=cwNg8OzuE4KoB_3pGE.39pl3X6WIAWHMlIZAQK27aJg-1737279393-1.0.1.1-3V4QQefLyQY4e0IQyrkOvNIeWvdzhtEaVrVHgDbdF2sL2avkddHqZUEYnCBNlrMXcDcUfbtRiH1vXHLG6_8RcQ; path=/; expires=Sun, 19-Jan-25 10:06:33 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=IyC3MJ3NqElcd86vVIH1obsqJJngj4UPt.OzoMvjwLs-1737279393565-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    'x-ratelimit-limit-requests': '10000',
+    'x-ratelimit-limit-tokens': '30000000',
+    'x-ratelimit-remaining-requests': '9999',
+    'x-ratelimit-remaining-tokens': '29998696',
+    'x-ratelimit-reset-requests': '6ms',
+    'x-ratelimit-reset-tokens': '2ms',
+    'x-request-id': 'req_ccf4deafdbb8cb06ca8b3b364c452fd5'
+  },
+  request_id: 'req_ccf4deafdbb8cb06ca8b3b364c452fd5',
+  error: {
+    message: "'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.",
+    type: 'invalid_request_error',
+    param: 'messages',
+    code: null
+  },
+  code: null,
+  param: 'messages',
+  type: 'invalid_request_error'
+}
+9:36:33 AM [express] POST /api/concepts/generate 500 in 21612ms :: {"message":"コンセプト生成中にエラーが発生しました: …
+Error: コンセプト生成中にエラーが発生しました: 400 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.
+    at generateConcept (/home/runner/workspace/server/lib/openai.ts:94:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:313:27)
