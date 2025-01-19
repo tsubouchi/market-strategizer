@@ -171,49 +171,49 @@ export async function generateWebAppRequirements(
       messages: [
         {
           role: "system",
-          content: "You will be generating a JSON response containing detailed web application requirements that match the WebAppRequirement interface structure.",
+          content: "WebAppRequirementインターフェースの構造に従って、日本語で要件定義書を生成してください。",
         },
         {
           role: "user",
-          content: `Generate a web application requirements document based on the following concept and conditions. Format the response as JSON with the following structure:
+          content: `以下のコンセプトと条件に基づいて、Webアプリケーションの要件定義書を生成してください。以下のJSON形式で出力してください：
 {
-  "title": "string",
-  "overview": "string",
-  "target_users": "string",
+  "title": "プロジェクト名",
+  "overview": "プロジェクト概要",
+  "target_users": "対象ユーザー",
   "features": [
     {
-      "name": "string",
+      "name": "機能名",
       "priority": "high" | "medium" | "low",
-      "description": "string",
-      "acceptance_criteria": ["string"]
+      "description": "機能の詳細説明",
+      "acceptance_criteria": ["受け入れ基準1", "受け入れ基準2"]
     }
   ],
   "tech_stack": {
-    "frontend": ["string"],
-    "backend": ["string"],
-    "database": ["string"],
-    "infrastructure": ["string"]
+    "frontend": ["フロントエンド技術"],
+    "backend": ["バックエンド技術"],
+    "database": ["データベース技術"],
+    "infrastructure": ["インフラ技術"]
   },
   "ui_ux_requirements": {
-    "design_system": "string",
-    "layout": "string",
-    "responsive": boolean,
-    "accessibility": ["string"],
-    "special_features": ["string"]
+    "design_system": "デザインシステム",
+    "layout": "レイアウト構成",
+    "responsive": true/false,
+    "accessibility": ["アクセシビリティ要件"],
+    "special_features": ["特別な機能要件"]
   },
   "schedule": {
     "phases": [
       {
-        "name": "string",
-        "duration": "string",
-        "tasks": ["string"]
+        "name": "フェーズ名",
+        "duration": "期間",
+        "tasks": ["タスク1", "タスク2"]
       }
     ]
   }
 }
 
-Concept: ${JSON.stringify(concept)}
-Conditions: ${JSON.stringify(conditions)}`,
+コンセプト: ${JSON.stringify(concept)}
+条件: ${JSON.stringify(conditions)}`,
         },
       ],
       response_format: { type: "json_object" },
@@ -236,16 +236,17 @@ Conditions: ${JSON.stringify(conditions)}`,
 export async function generateMarkdownRequirements(requirements: WebAppRequirement): Promise<string> {
   const md = `# ${requirements.title} 要件定義書
 
-## 1. 概要
+## 1. プロジェクト概要
 ${requirements.overview}
 
-## 2. ターゲットユーザー
+## 2. 対象ユーザー
 ${requirements.target_users}
 
 ## 3. 機能要件
 ${requirements.features.map(feature => `
-### ${feature.name} (優先度: ${feature.priority})
-${feature.description}
+### ${feature.name}
+- 優先度: ${feature.priority === 'high' ? '高' : feature.priority === 'medium' ? '中' : '低'}
+- 説明: ${feature.description}
 
 受け入れ基準:
 ${feature.acceptance_criteria.map(criteria => `- ${criteria}`).join('\n')}
@@ -266,7 +267,7 @@ ${requirements.tech_stack.infrastructure.map(tech => `- ${tech}`).join('\n')}
 
 ## 5. UI/UX要件
 - デザインシステム: ${requirements.ui_ux_requirements.design_system}
-- レイアウト: ${requirements.ui_ux_requirements.layout}
+- レイアウト構成: ${requirements.ui_ux_requirements.layout}
 - レスポンシブ対応: ${requirements.ui_ux_requirements.responsive ? '必要' : '不要'}
 
 ### アクセシビリティ要件
@@ -282,7 +283,7 @@ ${phase.tasks.map(task => `- ${task}`).join('\n')}
 `).join('\n')}
 
 ---
-生成日時: ${new Date().toLocaleString('ja-JP')}
+生成日時: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}
 `;
 
   return md;
