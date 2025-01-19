@@ -687,7 +687,10 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).send("Search query is required");
       }
 
-      // Perplexity APIの設定
+      // Perplexity APIの設定を修正
+      if (!process.env.PERPLEXITY_API_KEY) {
+        throw new Error("PERPLEXITY_API_KEY is required");
+      }
       const headers = {
         "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
         "Content-Type": "application/json"
