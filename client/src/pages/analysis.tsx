@@ -3,18 +3,19 @@ import { useAnalysis, useUpdateAnalysisVisibility } from "@/hooks/use-analysis";
 import AnalysisForm from "@/components/analysis-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Loader2, 
-  Link as LinkIcon, 
-  Paperclip, 
-  FileDown, 
+import {
+  Loader2,
+  Link as LinkIcon,
+  Paperclip,
+  FileDown,
   Share2,
   Globe,
-  Lock
+  Lock,
 } from "lucide-react";
 import { AnalysisPDFViewer } from "@/components/analysis-pdf";
 import Comments from "@/components/comments";
 import { useToast } from "@/hooks/use-toast";
+import ShareAnalysis from "@/components/share-analysis";
 
 export default function AnalysisPage() {
   const { id } = useParams<{ id: string }>();
@@ -77,8 +78,8 @@ export default function AnalysisPage() {
 
       toast({
         title: "更新完了",
-        description: analysis.is_public 
-          ? "分析を非公開に設定しました" 
+        description: analysis.is_public
+          ? "分析を非公開に設定しました"
           : "分析を公開に設定しました",
       });
     } catch (error: any) {
@@ -108,6 +109,7 @@ export default function AnalysisPage() {
               <CardTitle className="flex items-center justify-between">
                 <span>{analysis.analysis_type}分析の結果</span>
                 <div className="flex items-center gap-2">
+                  <ShareAnalysis analysisId={analysis.id} />
                   <Button
                     variant="outline"
                     size="sm"

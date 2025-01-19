@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Analysis } from "@db/schema";
+import type { Analysis, SharedAnalysis } from "@db/schema";
 
 interface AnalysisInput {
   analysis_type: string;
@@ -69,6 +69,36 @@ export function useUpdateAnalysisVisibility() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: [`/api/analyses/${id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/analyses"] });
+    },
+  });
+}
+
+interface ShareAnalysisInput {
+  analysisId: string;
+  userId: number;
+  canComment?: boolean;
+}
+
+export function useShareAnalysis() {
+  const queryClient = useQueryClient();
+
+  return useMutation<SharedAnalysis, Error, ShareAnalysisInput>({
+    mutationFn: async ({ analysisId, userId, canComment }) => {
+      const res = await fetch(`/api/analyses/${analysisId}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, can_comment: canComment }),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      return res.json();
+    },
+    onSuccess: (_, { analysisId }) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/analyses/${analysisId}`] });
     },
   });
 }
