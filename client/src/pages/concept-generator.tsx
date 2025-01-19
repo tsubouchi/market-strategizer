@@ -83,7 +83,28 @@ export default function ConceptGenerator() {
         description: "商品コンセプトが正常に生成されました。",
       });
 
-      // TODO: 生成されたコンセプトの表示処理
+      // 要件書の生成
+      const requirementsResponse = await fetch(`/api/concepts/${result.id}/requirements`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          conditions: requirementsForm,
+        }),
+      });
+
+      if (!requirementsResponse.ok) {
+        throw new Error(await requirementsResponse.text());
+      }
+
+      const requirements = await requirementsResponse.json();
+      toast({
+        title: "要件書生成完了",
+        description: "要件書が正常に生成されました。",
+      });
+
+      // TODO: 要件書の表示画面に遷移
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -201,8 +222,8 @@ export default function ConceptGenerator() {
           disabled={isGenerating || selectedAnalyses.length === 0}
           className="w-full"
         >
-          {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isGenerating ? "生成中..." : "コンセプトを生成"}
+          {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isGenerating ? "生成中..." : "コンセプトと要件書を生成"}
         </Button>
       </div>
     </div>

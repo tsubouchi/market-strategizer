@@ -4,11 +4,10 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "@db";
-import { analyses, comments, shared_analyses, concepts, concept_analyses } from "@db/schema";
+import { analyses, comments, shared_analyses, concepts, concept_analyses, product_requirements, requirement_analyses } from "@db/schema";
 import { eq, and } from "drizzle-orm";
-import { generateConcept, refineConceptWithConditions } from "./lib/openai";
+import { generateConcept, refineConceptWithConditions, generateWebAppRequirements, refineRequirements } from "./lib/openai";
 import fetch from "node-fetch";
-
 
 // Configure multer for file upload
 const upload = multer({
@@ -436,6 +435,114 @@ export function registerRoutes(app: Express): Server {
       }
 
       res.json(concept);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 要件書生成API
+  app.post("/api/concepts/:id/requirements", async (req, res, next) => {
+    try {
+      const { conditions } = req.body;
+
+      const [concept] = await db
+        .select()
+        .from(concepts)
+        .where(eq(concepts.id, req.params.id))
+        .limit(1);
+
+      if (!concept) {
+        return res.status(404).send("Concept not found");
+      }
+
+      // AIを使用して要件書を生成
+      const requirements = await generateWebAppRequirements(
+        {
+          title: concept.title,
+          value_proposition: concept.value_proposition,
+          target_customer: concept.target_customer,
+          advantage: concept.advantage,
+        },
+        conditions
+      );
+
+      // 要件書をデータベースに保存
+      const [requirement] = await db
+        .insert(product_requirements)
+        .values({
+          user_id: req.user?.id || 1,
+          concept_id: concept.id,
+          title: requirements.title,
+          overview: requirements.overview,
+          target_users: requirements.target_users,
+          features: requirements.features,
+          tech_stack: requirements.tech_stack,
+          ui_ux_requirements: requirements.ui_ux_requirements,
+          schedule: requirements.schedule,
+        })
+        .returning();
+
+      // 要件書と分析の関連付けを作成
+      const analyses = await db
+        .select()
+        .from(concept_analyses)
+        .where(eq(concept_analyses.concept_id, concept.id));
+
+      await Promise.all(
+        analyses.map((analysis) =>
+          db
+            .insert(requirement_analyses)
+            .values({
+              requirement_id: requirement.id,
+              analysis_id: analysis.analysis_id,
+            })
+        )
+      );
+
+      res.json(requirement);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 要件書更新API
+  app.put("/api/requirements/:id", async (req, res, next) => {
+    try {
+      const { updates } = req.body;
+
+      const [requirement] = await db
+        .select()
+        .from(product_requirements)
+        .where(eq(product_requirements.id, req.params.id))
+        .limit(1);
+
+      if (!requirement) {
+        return res.status(404).send("Requirement not found");
+      }
+
+      if (requirement.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      // AIを使用して要件書を更新
+      const refinedRequirements = await refineRequirements(requirement, updates);
+
+      // 更新された要件書を保存
+      const [updatedRequirement] = await db
+        .update(product_requirements)
+        .set({
+          title: refinedRequirements.title,
+          overview: refinedRequirements.overview,
+          target_users: refinedRequirements.target_users,
+          features: refinedRequirements.features,
+          tech_stack: refinedRequirements.tech_stack,
+          ui_ux_requirements: refinedRequirements.ui_ux_requirements,
+          schedule: refinedRequirements.schedule,
+        })
+        .where(eq(product_requirements.id, req.params.id))
+        .returning();
+
+      res.json(updatedRequirement);
     } catch (error) {
       next(error);
     }
