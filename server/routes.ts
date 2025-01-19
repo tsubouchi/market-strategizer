@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "@db";
-import { analyses, comments, shared_analyses, concepts, concept_analyses, product_requirements, requirement_analyses } from "@db/schema";
+import { analyses, comments, shared_analyses, concepts, concept_analyses, product_requirements, requirement_analyses, competitors, competitor_updates } from "@db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateConcept, refineConceptWithConditions, generateWebAppRequirements, refineRequirements, generateMarkdownRequirements } from "./lib/openai";
 import fetch from "node-fetch";
@@ -647,6 +647,143 @@ export function registerRoutes(app: Express): Server {
       res.json(results);
     } catch (error) {
       console.error("Deep search error:", error);
+      next(error);
+    }
+  });
+
+  // 競合他社一覧の取得
+  app.get("/api/competitors", async (req, res, next) => {
+    try {
+      const userCompetitors = await db
+        .select()
+        .from(competitors)
+        .where(eq(competitors.user_id, req.user?.id || 1))
+        .orderBy(competitors.created_at);
+
+      res.json(userCompetitors);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 競合他社の追加
+  app.post("/api/competitors", async (req, res, next) => {
+    try {
+      const { company_name, website_url, monitoring_keywords } = req.body;
+
+      if (!company_name || !website_url || !monitoring_keywords) {
+        return res.status(400).send("必須項目が不足しています");
+      }
+
+      const [competitor] = await db
+        .insert(competitors)
+        .values({
+          user_id: req.user?.id || 1,
+          company_name,
+          website_url,
+          monitoring_keywords,
+        })
+        .returning();
+
+      res.json(competitor);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 競合他社の更新情報を取得
+  app.get("/api/competitors/:id/updates", async (req, res, next) => {
+    try {
+      const updates = await db
+        .select()
+        .from(competitor_updates)
+        .where(eq(competitor_updates.competitor_id, req.params.id))
+        .orderBy(competitor_updates.created_at);
+
+      res.json(updates);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 手動で競合他社の情報を更新
+  app.post("/api/competitors/:id/refresh", async (req, res, next) => {
+    try {
+      const [competitor] = await db
+        .select()
+        .from(competitors)
+        .where(eq(competitors.id, req.params.id))
+        .limit(1);
+
+      if (!competitor) {
+        return res.status(404).send("Competitor not found");
+      }
+
+      // Perplexity APIを使用して情報を検索
+      const searchResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: "指定された企業の最新情報を収集し、重要度を判定してください。"
+            },
+            {
+              role: "user",
+              content: `企業名: ${competitor.company_name}
+                       Webサイト: ${competitor.website_url}
+                       モニタリングキーワード: ${competitor.monitoring_keywords.join(", ")}
+
+                       この企業に関する以下の情報を収集してください：
+                       1. 新製品・サービスの発表
+                       2. プレスリリース
+                       3. 技術動向
+                       4. 市場での評価`
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 1000,
+          return_citations: true
+        })
+      });
+
+      if (!searchResponse.ok) {
+        throw new Error("情報収集に失敗しました");
+      }
+
+      const searchResult = await searchResponse.json();
+      const content = searchResult.choices[0].message.content;
+      const citations = searchResult.citations || [];
+
+      // 更新情報を保存
+      const [update] = await db
+        .insert(competitor_updates)
+        .values({
+          competitor_id: competitor.id,
+          update_type: "news",
+          content: {
+            summary: content,
+            sources: citations,
+          },
+          source_url: citations[0] || null,
+          importance_score: "medium", // TODO: AIで重要度を判定
+          is_notified: false,
+        })
+        .returning();
+
+      // 最終更新日時を更新
+      await db
+        .update(competitors)
+        .set({ last_updated: new Date() })
+        .where(eq(competitors.id, competitor.id));
+
+      res.json(update);
+    } catch (error) {
       next(error);
     }
   });

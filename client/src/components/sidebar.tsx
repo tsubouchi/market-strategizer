@@ -12,6 +12,7 @@ import {
   Lightbulb,
   Search,
   FileText,
+  Eye,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -29,6 +30,11 @@ const sidebarLinks = [
     title: "深層検索",
     icon: Search,
     href: "/deep-search",
+  },
+  {
+    title: "競合他社モニタリング",
+    icon: Eye,
+    href: "/competitor-monitoring",
   },
   {
     title: "コンセプト生成",

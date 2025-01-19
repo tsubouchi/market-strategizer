@@ -33,7 +33,6 @@ export const concepts = pgTable("concepts", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
-// 分析とコンセプトの中間テーブル
 export const concept_analyses = pgTable("concept_analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
   concept_id: uuid("concept_id").references(() => concepts.id).notNull(),
@@ -58,7 +57,6 @@ export const shared_analyses = pgTable("shared_analyses", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-// 要件書テーブル
 export const product_requirements = pgTable("product_requirements", {
   id: uuid("id").defaultRandom().primaryKey(),
   user_id: serial("user_id").references(() => users.id).notNull(),
@@ -75,7 +73,6 @@ export const product_requirements = pgTable("product_requirements", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
-// 要件書と分析の関連付けテーブル
 export const requirement_analyses = pgTable("requirement_analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
   requirement_id: uuid("requirement_id").references(() => product_requirements.id).notNull(),
@@ -83,7 +80,28 @@ export const requirement_analyses = pgTable("requirement_analyses", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-// Relations
+// 競合他社モニタリングテーブル
+export const competitors = pgTable("competitors", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  user_id: serial("user_id").references(() => users.id).notNull(),
+  company_name: text("company_name").notNull(),
+  website_url: text("website_url"),
+  monitoring_keywords: jsonb("monitoring_keywords").$type<string[]>(),
+  last_updated: timestamp("last_updated").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const competitor_updates = pgTable("competitor_updates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  competitor_id: uuid("competitor_id").references(() => competitors.id).notNull(),
+  update_type: text("update_type").notNull(), // 'news', 'product', 'social'
+  content: jsonb("content").notNull(),
+  source_url: text("source_url"),
+  importance_score: text("importance_score"),
+  is_notified: boolean("is_notified").default(false),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   analyses: many(analyses),
   comments: many(comments),
@@ -165,8 +183,22 @@ export const requirementAnalysesRelations = relations(requirement_analyses, ({ o
   }),
 }));
 
+// Relations
+export const competitorsRelations = relations(competitors, ({ one, many }) => ({
+  user: one(users, {
+    fields: [competitors.user_id],
+    references: [users.id],
+  }),
+  updates: many(competitor_updates),
+}));
 
-// Export schemas and types
+export const competitorUpdatesRelations = relations(competitor_updates, ({ one }) => ({
+  competitor: one(competitors, {
+    fields: [competitor_updates.competitor_id],
+    references: [competitors.id],
+  }),
+}));
+
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export type User = typeof users.$inferSelect;
@@ -206,3 +238,13 @@ export const insertRequirementAnalysisSchema = createInsertSchema(requirement_an
 export const selectRequirementAnalysisSchema = createSelectSchema(requirement_analyses);
 export type RequirementAnalysis = typeof requirement_analyses.$inferSelect;
 export type NewRequirementAnalysis = typeof requirement_analyses.$inferInsert;
+
+export const insertCompetitorSchema = createInsertSchema(competitors);
+export const selectCompetitorSchema = createSelectSchema(competitors);
+export type Competitor = typeof competitors.$inferSelect;
+export type NewCompetitor = typeof competitors.$inferInsert;
+
+export const insertCompetitorUpdateSchema = createInsertSchema(competitor_updates);
+export const selectCompetitorUpdateSchema = createSelectSchema(competitor_updates);
+export type CompetitorUpdate = typeof competitor_updates.$inferSelect;
+export type NewCompetitorUpdate = typeof competitor_updates.$inferInsert;

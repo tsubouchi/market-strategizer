@@ -9,6 +9,7 @@ import Settings from "@/pages/settings";
 import Concepts from "@/pages/concepts";
 import DeepSearch from "@/pages/deep-search";
 import ConceptGenerator from "@/pages/concept-generator";
+import CompetitorMonitoring from "@/pages/competitor-monitoring";
 import Sidebar from "@/components/sidebar";
 import { queryClient } from "./lib/queryClient";
 
@@ -25,6 +26,7 @@ function Router() {
           <Route path="/concepts" component={Concepts} />
           <Route path="/deep-search" component={DeepSearch} />
           <Route path="/concept-generator" component={ConceptGenerator} />
+          <Route path="/competitor-monitoring" component={CompetitorMonitoring} />
           <Route component={NotFound} />
         </Switch>
       </main>
