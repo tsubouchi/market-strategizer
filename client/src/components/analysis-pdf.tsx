@@ -46,9 +46,9 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
     console.error("Failed to parse AI feedback:", error);
   }
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "";
-    return new Date(dateString).toLocaleString();
+  const formatDate = (date: string | null | undefined): string => {
+    if (!date) return "";
+    return new Date(date).toLocaleString('ja-JP');
   };
 
   return (
