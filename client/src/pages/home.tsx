@@ -59,7 +59,7 @@ export default function Home() {
         {/* Analysis Types Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
           {analysisTypes.map((type) => (
-            <Card key={type.id} className="transition-all hover:shadow-lg">
+            <Card key={type.id} className="transition-all hover:shadow-lg h-full flex flex-col">
               <CardHeader>
                 <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 mb-4">
                   <type.icon className="w-6 h-6 text-primary" />
@@ -69,8 +69,8 @@ export default function Home() {
                   {type.description}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 mb-6">
+              <CardContent className="flex-1 flex flex-col">
+                <ul className="space-y-2 mb-6 flex-1">
                   {type.details.map((detail, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
                       <span className="block w-1 h-1 mt-2 rounded-full bg-primary/50" />
@@ -79,7 +79,7 @@ export default function Home() {
                   ))}
                 </ul>
                 <Link href={`/analysis/new?type=${type.id}`}>
-                  <Button className="w-full">
+                  <Button className="w-full mt-auto">
                     この分析を開始
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
