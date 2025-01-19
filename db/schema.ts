@@ -1,17 +1,16 @@
-import { pgTable, text, serial, integer, timestamp, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, jsonb, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
-  password: text("password").notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });
 
 export const analyses = pgTable("analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
-  user_id: integer("user_id").references(() => users.id).notNull(),
+  user_id: serial("user_id").references(() => users.id).notNull(),
   analysis_type: text("analysis_type").notNull(), // '3C', '4P', 'PEST'
   content: jsonb("content").notNull(),
   ai_feedback: text("ai_feedback"),
@@ -40,7 +39,3 @@ export const insertAnalysisSchema = createInsertSchema(analyses);
 export const selectAnalysisSchema = createSelectSchema(analyses);
 export type Analysis = typeof analyses.$inferSelect;
 export type NewAnalysis = typeof analyses.$inferInsert;
-
-// Alias for auth system compatibility
-export type SelectUser = User;
-export type InsertUser = NewUser;
