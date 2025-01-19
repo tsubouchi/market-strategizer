@@ -7,6 +7,11 @@ interface AnalysisInput {
   reference_url?: string;
 }
 
+interface UpdateVisibilityInput {
+  id: string;
+  is_public: boolean;
+}
+
 export function useAnalyses() {
   return useQuery<Analysis[]>({
     queryKey: ["/api/analyses"],
@@ -38,6 +43,31 @@ export function useCreateAnalysis() {
       return res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/analyses"] });
+    },
+  });
+}
+
+export function useUpdateAnalysisVisibility() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Analysis, Error, UpdateVisibilityInput>({
+    mutationFn: async ({ id, is_public }) => {
+      const res = await fetch(`/api/analyses/${id}/visibility`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_public }),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      return res.json();
+    },
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/analyses/${id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/analyses"] });
     },
   });

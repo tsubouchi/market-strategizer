@@ -1,15 +1,27 @@
 import { useLocation, useParams } from "wouter";
-import { useAnalysis } from "@/hooks/use-analysis";
+import { useAnalysis, useUpdateAnalysisVisibility } from "@/hooks/use-analysis";
 import AnalysisForm from "@/components/analysis-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Link as LinkIcon, Paperclip, FileDown } from "lucide-react";
+import { 
+  Loader2, 
+  Link as LinkIcon, 
+  Paperclip, 
+  FileDown, 
+  Share2,
+  Globe,
+  Lock
+} from "lucide-react";
 import { AnalysisPDFViewer } from "@/components/analysis-pdf";
+import Comments from "@/components/comments";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AnalysisPage() {
   const { id } = useParams<{ id: string }>();
   const [location, navigate] = useLocation();
   const { data: analysis, isLoading } = useAnalysis(id || "");
+  const updateVisibility = useUpdateAnalysisVisibility();
+  const { toast } = useToast();
 
   // 新規分析の場合
   if (id === "new") {
@@ -56,6 +68,28 @@ export default function AnalysisPage() {
 
   const content = analysis.content as Record<string, string>;
 
+  const handleVisibilityToggle = async () => {
+    try {
+      await updateVisibility.mutateAsync({
+        id: analysis.id,
+        is_public: !analysis.is_public,
+      });
+
+      toast({
+        title: "更新完了",
+        description: analysis.is_public 
+          ? "分析を非公開に設定しました" 
+          : "分析を公開に設定しました",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="max-w-4xl mx-auto">
@@ -73,15 +107,35 @@ export default function AnalysisPage() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{analysis.analysis_type}分析の結果</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => window.print()}
-                >
-                  <FileDown className="w-4 h-4" />
-                  PDFダウンロード
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={handleVisibilityToggle}
+                  >
+                    {analysis.is_public ? (
+                      <>
+                        <Globe className="w-4 h-4" />
+                        公開中
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        非公開
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={() => window.print()}
+                  >
+                    <FileDown className="w-4 h-4" />
+                    PDF
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -139,8 +193,9 @@ export default function AnalysisPage() {
             </CardContent>
           </Card>
 
-          {/* PDF Preview */}
-          <div className="hidden lg:block">
+          {/* Right Column: PDF Preview and Comments */}
+          <div className="space-y-8">
+            {/* PDF Preview */}
             <Card>
               <CardHeader>
                 <CardTitle>PDFプレビュー</CardTitle>
@@ -149,6 +204,9 @@ export default function AnalysisPage() {
                 <AnalysisPDFViewer analysis={analysis} />
               </CardContent>
             </Card>
+
+            {/* Comments Section */}
+            <Comments analysisId={analysis.id} />
           </div>
         </div>
       </div>

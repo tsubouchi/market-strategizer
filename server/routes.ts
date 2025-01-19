@@ -2,8 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { analyzeBusinessStrategy } from "./openai";
 import { db } from "@db";
-import { analyses } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { analyses, comments, shared_analyses } from "@db/schema";
+import { eq, and } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -59,12 +59,13 @@ export function registerRoutes(app: Express): Server {
       const [analysis] = await db
         .insert(analyses)
         .values({
-          user_id: 1, // デモユーザー
+          user_id: req.user?.id || 1, // デモユーザー
           analysis_type,
           content: parsedContent,
           ai_feedback: aiFeedback,
           reference_url: reference_url || null,
-          attachment_path: req.file?.path || null
+          attachment_path: req.file?.path || null,
+          is_public: false //added is_public field
         })
         .returning();
 
@@ -75,16 +76,33 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get all analyses
-  app.get("/api/analyses", async (_req, res, next) => {
+  // Get all analyses (including shared ones)
+  app.get("/api/analyses", async (req, res, next) => {
     try {
       const userAnalyses = await db
-        .select()
+        .select({
+          analysis: analyses,
+          shared: shared_analyses,
+        })
         .from(analyses)
-        .where(eq(analyses.user_id, 1)) // デモユーザー
+        .leftJoin(
+          shared_analyses,
+          and(
+            eq(analyses.id, shared_analyses.analysis_id),
+            eq(shared_analyses.user_id, req.user?.id || 1)
+          )
+        )
+        .where(
+          req.user?.id 
+            ? and(
+                eq(analyses.user_id, req.user.id),
+                eq(analyses.is_public, true)
+              )
+            : eq(analyses.user_id, 1) // デモユーザー
+        )
         .orderBy(analyses.created_at);
 
-      res.json(userAnalyses);
+      res.json(userAnalyses.map(({ analysis }) => analysis));
     } catch (error) {
       next(error);
     }
@@ -107,7 +125,162 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Analysis not found");
       }
 
+      // Check if user has access
+      if (analysis.user_id !== (req.user?.id || 1)) {
+        const [shared] = await db
+          .select()
+          .from(shared_analyses)
+          .where(
+            and(
+              eq(shared_analyses.analysis_id, analysis.id),
+              eq(shared_analyses.user_id, req.user?.id || 1)
+            )
+          )
+          .limit(1);
+
+        if (!shared && !analysis.is_public) {
+          return res.status(403).send("Access denied");
+        }
+      }
+
       res.json(analysis);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Share analysis with another user
+  app.post("/api/analyses/:id/share", async (req, res, next) => {
+    try {
+      const { user_id, can_comment = true } = req.body;
+
+      if (!user_id) {
+        return res.status(400).send("user_id is required");
+      }
+
+      const [analysis] = await db
+        .select()
+        .from(analyses)
+        .where(eq(analyses.id, req.params.id))
+        .limit(1);
+
+      if (!analysis) {
+        return res.status(404).send("Analysis not found");
+      }
+
+      if (analysis.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      const [shared] = await db
+        .insert(shared_analyses)
+        .values({
+          analysis_id: req.params.id,
+          user_id,
+          can_comment,
+        })
+        .returning();
+
+      res.json(shared);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Toggle analysis public/private
+  app.post("/api/analyses/:id/visibility", async (req, res, next) => {
+    try {
+      const { is_public } = req.body;
+
+      const [analysis] = await db
+        .select()
+        .from(analyses)
+        .where(eq(analyses.id, req.params.id))
+        .limit(1);
+
+      if (!analysis) {
+        return res.status(404).send("Analysis not found");
+      }
+
+      if (analysis.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      const [updated] = await db
+        .update(analyses)
+        .set({ is_public })
+        .where(eq(analyses.id, req.params.id))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Get comments for an analysis
+  app.get("/api/analyses/:id/comments", async (req, res, next) => {
+    try {
+      const analysis_comments = await db
+        .select()
+        .from(comments)
+        .where(eq(comments.analysis_id, req.params.id))
+        .orderBy(comments.created_at);
+
+      res.json(analysis_comments);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Add a comment to an analysis
+  app.post("/api/analyses/:id/comments", async (req, res, next) => {
+    try {
+      const { content } = req.body;
+
+      if (!content) {
+        return res.status(400).send("content is required");
+      }
+
+      const [analysis] = await db
+        .select()
+        .from(analyses)
+        .where(eq(analyses.id, req.params.id))
+        .limit(1);
+
+      if (!analysis) {
+        return res.status(404).send("Analysis not found");
+      }
+
+      // Check if user can comment
+      if (analysis.user_id !== (req.user?.id || 1)) {
+        const [shared] = await db
+          .select()
+          .from(shared_analyses)
+          .where(
+            and(
+              eq(shared_analyses.analysis_id, analysis.id),
+              eq(shared_analyses.user_id, req.user?.id || 1),
+              eq(shared_analyses.can_comment, true)
+            )
+          )
+          .limit(1);
+
+        if (!shared) {
+          return res.status(403).send("Comments not allowed");
+        }
+      }
+
+      const [comment] = await db
+        .insert(comments)
+        .values({
+          analysis_id: req.params.id,
+          user_id: req.user?.id || 1,
+          content,
+        })
+        .returning();
+
+      res.json(comment);
     } catch (error) {
       next(error);
     }
