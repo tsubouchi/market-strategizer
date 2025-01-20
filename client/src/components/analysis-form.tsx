@@ -9,6 +9,7 @@ import ReactMarkdown from "react-markdown";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Link as LinkIcon, Paperclip, ArrowLeft, ArrowRight } from "lucide-react";
 import { AnalysisPDFViewer } from "./analysis-pdf";
+import { Typewriter } from "@/components/ui/typewriter";
 
 export type AnalysisType = "3C" | "4P" | "PEST";
 
@@ -100,7 +101,8 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processStatus, setProcessStatus] = useState<string>("");
-  const [analysisResult, setAnalysisResult] = useState<any | null>(null); // Changed to any to accommodate potential structure
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [showPDF, setShowPDF] = useState(false);
   const createAnalysis = useCreateAnalysis();
   const { toast } = useToast();
 
@@ -147,6 +149,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
     }
 
     setIsProcessing(true);
+    setShowPDF(false);
     setProcessStatus("分析を実行中...");
     setAnalysisResult(null);
 
@@ -167,7 +170,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       const analysis = await createAnalysis.mutateAsync(formDataToSend);
 
       // 分析が完了し、結果が有効な場合のみ表示
-      if (analysis.content && !analysis.content.message?.includes("準備中")) {
+      if (analysis.content && !Object.values(analysis.content).some(value => value.message?.includes("準備中"))) {
         setAnalysisResult(analysis);
       }
 
@@ -189,6 +192,15 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       setIsProcessing(false);
       setProcessStatus("");
     }
+  };
+
+  // 分析結果をマークダウン形式に変換
+  const getMarkdownContent = () => {
+    if (!analysisResult?.content) return "";
+    return Object.entries(analysisResult.content)
+      .filter(([_, value]) => !value.message?.includes("準備中"))
+      .map(([key, value]) => `### ${key}\n${value}`)
+      .join('\n\n');
   };
 
   return (
@@ -261,7 +273,19 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
             />
           </div>
 
-          {/* 分析結果の表示 - 完了した結果のみ表示 */}
+          {/* 分析中の表示 */}
+          {isProcessing && (
+            <div className="flex flex-col items-center justify-center gap-4 py-8">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+              </div>
+              <p className="text-lg font-medium text-primary">{processStatus}</p>
+              <p className="text-sm text-muted-foreground">分析結果を待っています...</p>
+            </div>
+          )}
+
+          {/* 分析結果の表示 */}
           {analysisResult && !isProcessing && (
             <>
               <Card className="mt-6">
@@ -269,33 +293,28 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
                   <CardTitle>分析結果</CardTitle>
                 </CardHeader>
                 <CardContent className="prose prose-sm dark:prose-invert">
-                  <ReactMarkdown>
-                    {Object.entries(analysisResult.content)
-                      .filter(([_, value]) => !value.message?.includes("準備中"))
-                      .map(([key, value]) => `### ${key}\n${value}`)
-                      .join('\n\n')}
-                  </ReactMarkdown>
+                  <Typewriter
+                    content={getMarkdownContent()}
+                    speed={30}
+                    onComplete={() => setShowPDF(true)}
+                  />
                 </CardContent>
               </Card>
 
-              {/* PDFプレビュー - 完了した分析結果のみ表示 */}
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>PDFプレビュー</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AnalysisPDFViewer analysis={analysisResult} />
-                </CardContent>
-              </Card>
+              {/* PDFプレビュー - タイプライター表示完了後に表示 */}
+              {showPDF && (
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>PDFプレビュー</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AnalysisPDFViewer analysis={analysisResult} />
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
 
-          {isProcessing && (
-            <div className="flex items-center justify-center gap-2 py-4 text-primary">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">{processStatus}</span>
-            </div>
-          )}
 
           <div className="flex justify-between gap-4">
             {currentStep > 0 && (
