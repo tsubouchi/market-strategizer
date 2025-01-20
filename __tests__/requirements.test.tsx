@@ -64,9 +64,9 @@ describe('Requirements Workflow Tests', () => {
   describe('Requirements History', () => {
     it('renders requirements list', async () => {
       render(
-        React.createElement(QueryClientProvider, { client: queryClient }, 
-          React.createElement(RequirementsHistory)
-        )
+        <QueryClientProvider client={queryClient}>
+          <RequirementsHistory />
+        </QueryClientProvider>
       );
 
       // Loading state should be shown initially
@@ -87,9 +87,9 @@ describe('Requirements Workflow Tests', () => {
       );
 
       render(
-        React.createElement(QueryClientProvider, { client: queryClient },
-          React.createElement(RequirementsHistory)
-        )
+        <QueryClientProvider client={queryClient}>
+          <RequirementsHistory />
+        </QueryClientProvider>
       );
 
       await waitFor(() => {
@@ -102,9 +102,9 @@ describe('Requirements Workflow Tests', () => {
   describe('Requirements Detail', () => {
     it('renders requirement details and markdown preview', async () => {
       render(
-        React.createElement(QueryClientProvider, { client: queryClient },
-          React.createElement(RequirementsDetail, { params: { id: '1' } })
-        )
+        <QueryClientProvider client={queryClient}>
+          <RequirementsDetail params={{ id: '1' }} />
+        </QueryClientProvider>
       );
 
       // Check if the title is rendered
@@ -124,9 +124,9 @@ describe('Requirements Workflow Tests', () => {
       );
 
       render(
-        React.createElement(QueryClientProvider, { client: queryClient },
-          React.createElement(RequirementsDetail, { params: { id: '1' } })
-        )
+        <QueryClientProvider client={queryClient}>
+          <RequirementsDetail params={{ id: '1' }} />
+        </QueryClientProvider>
       );
 
       // Wait for the component to load
@@ -150,9 +150,9 @@ describe('Requirements Workflow Tests', () => {
 
     it('handles markdown download', async () => {
       render(
-        React.createElement(QueryClientProvider, { client: queryClient },
-          React.createElement(RequirementsDetail, { params: { id: '1' } })
-        )
+        <QueryClientProvider client={queryClient}>
+          <RequirementsDetail params={{ id: '1' }} />
+        </QueryClientProvider>
       );
 
       // Wait for the component to load
@@ -177,9 +177,9 @@ describe('Requirements Workflow Tests', () => {
       );
 
       render(
-        React.createElement(QueryClientProvider, { client: queryClient },
-          React.createElement(RequirementsDetail, { params: { id: '1' } })
-        )
+        <QueryClientProvider client={queryClient}>
+          <RequirementsDetail params={{ id: '1' }} />
+        </QueryClientProvider>
       );
 
       const loader = screen.getByRole('status');

@@ -6,19 +6,27 @@ const config: Config.InitialOptions = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/client/src/$1',
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '^lucide-react$': '<rootDir>/node_modules/lucide-react/dist/cjs/lucide-react.js'
   },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json'
+      tsconfig: 'tsconfig.json',
+      useESM: true
     }],
-    '^.+\\.(js|jsx)$': 'babel-jest'
+    '^.+\\.(js|jsx|mjs)$': ['babel-jest', { 
+      configFile: './babel.config.mjs'
+    }]
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(wouter|@tanstack|lucide-react)/)'
+    'node_modules/(?!(wouter|@tanstack|lucide-react|react-markdown)/)'
   ],
+  testEnvironmentOptions: {
+    customExportConditions: ['node', 'node-addons']
+  },
   testMatch: ['**/__tests__/**/*.test.{ts,tsx}'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json']
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'mjs']
 };
 
 export default config;

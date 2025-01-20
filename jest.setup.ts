@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import { createElement } from 'react';
+import type { ReactNode } from 'react';
+import { jest } from '@jest/globals';
 
 // Mock window.location
 Object.defineProperty(window, 'location', {
@@ -21,13 +23,13 @@ global.fetch = jest.fn(() =>
 // Mock wouter
 jest.mock('wouter', () => ({
   useLocation: () => ['/', jest.fn()],
-  Link: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children)
+  Link: ({ children }: { children: ReactNode }) => createElement('div', null, children)
 }));
 
 // Mock react-markdown
 jest.mock('react-markdown', () => ({
   __esModule: true,
-  default: function MockMarkdown({ children }: { children: React.ReactNode }) {
-    return React.createElement('div', { 'data-testid': 'markdown-content' }, children);
+  default: function MockMarkdown({ children }: { children: ReactNode }) {
+    return createElement('div', { 'data-testid': 'markdown-content' }, children);
   }
 }));

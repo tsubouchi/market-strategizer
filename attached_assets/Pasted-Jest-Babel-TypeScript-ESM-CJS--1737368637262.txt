@@ -1,0 +1,67 @@
+Jest と Babel・TypeScript・ESM/CJS 設定の不整合がいくつか含まれている可能性が高く、それが原因でテストが正常に動かない・設定で苦労していると考えられます。
+代表的な問題点・課題をまとめると、主に以下のようなものが挙げられます。
+
+1. 「type: module」と module.exports の混在 (ESM/CJS の不整合)
+
+package.json で "type": "module" を指定している一方、Babel の設定ファイルでは module.exports = { ... } を使っており、ESM と CommonJS が混在しています。
+	•	問題
+	•	ESM 環境下では基本的に export default や export const ... を使うべきであり、module.exports は CJS 用の構文です。
+	•	Jest 自体が CJS ベースで動作する場合が多い（最新バージョンでは ESM 対応も進んでいますが、まだ完全ではない）ため、設定ファイル間での書き方に齟齬があるとエラーになりやすい。
+	•	解決策の例
+	1.	Babel 設定ファイルを ESM 化する
+	•	ファイル名を babel.config.mjs に変更し、export default { ... } に書き換える。
+	2.	あるいは、プロジェクト全体を CommonJS に合わせる
+	•	package.json の "type": "module" を外し、Babel / Jest 設定をすべて require / module.exports で統一する。
+	3.	Jest を ESM で使う場合、Jest の ESM 対応手順に従って設定を合わせる
+	•	参考: Jest公式：ECMAScript Modules (ESM) サポート
+
+2. Babel 関連の依存関係不足 (特に @babel/core)
+
+babel-jest を使用しているにもかかわらず、@babel/core が依存関係に含まれていないように見えます。
+	•	問題
+	•	Babel でコードをコンパイルするには、@babel/core が必須です。
+	•	babel-jest は内部で Babel を呼び出すため、@babel/core がないとエラーになる、または正常動作しない可能性が高い。
+	•	解決策
+	•	npm install --save-dev @babel/core などで @babel/core を明示的にインストール。
+	•	バージョンは babel-jest と整合するものを選ぶ（通常同じメジャーバージョンであればOK）。	
+
+3. Jest と Babel・TS-Jest の二重変換設定
+
+.ts / .tsx は ts-jest、.js / .jsx は babel-jest と分けている構成です。これは問題になることもあれば、正しく組み合わせれば動作する場合もあります。
+	•	考えられる不具合
+	1.	TypeScript ファイルのトランスパイルを ts-jest、JS ファイルのトランスパイルを Babel が担当し、Babel 設定と TS 設定が混在して整合が取れていない。
+	2.	Babel 側で TypeScript をプリコンパイルしようとする設定 (@babel/preset-typescript) が動いてしまい、ts-jest と衝突するケース。
+	•	解決の方針
+	1.	もし TypeScript は ts-jest のみで扱うなら、Babel の @babel/preset-typescript は不要にできる場合がある。
+	2.	JS/TSをすべて Babel で統一し、ts-jest は使わないという構成もアリ。
+	3.	どうしても両方使いたい場合、.babelrc や babel.config.js のスコープ設定・ignore を厳密に指定して競合を避ける。	
+
+4. ESM 環境下の Jest 実行における制限
+
+Jest は内部的に CJS を採用していたり、一部 ESM との相性に制限があります。
+	•	よくある症状
+	•	"Cannot use import statement outside a module" や "Must use import to load ES Module" などのエラーが出る。
+	•	Babel/Jest 設定ファイルを読み込む段階で止まる。
+	•	対処法
+	1.	Jest を ESM として使う場合: jest.config.js (または jest.config.ts) を ESM 化し、"type": "module" を前提に正しい設定を行う。
+	2.	CJS として使う場合: "type": "module" を外し、Jest 設定ファイルを CJS として記述する (module.exports = {...})。
+	3.	公式ドキュメントにある ESM Support (Experimental) を参照し、ESM 対応の留意点を順次設定。	
+
+5. まとめ：主な原因と改善ステップ
+	1.	ESM/CJS の整合性を取る
+	•	package.json の "type": "module" と Babel/Jest 設定ファイルの書き方 (module.exports vs export default) を合わせる。
+	•	ルートにある設定ファイル (babel.config.js or babel.config.cjs など) の拡張子・構文を統一。
+	2.	Babel の必須依存関係を追加する (@babel/core)
+	•	npm install --save-dev @babel/core を忘れずに。
+	3.	ts-jest と babel-jest の役割を再確認
+	•	TypeScript を ts-jest に任せるなら Babel で TypeScript をコンパイルしない設定にする。
+	•	あるいはすべて Babel によるトランスパイルに統一し、ts-jest は使わない形にする。
+	4.	変換設定・ignore設定の確認
+	•	transformIgnorePatterns や moduleNameMapper が正しく働いているか確認。
+	•	依存モジュールによっては ESM/CJS の混在があるため、ビルドエラーが起きることもある。
+	5.	ESM で Jest を使う際の制限に対応
+	•	テストファイルやコンフィグをすべて ESM に寄せるなら、jest --experimental-vm-modules を使う、または babel-jest で変換するといった追加設定が必要になる場合も。	
+
+これらを踏まえて設定を洗い直し、「ESM で統一する」のか「CJS で統一する」のかをまずはっきり決めるのが解決への近道です。また、Babel と TS の役割分担もはっきりさせることで、競合によるテスト失敗を減らせます。
+
+特に @babel/core が入っていない もしくは babel.config が ESM/CJS どちらかに統一されていない ことが原因になっていることが非常に多いので、そこをまずチェックしてみてください。	
