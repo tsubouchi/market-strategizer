@@ -79,7 +79,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex">
           <Sidebar>
             <SidebarHeader>
-              <Link href="/" className="flex items-center gap-2 font-bold pt-16">
+              <Link href="/" className="flex items-center gap-2 font-bold pt-20">
                 <BarChart3 className="h-6 w-6" />
                 <div>
                   <div className="text-lg">戦略AIコンパス</div>
