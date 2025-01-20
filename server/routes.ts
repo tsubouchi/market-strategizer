@@ -1018,25 +1018,40 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).send("Access denied");
       }
 
-      // トランザクションで削除を実行
-      await db.transaction(async (tx) => {
-        // まず関連する分析との関連付けを削除
-        await tx
-          .delete(requirement_analyses)
-          .where(eq(requirement_analyses.requirement_id, req.params.id));
+      await db
+        .delete(product_requirements)
+        .where(eq(product_requirements.id, req.params.id));
 
-        // 次に要件書を削除
-        await tx
-          .delete(product_requirements)
-          .where(eq(product_requirements.id, req.params.id));
-      });
-
-      res.status(204).send();
+      res.status(204).end();
     } catch (error) {
-      console.error("Error deleting requirement:", error);
       next(error);
     }
   });
+
+  // 個別の要件書取得API
+  app.get("/api/requirements/:id", async (req, res, next) => {
+    try {
+      const [requirement] = await db
+        .select()
+        .from(product_requirements)
+        .where(eq(product_requirements.id, req.params.id))
+        .limit(1);
+
+      if (!requirement) {
+        return res.status(404).send("Requirement not found");
+      }
+
+      if (requirement.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      res.json(requirement);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 他のルート設定は変更なし ...
 
   const httpServer = createServer(app);
   return httpServer;
