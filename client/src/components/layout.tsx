@@ -97,24 +97,24 @@ export function Layout({ children }: LayoutProps) {
             </div>
             <SidebarMenu>
               <SidebarMenuItem>
-                <Link href="/analysis/3c">
-                  <SidebarMenuButton tooltip="3C分析" isActive={location === "/analysis/3c"}>
+                <Link href="/analysis/new/3c">
+                  <SidebarMenuButton tooltip="3C分析" isActive={location === "/analysis/new/3c"}>
                     <BarChart3 className="w-4 h-4" />
                     <span>3C分析</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/analysis/4p">
-                  <SidebarMenuButton tooltip="4P分析" isActive={location === "/analysis/4p"}>
+                <Link href="/analysis/new/4p">
+                  <SidebarMenuButton tooltip="4P分析" isActive={location === "/analysis/new/4p"}>
                     <PieChart className="w-4 h-4" />
                     <span>4P分析</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/analysis/pest">
-                  <SidebarMenuButton tooltip="PEST分析" isActive={location === "/analysis/pest"}>
+                <Link href="/analysis/new/pest">
+                  <SidebarMenuButton tooltip="PEST分析" isActive={location === "/analysis/new/pest"}>
                     <TrendingUp className="w-4 h-4" />
                     <span>PEST分析</span>
                   </SidebarMenuButton>

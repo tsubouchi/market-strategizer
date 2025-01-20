@@ -19,16 +19,18 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/history" component={Dashboard} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/search" component={DeepSearch} />
         <Route path="/monitoring" component={CompetitorMonitoring} />
         <Route path="/concept" component={ConceptGenerator} />
-        <Route path="/requirements" component={Concepts} />
+        <Route path="/concepts" component={Concepts} />
         <Route path="/settings" component={Settings} />
+        {/* 分析関連のルート */}
+        <Route path="/analysis/new" component={Analysis} />
         <Route path="/analysis/:id" component={Analysis} />
-        <Route path="/analysis/3c" component={() => <Analysis type="3C" />} />
-        <Route path="/analysis/4p" component={() => <Analysis type="4P" />} />
-        <Route path="/analysis/pest" component={() => <Analysis type="PEST" />} />
+        <Route path="/analysis/new/3c" component={() => <Analysis type="3C" />} />
+        <Route path="/analysis/new/4p" component={() => <Analysis type="4P" />} />
+        <Route path="/analysis/new/pest" component={() => <Analysis type="PEST" />} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
