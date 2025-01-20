@@ -682,13 +682,14 @@ export function registerRoutes(app: Express): Server {
       const { query, searchType = "all" } = req.body;
 
       if (!query) {
-        return res.status(400).send("Search query is required");
+        return res.status(400).json({ error: "Search query is required" });
       }
 
       // Perplexity APIの設定を修正
       if (!process.env.PERPLEXITY_API_KEY) {
         throw new Error("PERPLEXITY_API_KEY is required");
       }
+
       const headers = {
         "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
         "Content-Type": "application/json"
@@ -722,10 +723,14 @@ export function registerRoutes(app: Express): Server {
           temperature: 0.2,
           max_tokens: 1000,
           return_citations: true
-        })
+        }),
+        // タイムアウトを30秒に設定
+        timeout: 30000
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Perplexity API error:", errorText);
         throw new Error(`Search API error: ${response.statusText}`);
       }
 
@@ -742,18 +747,26 @@ export function registerRoutes(app: Express): Server {
         results.push(mainResult);
 
         // 引用元の情報を別々の結果として追加
-        searchResult.citations?.forEach((citation: string, index: number) => {
-          results.push({
-            title: `参考文献 ${index + 1}`,
-            url: citation,
-            summary: "引用元文献"
-          });
-        });
+        if (searchResult.citations?.length > 0) {
+          for (const [index, citation] of searchResult.citations.entries()) {
+            results.push({
+              title: `参考文献 ${index + 1}`,
+              url: citation,
+              summary: "引用元文献"
+            });
+          }
+        }
       }
 
       res.json(results);
     } catch (error) {
       console.error("Deep search error:", error);
+      if (error instanceof Error) {
+        return res.status(502).json({ 
+          error: "検索中にエラーが発生しました",
+          details: error.message 
+        });
+      }
       next(error);
     }
   });

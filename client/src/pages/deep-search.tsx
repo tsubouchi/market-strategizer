@@ -45,7 +45,8 @@ export default function DeepSearch() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const errorData = await response.json();
+        throw new Error(errorData.error || "検索中にエラーが発生しました");
       }
 
       const data = await response.json();
@@ -54,124 +55,127 @@ export default function DeepSearch() {
       toast({
         variant: "destructive",
         title: "検索エラー",
-        description: error.message,
+        description: error.message || "予期せぬエラーが発生しました。しばらく待ってから再度お試しください。",
       });
+      setResults([]);
     } finally {
       setIsSearching(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full p-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">深層検索エージェント</h1>
-        <p className="text-muted-foreground">
-          AIを活用して深い洞察を得るための検索を実行します
-        </p>
-      </div>
-
-      <Card className="w-full mb-8">
-        <CardHeader>
-          <CardTitle>検索条件</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSearch} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="query">検索キーワード</Label>
-              <textarea
-                id="query"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="キーワードを入力（例：AI トレンド、データサイエンス 就職）&#13;&#10;複数行での入力が可能です。"
-                className="min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="type">検索範囲</Label>
-              <Select
-                value={searchType}
-                onValueChange={setSearchType}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="検索範囲を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  <SelectItem value="news">ニュース</SelectItem>
-                  <SelectItem value="academic">学術論文</SelectItem>
-                  <SelectItem value="blog">ブログ・技術記事</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isSearching}
-              className="w-full"
-            >
-              {isSearching ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="mr-2 h-4 w-4" />
-              )}
-              深層検索を実行
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {results.length > 0 && (
-        <div className="">
-          <h2 className="text-2xl font-semibold mb-4">検索結果</h2>
-          <div className="grid gap-4 w-full">
-            {results.map((result, index) => (
-              <Card key={index} className="w-full">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">
-                    {result.url ? (
-                      <a
-                        href={result.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-2"
-                      >
-                        {result.title}
-                        <LinkIcon className="h-4 w-4" />
-                      </a>
-                    ) : (
-                      result.title
-                    )}
-                  </h3>
-                  <p className="text-muted-foreground whitespace-pre-wrap">
-                    {result.summary}
-                  </p>
-                  {result.citations && result.citations.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="font-semibold mb-2">参考文献：</h4>
-                      <ul className="list-disc list-inside space-y-1">
-                        {result.citations.map((citation, idx) => (
-                          <li key={idx}>
-                            <a
-                              href={citation}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline"
-                            >
-                              {citation}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+    <div className="flex-1 w-full min-h-screen">
+      <div className="p-8 space-y-8">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">深層検索エージェント</h1>
+          <p className="text-muted-foreground">
+            AIを活用して深い洞察を得るための検索を実行します
+          </p>
         </div>
-      )}
+
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>検索条件</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSearch} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="query">検索キーワード</Label>
+                <textarea
+                  id="query"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="キーワードを入力（例：AI トレンド、データサイエンス 就職）&#13;&#10;複数行での入力が可能です。"
+                  className="min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="type">検索範囲</Label>
+                <Select
+                  value={searchType}
+                  onValueChange={setSearchType}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="検索範囲を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">すべて</SelectItem>
+                    <SelectItem value="news">ニュース</SelectItem>
+                    <SelectItem value="academic">学術論文</SelectItem>
+                    <SelectItem value="blog">ブログ・技術記事</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isSearching}
+                className="w-full"
+              >
+                {isSearching ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="mr-2 h-4 w-4" />
+                )}
+                深層検索を実行
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {results.length > 0 && (
+          <div className="w-full">
+            <h2 className="text-2xl font-semibold mb-4">検索結果</h2>
+            <div className="grid gap-4">
+              {results.map((result, index) => (
+                <Card key={index} className="w-full">
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold mb-2">
+                      {result.url ? (
+                        <a
+                          href={result.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-2"
+                        >
+                          {result.title}
+                          <LinkIcon className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        result.title
+                      )}
+                    </h3>
+                    <p className="text-muted-foreground whitespace-pre-wrap">
+                      {result.summary}
+                    </p>
+                    {result.citations && result.citations.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="font-semibold mb-2">参考文献：</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {result.citations.map((citation, idx) => (
+                            <li key={idx}>
+                              <a
+                                href={citation}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                {citation}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
