@@ -68,10 +68,10 @@ export function registerRoutes(app: Express): Server {
   // Create new analysis
   app.post("/api/analyses", upload.single("attachment"), async (req, res, next) => {
     try {
-      const { analysis_type, content, reference_url } = req.body;
+      const { analysis_type, content, reference_url, title } = req.body;
 
-      if (!analysis_type || !content) {
-        return res.status(400).send("analysis_type and content are required");
+      if (!analysis_type || !content || !title) {
+        return res.status(400).send("analysis_type, content and title are required");
       }
 
       let parsedContent;
@@ -83,28 +83,23 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Get AI feedback
-      let aiFeedback;
-      try {
-        aiFeedback = await analyzeBusinessStrategy(analysis_type, parsedContent);
-      } catch (error) {
-        console.error('AI analysis error:', error);
-        aiFeedback = JSON.stringify({
-          initial_analysis: { error: "AI分析中にエラーが発生しました" },
-          deep_analysis: { error: "詳細分析を実行できませんでした" },
-          recommendations: { error: "提案を生成できませんでした" }
-        });
-      }
+      let aiFeedback = JSON.stringify({
+        initial_analysis: { message: "AI分析は現在準備中です" },
+        deep_analysis: { message: "詳細分析は現在準備中です" },
+        recommendations: { message: "提案は現在準備中です" }
+      });
 
       const [analysis] = await db
         .insert(analyses)
         .values({
           user_id: req.user?.id || 1, // デモユーザー
+          title, // Add title here
           analysis_type,
           content: parsedContent,
           ai_feedback: aiFeedback,
           reference_url: reference_url || null,
           attachment_path: req.file?.path || null,
-          is_public: false //added is_public field
+          is_public: false
         })
         .returning();
 
@@ -762,9 +757,9 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Deep search error:", error);
       if (error instanceof Error) {
-        return res.status(502).json({ 
+        return res.status(502).json({
           error: "検索中にエラーが発生しました",
-          details: error.message 
+          details: error.message
         });
       }
       next(error);
@@ -980,15 +975,16 @@ export function registerRoutes(app: Express): Server {
         .where(eq(competitors.id, competitor.id));
 
       res.json([update]);
-    } catch(error) {
+    } catch (error) {
       console.error("Error refreshing competitor data:", error);
       next(error);
     }
   });
 
   // 重要度判定ロジックを改善
-  function determineImportance(content: Record<string,string>): "low" | "medium" | "high" {
-    const keywords = {      high: ["新製品発表", "重要な発表", "戦略的提携","M&A", "特許取得", "業績予想修正", "重大な技術革新", "大幅な増収"],
+  function determineImportance(content: Record<string, string>): "low" | "medium" | "high" {
+    const keywords = {
+      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新", "大幅な増収"],
       medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更", "環境対応"],
       low: ["通常の更新", "定期的な情報", "軽微な変更", "その他"]
     };

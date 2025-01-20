@@ -264,7 +264,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
               {createAnalysis.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {isLastStep ? "分析を完了" : (
+              {isLastStep ? "分析をする" : (
                 <>
                   次のステップ
                   <ArrowRight className="w-4 h-4 ml-2" />
