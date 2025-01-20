@@ -15,6 +15,7 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
+// リクエストロギング
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -47,6 +48,11 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // 静的ファイルの提供を先に設定
+    if (app.get("env") !== "development") {
+      serveStatic(app);
+    }
+
     const server = registerRoutes(app);
 
     // エラーハンドリングミドルウェアの強化
@@ -60,13 +66,13 @@ app.use((req, res, next) => {
       });
     });
 
+    // 開発環境の場合はViteのセットアップを最後に行う
     if (app.get("env") === "development") {
       await setupVite(app, server);
-    } else {
-      serveStatic(app);
     }
 
-    const PORT = 5001;
+    // ポート2で起動
+    const PORT = 2;
     server.listen(PORT, "0.0.0.0", () => {
       log(`Server is running on port ${PORT}`);
       log(`Environment: ${app.get("env")}`);
