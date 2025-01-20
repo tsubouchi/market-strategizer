@@ -152,7 +152,7 @@ export default function Sidebar() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar/95 backdrop-blur-sm">
+          <SheetContent side="left" className="w-64 p-0 bg-sidebar border-r">
             <SidebarContent />
           </SheetContent>
         </Sheet>
