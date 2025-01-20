@@ -112,11 +112,11 @@ export default function RequirementDetail({ params }: { params: { id: string } }
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader className="relative">
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-6 right-6">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Trash2 className="h-4 w-4 text-destructive" />
+              <Button variant="destructive" size="icon" className="h-9 w-9">
+                <Trash2 className="h-5 w-5" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
