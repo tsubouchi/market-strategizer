@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -119,7 +120,7 @@ export default function ConceptGenerator() {
     },
   ]);
   const [requirements, setRequirements] = useState<Requirements | null>(null); // Added state for requirements
-  
+
 
   const handleAnalysisSelect = (analysisId: string) => {
     setSelectedAnalyses((current) =>
@@ -279,21 +280,45 @@ export default function ConceptGenerator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {analyses?.map((analysis) => (
-              <div key={analysis.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={analysis.id}
-                  checked={selectedAnalyses.includes(analysis.id)}
-                  onCheckedChange={() => handleAnalysisSelect(analysis.id)}
-                />
-                <Label htmlFor={analysis.id} className="flex-1">
-                  <span className="font-medium">{analysis.analysis_type}分析</span>
-                  <span className="text-sm text-muted-foreground ml-2">
-                    {new Date(analysis.created_at).toLocaleDateString()}
-                  </span>
-                </Label>
-              </div>
-            ))}
+            <div className="grid gap-4">
+              {analyses?.map((analysis) => (
+                <div
+                  key={analysis.id}
+                  className="flex items-start space-x-3 p-4 rounded-lg border bg-card hover:bg-accent/10 transition-colors"
+                >
+                  <Checkbox
+                    id={analysis.id}
+                    checked={selectedAnalyses.includes(analysis.id)}
+                    onCheckedChange={() => handleAnalysisSelect(analysis.id)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 space-y-1">
+                    <Label
+                      htmlFor={analysis.id}
+                      className="text-base font-medium cursor-pointer"
+                    >
+                      {analysis.title || `${analysis.analysis_type}分析のタイトル`}
+                    </Label>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-primary-foreground">
+                        {analysis.analysis_type}分析
+                      </span>
+                      <span>
+                        {analysis.created_at &&
+                          format(new Date(analysis.created_at), "yyyy年MM月dd日")}
+                      </span>
+                    </div>
+                    {analysis.content && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                        {Object.entries(analysis.content as Record<string, string>)
+                          .map(([key, value]) => `${key}: ${value}`)
+                          .join(" | ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 

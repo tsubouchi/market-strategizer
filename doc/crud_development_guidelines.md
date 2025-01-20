@@ -12,7 +12,7 @@
 
 ```typescript
 // バックエンド
-const userId = req.user?.id || 1; // デモユーザーとしてID=1を使用
+const userId = 1; // デモユーザーとしてID=1を使用
 
 // データベースクエリ例
 const userRecords = await db
@@ -24,8 +24,8 @@ const userRecords = await db
 ### 2.2 認証チェックの実装
 
 ```typescript
-// 本番環境での実装を見据えた条件分岐
-if (record.user_id !== (req.user?.id || 1)) {
+// デモ環境での実装
+if (record.user_id !== 1) {
   return res.status(403).send("Access denied");
 }
 ```
@@ -168,40 +168,131 @@ return useMutation({
 });
 ```
 
-## 7. 本番環境への移行準備
+## 7. データベーススキーマ設計の指針
+
+### 7.1 必須フィールドの追加
+
+新しい必須フィールドを追加する際は、以下の手順で実装します：
+
+1. 一時的にNULLを許容する形で追加
+```typescript
+title: text("title"), // 一時的にnullable
+```
+
+2. 既存レコードにデフォルト値を設定
+```sql
+UPDATE table_name 
+SET new_field = 'デフォルト値' 
+WHERE new_field IS NULL;
+```
+
+3. NOT NULL制約を追加
+```typescript
+title: text("title").notNull(), // 必須フィールドに変更
+```
+
+### 7.2 スキーマ定義例
+
+```typescript
+export const analyses = pgTable("analyses", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  user_id: serial("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  analysis_type: text("analysis_type").notNull(),
+  content: jsonb("content").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+```
+
+## 8. フロントエンドのデータ表示パターン
+
+### 8.1 カード表示のベストプラクティス
+
+```typescript
+<Card className="hover:shadow-lg transition-shadow relative group">
+  <CardHeader>
+    <CardTitle className="flex justify-between items-start">
+      <div>
+        <div className="text-xl">{analysis.title}</div>
+        <div className="text-sm text-muted-foreground mt-1">
+          {analysis.analysis_type}分析
+        </div>
+      </div>
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p className="text-sm text-muted-foreground line-clamp-3">
+      {/* コンテンツの表示 */}
+    </p>
+  </CardContent>
+</Card>
+```
+
+### 8.2 削除ボタンの配置
+
+```typescript
+<div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+  <AlertDialog>
+    <AlertDialogTrigger asChild>
+      <Button 
+        variant="outline" 
+        size="icon"
+        className="hover:bg-destructive/10 hover:text-destructive"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </AlertDialogTrigger>
+    {/* 確認ダイアログの内容 */}
+  </AlertDialog>
+</div>
+```
+
+## 9. APIエンドポイントの設計パターン
+
+### 9.1 削除エンドポイントの実装
+
+```typescript
+app.delete("/api/:resource/:id", async (req, res, next) => {
+  try {
+    const [record] = await db
+      .select()
+      .from(targetTable)
+      .where(eq(targetTable.id, req.params.id))
+      .limit(1);
+
+    if (!record) {
+      return res.status(404).send("Record not found");
+    }
+
+    // デモ環境での認証チェック
+    if (record.user_id !== 1) {
+      return res.status(403).send("Access denied");
+    }
+
+    await db
+      .delete(targetTable)
+      .where(eq(targetTable.id, req.params.id));
+
+    res.json({ message: "Successfully deleted" });
+  } catch (error) {
+    next(error);
+  }
+});
+```
+
+## 10. 本番環境への移行準備
 
 1. ユーザー認証の実装
-   - `req.user?.id || 1` の箇所を `req.user.id` に置き換え
-   - 認証ミドルウェアの追加
+   - デモ環境の固定user_idを実際の認証システムに置き換え
+   - セッション管理の追加
+   - 適切なアクセス制御の実装
 
-2. アクセス制御の強化
-   - ロールベースのアクセス制御
-   - より厳密な所有者チェック
+2. データ整合性の確保
+   - 必須フィールドの確認と適切なデフォルト値の設定
+   - 関連テーブル間の整合性チェック
 
-3. エラーメッセージの調整
-   - デバッグ情報の制限
-   - ユーザーフレンドリーなエラーメッセージ
-
-## 8. パフォーマンス最適化
-
-1. N+1問題の回避
-   - 関連データの一括取得
-   - 必要なフィールドのみの選択
-
-2. インデックスの活用
-   - 頻繁に検索される列へのインデックス付与
-   - 複合インデックスの検討
-
-## 9. テスト戦略
-
-1. 単体テスト
-   - CRUD操作の基本機能テスト
-   - エラーケースの検証
-
-2. 統合テスト
-   - 関連テーブル間の整合性確認
-   - トランザクションの動作確認
-
-3. E2Eテスト
-   - UI操作を含めた一連の流れの確認
-   - エラー時のUX検証
+3. エラーハンドリングの強化
+   - より詳細なエラーメッセージ
+   - エラーログの強化
+   - ユーザーフレンドリーなエラー表示
