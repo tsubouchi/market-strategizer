@@ -57,22 +57,6 @@ export default function Dashboard() {
     );
   }
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteAnalysis.mutateAsync(id);
-      toast({
-        title: "削除完了",
-        description: "分析が正常に削除されました。",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error.message,
-      });
-    }
-  };
-
   return (
     <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
       <div className="flex items-center gap-4 mb-8">
@@ -83,13 +67,13 @@ export default function Dashboard() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex-1">
+        <div>
           <h1 className="text-4xl font-bold">分析一覧</h1>
           <p className="text-muted-foreground">
             戦略分析の履歴と結果の管理
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 ml-auto">
           <Button onClick={() => navigate("/analysis/new")}>
             <PlusCircle className="w-4 h-4 mr-2" />
             新規分析
