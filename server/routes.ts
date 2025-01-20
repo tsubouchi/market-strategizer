@@ -828,6 +828,41 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // 競合他社のキーワード更新
+  app.put("/api/competitors/:id/keywords", async (req, res, next) => {
+    try {
+      const { monitoring_keywords } = req.body;
+
+      if (!monitoring_keywords || !Array.isArray(monitoring_keywords)) {
+        return res.status(400).send("monitoring_keywords (array) is required");
+      }
+
+      const [competitor] = await db
+        .select()
+        .from(competitors)
+        .where(eq(competitors.id, req.params.id))
+        .limit(1);
+
+      if (!competitor) {
+        return res.status(404).send("Competitor not found");
+      }
+
+      // キーワードを更新
+      const [updated] = await db
+        .update(competitors)
+        .set({
+          monitoring_keywords,
+          updated_at: new Date(),
+        })
+        .where(eq(competitors.id, req.params.id))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // 競合他社の更新情報を取得
   app.post("/api/competitors/:id/refresh", async (req, res, next) => {
     try {

@@ -39,6 +39,7 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle,
+  Edit2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -140,17 +141,153 @@ const LoadingCard = () => (
   </Card>
 );
 
+const KeywordEditDialog = ({ 
+  competitor, 
+  isOpen, 
+  onOpenChange 
+}: { 
+  competitor: Competitor; 
+  isOpen: boolean; 
+  onOpenChange: (open: boolean) => void;
+}) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [keywords, setKeywords] = useState(competitor.monitoring_keywords.join(", "));
+
+  const updateKeywordsMutation = useMutation({
+    mutationFn: async (data: { id: string; keywords: string[] }) => {
+      const response = await fetch(`/api/competitors/${data.id}/keywords`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          monitoring_keywords: data.keywords,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/competitors"] });
+      onOpenChange(false);
+      toast({
+        title: "キーワードを更新しました",
+        description: "モニタリングキーワードが更新されました",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message,
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const keywordArray = keywords
+      .split(",")
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
+
+    if (keywordArray.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "少なくとも1つのキーワードを入力してください",
+      });
+      return;
+    }
+
+    updateKeywordsMutation.mutate({
+      id: competitor.id,
+      keywords: keywordArray,
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>モニタリングキーワードの編集</DialogTitle>
+          <DialogDescription>
+            {competitor.company_name}のモニタリングキーワードを編集します
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="keywords">
+                モニタリングキーワード（カンマ区切り）
+              </Label>
+              <Input
+                id="keywords"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                placeholder="製品名, サービス名, 技術キーワード"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="submit"
+              disabled={updateKeywordsMutation.isPending}
+            >
+              {updateKeywordsMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              更新
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
+const ImportanceBadge = ({ score }: { score: CompetitorUpdate["importance_score"] }) => {
+  switch (score) {
+    case "high":
+      return (
+        <Badge variant="destructive" className="gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          重要
+        </Badge>
+      );
+    case "medium":
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Activity className="h-3 w-3" />
+          中程度
+        </Badge>
+      );
+    case "low":
+      return (
+        <Badge variant="outline" className="gap-1">
+          <CheckCircle className="h-3 w-3" />
+          軽微
+        </Badge>
+      );
+  }
+};
+
 export default function CompetitorMonitoring() {
   const [isAddingCompetitor, setIsAddingCompetitor] = useState(false);
+  const [editingCompetitor, setEditingCompetitor] = useState<Competitor | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // 競合他社一覧の取得
   const { data: competitors, isLoading } = useQuery<Competitor[]>({
     queryKey: ["/api/competitors"],
   });
 
-  // 競合他社の追加
   const addCompetitorMutation = useMutation({
     mutationFn: async (data: {
       company_name: string;
@@ -188,7 +325,6 @@ export default function CompetitorMonitoring() {
     },
   });
 
-  // 更新機能
   const refreshCompetitorMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/competitors/${id}/refresh`, {
@@ -240,34 +376,6 @@ export default function CompetitorMonitoring() {
     });
   };
 
-  // 重要度に応じたバッジの表示
-  const ImportanceBadge = ({ score }: { score: CompetitorUpdate["importance_score"] }) => {
-    switch (score) {
-      case "high":
-        return (
-          <Badge variant="destructive" className="gap-1">
-            <AlertTriangle className="h-3 w-3" />
-            重要
-          </Badge>
-        );
-      case "medium":
-        return (
-          <Badge variant="secondary" className="gap-1">
-            <Activity className="h-3 w-3" />
-            中程度
-          </Badge>
-        );
-      case "low":
-        return (
-          <Badge variant="outline" className="gap-1">
-            <CheckCircle className="h-3 w-3" />
-            軽微
-          </Badge>
-        );
-    }
-  };
-
-  // Show loading skeletons during initial load
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -421,17 +529,26 @@ export default function CompetitorMonitoring() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">
-                        モニタリングキーワード
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {competitor.monitoring_keywords.map((keyword, index) => (
-                          <Badge key={index} variant="secondary">
-                            {keyword}
-                          </Badge>
-                        ))}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">
+                          モニタリングキーワード
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {competitor.monitoring_keywords.map((keyword, index) => (
+                            <Badge key={index} variant="secondary">
+                              {keyword}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingCompetitor(competitor)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium mb-2">最新の更新</h4>
@@ -497,6 +614,14 @@ export default function CompetitorMonitoring() {
           ))}
         </AnimatePresence>
       </div>
+
+      {editingCompetitor && (
+        <KeywordEditDialog
+          competitor={editingCompetitor}
+          isOpen={!!editingCompetitor}
+          onOpenChange={(open) => !open && setEditingCompetitor(null)}
+        />
+      )}
     </div>
   );
 }
