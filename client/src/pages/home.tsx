@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, BarChart3, PieChart, TrendingUp, ArrowRight } from "lucide-react";
+import { Header } from "@/components/header";
 
 export default function Home() {
   const analysisTypes = [
@@ -45,17 +46,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <div className="container mx-auto py-8 px-4 sm:py-12 sm:px-6">
-        {/* Hero Section */}
-        <div className="text-center mb-12 sm:mb-16">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-white">
-            戦略AIコンパス
-          </h1>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
-            不確実な時代の羅針盤。AIと多段分析でビジネスの方向性を明確化し、次なるアクションプランを見える化します。
-          </p>
-        </div>
-
         {/* Analysis Types Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-16 sm:mb-20">
           {analysisTypes.map((type) => (
