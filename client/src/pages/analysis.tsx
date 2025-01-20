@@ -16,40 +16,41 @@ import Comments from "@/components/comments";
 import { useToast } from "@/hooks/use-toast";
 import ShareAnalysis from "@/components/share-analysis";
 
-export default function AnalysisPage() {
+interface AnalysisPageProps {
+  type?: AnalysisType;
+}
+
+export default function AnalysisPage({ type }: AnalysisPageProps) {
   const { id } = useParams<{ id: string }>();
-  const [location, navigate] = useLocation();
+  const [_, navigate] = useLocation();
   const { data: analysis, isLoading } = useAnalysis(id || "");
   const updateVisibility = useUpdateAnalysisVisibility();
   const { toast } = useToast();
 
   // 新規分析の場合
-  if (id === "new") {
-    const params = new URLSearchParams(window.location.search);
-    const type = params.get("type") as AnalysisType;
+  if (id === "new" || type) {
+    const analysisType = type || (new URLSearchParams(window.location.search).get("type") as AnalysisType);
 
-    if (!type || !["3C", "4P", "PEST"].includes(type)) {
+    if (!analysisType || !["3C", "4P", "PEST"].includes(analysisType)) {
       navigate("/");
       return null;
     }
 
     return (
-      <div className="container mx-auto py-8 px-4 max-w-7xl">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/")}
-              className="mb-4"
-            >
-              ← トップに戻る
-            </Button>
-          </div>
-          <AnalysisForm
-            type={type}
-            onComplete={(analysis) => navigate(`/analysis/${analysis.id}`)}
-          />
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="mb-4"
+          >
+            ← トップに戻る
+          </Button>
         </div>
+        <AnalysisForm
+          type={analysisType}
+          onComplete={(analysis) => navigate(`/analysis/${analysis.id}`)}
+        />
       </div>
     );
   }
@@ -91,124 +92,122 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
-      <div className="max-w-6xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/dashboard")}
-          className="mb-4"
-        >
-          ← ダッシュボードに戻る
-        </Button>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/dashboard")}
+        className="mb-4"
+      >
+        ← ダッシュボードに戻る
+      </Button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Analysis Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Analysis Content */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>{analysis.analysis_type}分析の結果</span>
+              <div className="flex items-center gap-2">
+                <ShareAnalysis analysisId={analysis.id} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={handleVisibilityToggle}
+                >
+                  {analysis.is_public ? (
+                    <>
+                      <Globe className="w-4 h-4" />
+                      公開中
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      非公開
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => window.print()}
+                >
+                  <FileDown className="w-4 h-4" />
+                  PDF
+                </Button>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Reference URL */}
+              {analysis.reference_url && (
+                <div className="flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4" />
+                  <a
+                    href={analysis.reference_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    参考URL
+                  </a>
+                </div>
+              )}
+
+              {/* Attachment */}
+              {analysis.attachment_path && (
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  <a
+                    href={`/api/uploads/${analysis.attachment_path.split("/").pop()}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    添付資料を表示
+                  </a>
+                </div>
+              )}
+
+              {/* Analysis Content */}
+              {Object.entries(content).map(([key, value]) => (
+                <div key={key} className="space-y-2">
+                  <h3 className="font-medium capitalize">{key}</h3>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{value}</p>
+                </div>
+              ))}
+
+              {/* AI Feedback */}
+              {analysis.ai_feedback && (
+                <div className="mt-8">
+                  <h3 className="font-medium mb-2">AI分析結果</h3>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <pre className="whitespace-pre-wrap text-sm">
+                      {analysis.ai_feedback}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Right Column: PDF Preview and Comments */}
+        <div className="space-y-8">
+          {/* PDF Preview */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{analysis.analysis_type}分析の結果</span>
-                <div className="flex items-center gap-2">
-                  <ShareAnalysis analysisId={analysis.id} />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={handleVisibilityToggle}
-                  >
-                    {analysis.is_public ? (
-                      <>
-                        <Globe className="w-4 h-4" />
-                        公開中
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="w-4 h-4" />
-                        非公開
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={() => window.print()}
-                  >
-                    <FileDown className="w-4 h-4" />
-                    PDF
-                  </Button>
-                </div>
-              </CardTitle>
+              <CardTitle>PDFプレビュー</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Reference URL */}
-                {analysis.reference_url && (
-                  <div className="flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4" />
-                    <a
-                      href={analysis.reference_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      参考URL
-                    </a>
-                  </div>
-                )}
-
-                {/* Attachment */}
-                {analysis.attachment_path && (
-                  <div className="flex items-center gap-2">
-                    <Paperclip className="w-4 h-4" />
-                    <a
-                      href={`/api/uploads/${analysis.attachment_path.split("/").pop()}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      添付資料を表示
-                    </a>
-                  </div>
-                )}
-
-                {/* Analysis Content */}
-                {Object.entries(content).map(([key, value]) => (
-                  <div key={key} className="space-y-2">
-                    <h3 className="font-medium capitalize">{key}</h3>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{value}</p>
-                  </div>
-                ))}
-
-                {/* AI Feedback */}
-                {analysis.ai_feedback && (
-                  <div className="mt-8">
-                    <h3 className="font-medium mb-2">AI分析結果</h3>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <pre className="whitespace-pre-wrap text-sm">
-                        {analysis.ai_feedback}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-              </div>
+            <CardContent className="p-0">
+              <AnalysisPDFViewer analysis={analysis} />
             </CardContent>
           </Card>
 
-          {/* Right Column: PDF Preview and Comments */}
-          <div className="space-y-8">
-            {/* PDF Preview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>PDFプレビュー</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <AnalysisPDFViewer analysis={analysis} />
-              </CardContent>
-            </Card>
-
-            {/* Comments Section */}
-            <Comments analysisId={analysis.id} />
-          </div>
+          {/* Comments Section */}
+          <Comments analysisId={analysis.id} />
         </div>
       </div>
     </div>

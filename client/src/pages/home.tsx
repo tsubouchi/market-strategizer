@@ -66,7 +66,7 @@ export default function Home() {
               ))}
             </ul>
             <Button className="w-full mt-auto" asChild>
-              <Link href={`/analysis/${type.id.toLowerCase()}`}>
+              <Link href={`/analysis/new/${type.id.toLowerCase()}`}>
                 この分析を開始
               </Link>
             </Button>
