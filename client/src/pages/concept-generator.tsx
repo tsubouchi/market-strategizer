@@ -19,8 +19,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Settings, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Settings, CheckCircle2, XCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface RequirementsForm {
   timeline?: string;
@@ -39,7 +51,8 @@ interface GenerationStep {
 
 interface Requirements {
   id: string;
-  // Add other necessary properties for requirements
+  title: string; // Added title property
+  // その他の必要なプロパティ
 }
 
 export default function ConceptGenerator() {
@@ -47,6 +60,44 @@ export default function ConceptGenerator() {
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
   const [requirementsForm, setRequirementsForm] = useState<RequirementsForm>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/requirements/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/concepts"] });
+      toast({
+        title: "削除完了",
+        description: "要件書を削除しました",
+      });
+      setRequirements(null); //added to clear requirement after delete
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message,
+      });
+    },
+  });
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
+
   const [steps, setSteps] = useState<GenerationStep[]>([
     {
       id: "analyze",
@@ -68,7 +119,7 @@ export default function ConceptGenerator() {
     },
   ]);
   const [requirements, setRequirements] = useState<Requirements | null>(null); // Added state for requirements
-  const { toast } = useToast();
+  
 
   const handleAnalysisSelect = (analysisId: string) => {
     setSelectedAnalyses((current) =>
@@ -309,6 +360,54 @@ export default function ConceptGenerator() {
             </div>
           </CardContent>
         </Card>
+
+        {/* 要件書一覧セクションを追加 */}
+        {requirements && (
+          <Card>
+            <CardHeader>
+              <CardTitle>生成された要件書</CardTitle>
+              <CardDescription>
+                最新の要件書の内容を確認できます
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-medium">{requirements.title}</h3>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="icon">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>要件書の削除</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          この要件書を削除してもよろしいですか？この操作は取り消せません。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(requirements.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deleteMutation.isPending && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          削除
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 生成ステップの表示 */}
         {isGenerating && (
