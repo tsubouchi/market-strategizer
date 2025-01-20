@@ -120,29 +120,29 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   // 生成ステップの状態管理
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
     {
-      id: "analyze",
-      title: "分析データの統合",
-      description: "選択された分析を統合し、要点を抽出します",
+      id: "data_collection",
+      title: "データ収集",
+      description: "分析に必要な情報を収集しています",
       status: "waiting",
     },
     {
-      id: "initial",
+      id: "initial_analysis",
       title: "初期分析",
-      description: "基本的な分析を実行します",
+      description: "基本的な分析を実行しています",
       status: "waiting",
     },
     {
-      id: "deep",
+      id: "deep_analysis",
       title: "詳細分析",
-      description: "深い洞察を導き出します",
+      description: "深い洞察を導き出しています",
       status: "waiting",
     },
     {
-      id: "recommendations",
-      title: "提案生成",
-      description: "具体的な提案を作成します",
+      id: "final_recommendations",
+      title: "最終提案",
+      description: "具体的な提案を生成しています",
       status: "waiting",
-    },
+    }
   ]);
 
   // ステップのステータスを更新する関数
@@ -205,8 +205,8 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
     setAnalysisResult(null);
 
     try {
-      // 分析データの統合ステップを開始
-      updateStepStatus("analyze", "processing");
+      // データ収集ステップ開始
+      updateStepStatus("data_collection", "processing");
       const formDataToSend = new FormData();
       formDataToSend.append("analysis_type", type);
       formDataToSend.append("title", title);
@@ -220,19 +220,18 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
         formDataToSend.append("attachment", file);
       }
 
-      updateStepStatus("analyze", "completed");
-      updateStepStatus("initial", "processing");
+      updateStepStatus("data_collection", "completed");
+      updateStepStatus("initial_analysis", "processing");
 
       const analysis = await createAnalysis.mutateAsync(formDataToSend);
 
-      // 分析が完了し、結果が有効な場合のみ表示
-      if (analysis.content && !Object.values(analysis.content).some(value => value.message?.includes("準備中"))) {
-        setAnalysisResult(analysis);
+      if (analysis.content) {
+        // 分析の各段階の状態を更新
+        updateStepStatus("initial_analysis", "completed");
+        updateStepStatus("deep_analysis", "completed");
+        updateStepStatus("final_recommendations", "completed");
 
-        // すべてのステップを完了としてマーク
-        updateStepStatus("initial", "completed");
-        updateStepStatus("deep", "completed");
-        updateStepStatus("recommendations", "completed");
+        setAnalysisResult(analysis);
 
         toast({
           title: "分析完了",
