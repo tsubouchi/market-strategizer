@@ -10,6 +10,7 @@ import CompetitorMonitoring from "@/pages/competitor-monitoring";
 import ConceptGenerator from "@/pages/concept-generator";
 import Analysis from "@/pages/analysis";
 import Settings from "@/pages/settings";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 function Router() {
   return (
@@ -34,8 +35,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <SidebarProvider>
+        <Router />
+        <Toaster />
+      </SidebarProvider>
     </QueryClientProvider>
   );
 }
