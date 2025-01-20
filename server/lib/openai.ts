@@ -84,6 +84,25 @@ interface WebAppRequirement {
   };
 }
 
+interface AnalysisResult {
+  initial_analysis: {
+    key_points: string[];
+    opportunities: string[];
+    challenges: string[];
+  };
+  deep_analysis: {
+    company_insights: string[];
+    market_insights: string[];
+    competitive_insights: string[];
+    recommendations: string[];
+  };
+  final_recommendations: {
+    strategic_moves: string[];
+    action_items: string[];
+    risk_factors: string[];
+  };
+}
+
 export async function generateConcept(analyses: Analysis[]) {
   try {
     // Step 1: 統合準備 - 各分析の要点を抽出・要約
@@ -313,7 +332,6 @@ export async function generateWebAppRequirements(
 
 export async function generateMarkdownRequirements(requirements: WebAppRequirement): Promise<string> {
   const md = `# ${requirements.title} 要件定義書
-
 ## 1. プロジェクトの目的
 ### 背景
 ${requirements.purpose.background}
@@ -462,4 +480,156 @@ export async function refineRequirements(
     console.error("Error in requirements refinement:", error);
     throw new Error(`要件書の更新中にエラーが発生しました: ${error.message}`);
   }
+}
+
+export async function analyze3C(formData: Record<string, string>): Promise<AnalysisResult> {
+  try {
+    // Step 1: 初期分析
+    const initialAnalysisResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "3C分析の初期評価を行います。Company（自社）、Customer（顧客）、Competitor（競合）の基本的な分析を行い、主要なポイント、機会、課題を抽出してください。",
+        },
+        {
+          role: "user",
+          content: `以下の3C分析データを基に、初期分析を行ってください：
+
+Company分析:
+${formData.company}
+
+Customer分析:
+${formData.customer}
+
+Competitor分析:
+${formData.competitors}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "key_points": ["主要なポイント1", "主要なポイント2", ...],
+  "opportunities": ["機会1", "機会2", ...],
+  "challenges": ["課題1", "課題2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const initialAnalysis = JSON.parse(initialAnalysisResponse.choices[0].message.content || "{}");
+
+    // Step 2: 詳細分析
+    const deepAnalysisResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "初期分析結果を基に、より深い洞察を導き出します。各要素の関連性や影響を分析し、具体的な示唆を提供してください。",
+        },
+        {
+          role: "user",
+          content: `初期分析結果と元データを基に、詳細な分析を行ってください：
+
+初期分析結果:
+${JSON.stringify(initialAnalysis, null, 2)}
+
+元データ:
+${JSON.stringify(formData, null, 2)}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "company_insights": ["自社に関する洞察1", "自社に関する洞察2", ...],
+  "market_insights": ["市場に関する洞察1", "市場に関する洞察2", ...],
+  "competitive_insights": ["競争環境に関する洞察1", "競争環境に関する洞察2", ...],
+  "recommendations": ["戦略的示唆1", "戦略的示唆2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const deepAnalysis = JSON.parse(deepAnalysisResponse.choices[0].message.content || "{}");
+
+    // Step 3: 最終提案
+    const finalRecommendationsResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "これまでの分析結果を統合し、具体的なアクションプランと提案を作成します。実行可能な戦略とリスク要因も含めて提示してください。",
+        },
+        {
+          role: "user",
+          content: `これまでの分析結果を基に、最終的な提案を作成してください：
+
+初期分析:
+${JSON.stringify(initialAnalysis, null, 2)}
+
+詳細分析:
+${JSON.stringify(deepAnalysis, null, 2)}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "strategic_moves": ["戦略的アクション1", "戦略的アクション2", ...],
+  "action_items": ["具体的なアクション1", "具体的なアクション2", ...],
+  "risk_factors": ["リスク要因1", "リスク要因2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const finalRecommendations = JSON.parse(finalRecommendationsResponse.choices[0].message.content || "{}");
+
+    return {
+      initial_analysis: initialAnalysis,
+      deep_analysis: deepAnalysis,
+      final_recommendations: finalRecommendations,
+    };
+  } catch (error: any) {
+    console.error("Error in 3C analysis:", error);
+    throw new Error(`分析中にエラーが発生しました: ${error.message}`);
+  }
+}
+
+// Markdown形式に変換するヘルパー関数
+export function convertAnalysisToMarkdown(result: AnalysisResult): string {
+  return `# 3C分析結果
+
+## 初期分析
+### 主要なポイント
+${result.initial_analysis.key_points.map(point => `- ${point}`).join('\n')}
+
+### 機会
+${result.initial_analysis.opportunities.map(opp => `- ${opp}`).join('\n')}
+
+### 課題
+${result.initial_analysis.challenges.map(challenge => `- ${challenge}`).join('\n')}
+
+## 詳細分析
+### 自社の洞察
+${result.deep_analysis.company_insights.map(insight => `- ${insight}`).join('\n')}
+
+### 市場の洞察
+${result.deep_analysis.market_insights.map(insight => `- ${insight}`).join('\n')}
+
+### 競争環境の洞察
+${result.deep_analysis.competitive_insights.map(insight => `- ${insight}`).join('\n')}
+
+### 戦略的示唆
+${result.deep_analysis.recommendations.map(rec => `- ${rec}`).join('\n')}
+
+## 最終提案
+### 戦略的アクション
+${result.final_recommendations.strategic_moves.map(move => `- ${move}`).join('\n')}
+
+### 具体的なアクションプラン
+${result.final_recommendations.action_items.map(item => `- ${item}`).join('\n')}
+
+### リスク要因
+${result.final_recommendations.risk_factors.map(risk => `- ${risk}`).join('\n')}
+
+---
+生成日時: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}
+`;
 }

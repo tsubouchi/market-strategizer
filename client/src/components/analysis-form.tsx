@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useCreateAnalysis } from "@/hooks/use-analysis";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,6 +93,14 @@ interface AnalysisFormProps {
   onComplete?: (analysis: any) => void;
 }
 
+interface GenerationStep {
+  id: string;
+  title: string;
+  description: string;
+  status: "waiting" | "processing" | "completed" | "error";
+  error?: string;
+}
+
 export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, string>>({});
@@ -100,9 +108,8 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [referenceUrl, setReferenceUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processStatus, setProcessStatus] = useState<string>("");
-  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const [showPDF, setShowPDF] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const createAnalysis = useCreateAnalysis();
   const { toast } = useToast();
 
@@ -110,16 +117,35 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const currentField = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
 
-  const handleNext = () => {
-    if (!title && currentStep === 0) {
-      toast({
-        variant: "destructive",
-        title: "入力エラー",
-        description: "分析のタイトルを入力してください。",
-      });
-      return;
-    }
+  // 生成ステップの状態管理
+  const [generationSteps] = useState<GenerationStep[]>([
+    {
+      id: "analyze",
+      title: "分析データの統合",
+      description: "選択された分析を統合し、要点を抽出します",
+      status: "waiting",
+    },
+    {
+      id: "initial",
+      title: "初期分析",
+      description: "基本的な分析を実行します",
+      status: "waiting",
+    },
+    {
+      id: "deep",
+      title: "詳細分析",
+      description: "深い洞察を導き出します",
+      status: "waiting",
+    },
+    {
+      id: "recommendations",
+      title: "提案生成",
+      description: "具体的な提案を作成します",
+      status: "waiting",
+    },
+  ]);
 
+  const handleNext = () => {
     if (!formData[currentField.key]?.trim()) {
       toast({
         variant: "destructive",
@@ -139,6 +165,12 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!isLastStep) {
+      handleNext();
+      return;
+    }
+
+    // 必須入力チェック
     if (!title.trim()) {
       toast({
         variant: "destructive",
@@ -148,9 +180,17 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       return;
     }
 
+    if (Object.keys(formData).length < steps.length) {
+      toast({
+        variant: "destructive",
+        title: "入力エラー",
+        description: "すべての分析項目を入力してください。",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     setShowPDF(false);
-    setProcessStatus("分析を実行中...");
     setAnalysisResult(null);
 
     try {
@@ -176,7 +216,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
 
       toast({
         title: "分析完了",
-        description: "分析が正常に保存されました。",
+        description: "分析が正常に完了しました。",
       });
 
       if (onComplete) {
@@ -186,11 +226,10 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       toast({
         variant: "destructive",
         title: "エラー",
-        description: error.message || "分析の保存中にエラーが発生しました。",
+        description: error.message || "分析中にエラーが発生しました。",
       });
     } finally {
       setIsProcessing(false);
-      setProcessStatus("");
     }
   };
 
@@ -215,6 +254,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* タイトル入力（最初のステップのみ） */}
           {currentStep === 0 && (
             <>
               <div className="space-y-2">
@@ -259,6 +299,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
             </>
           )}
 
+          {/* 分析内容入力 */}
           <div className="space-y-2">
             <Label htmlFor={currentField.key}>{currentField.description}</Label>
             <Textarea
@@ -275,13 +316,53 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
 
           {/* 分析中の表示 */}
           {isProcessing && (
-            <div className="flex flex-col items-center justify-center gap-4 py-8">
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
-                <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            <div className="space-y-6">
+              <div className="flex flex-col items-center justify-center gap-4 py-8">
+                <div className="relative w-16 h-16">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+                </div>
+                <p className="text-lg font-medium text-primary">分析を実行中...</p>
+                <p className="text-sm text-muted-foreground">しばらくお待ちください</p>
               </div>
-              <p className="text-lg font-medium text-primary">{processStatus}</p>
-              <p className="text-sm text-muted-foreground">分析結果を待っています...</p>
+
+              {/* 生成ステップの表示 */}
+              <div className="space-y-4">
+                {generationSteps.map((step) => (
+                  <div
+                    key={step.id}
+                    className={`p-4 rounded-lg border ${
+                      step.status === "processing"
+                        ? "bg-muted animate-pulse"
+                        : step.status === "completed"
+                        ? "bg-green-50"
+                        : step.status === "error"
+                        ? "bg-red-50"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6">
+                        {step.status === "processing" ? (
+                          <Loader2 className="w-full h-full animate-spin text-primary" />
+                        ) : step.status === "completed" ? (
+                          <div className="w-full h-full rounded-full bg-green-500 text-white flex items-center justify-center">
+                            ✓
+                          </div>
+                        ) : (
+                          <div className="w-full h-full rounded-full border-2 border-gray-300" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{step.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -315,7 +396,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
             </>
           )}
 
-
+          {/* ナビゲーションボタン */}
           <div className="flex justify-between gap-4">
             {currentStep > 0 && (
               <Button type="button" variant="outline" onClick={handleBack}>
@@ -324,14 +405,13 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
               </Button>
             )}
             <Button
-              type="submit"
+              type={isLastStep ? "submit" : "button"}
+              onClick={isLastStep ? undefined : handleNext}
               className={currentStep === 0 ? "w-full" : "ml-auto"}
-              disabled={createAnalysis.isPending || isProcessing}
+              disabled={isProcessing}
             >
-              {(createAnalysis.isPending || isProcessing) && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {isLastStep ? "分析を完了" : (
+              {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLastStep ? "分析を開始" : (
                 <>
                   次のステップ
                   <ArrowRight className="w-4 h-4 ml-2" />
