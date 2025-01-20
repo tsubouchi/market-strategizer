@@ -140,7 +140,7 @@ export default function Sidebar() {
   return (
     <>
       {/* デスクトップサイドバー */}
-      <div className="hidden md:block h-screen w-64 border-r bg-background">
+      <div className="hidden md:block h-screen w-72 border-r bg-background">
         <SidebarContent />
       </div>
 
@@ -152,7 +152,7 @@ export default function Sidebar() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-background border-r shadow-lg">
+          <SheetContent side="left" className="w-[85vw] max-w-[400px] p-0 bg-background border-r shadow-lg">
             <SidebarContent />
           </SheetContent>
         </Sheet>
