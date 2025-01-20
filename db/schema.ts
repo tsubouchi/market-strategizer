@@ -11,6 +11,7 @@ export const users = pgTable("users", {
 export const analyses = pgTable("analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
   user_id: serial("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(), // タイトルを必須に変更
   analysis_type: text("analysis_type").notNull(), // '3C', '4P', 'PEST'
   content: jsonb("content").notNull(),
   ai_feedback: text("ai_feedback"),

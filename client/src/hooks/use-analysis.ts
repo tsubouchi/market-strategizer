@@ -102,3 +102,25 @@ export function useShareAnalysis() {
     },
   });
 }
+
+export function useDeleteAnalysis() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: async (id) => {
+      const res = await fetch(`/api/analyses/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/analyses"] });
+    },
+  });
+}

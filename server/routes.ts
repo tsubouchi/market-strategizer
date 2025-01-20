@@ -1080,6 +1080,57 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // 分析の削除
+  app.delete("/api/analyses/:id", async (req, res, next) => {
+    try {
+      const [analysis] = await db
+        .select()
+        .from(analyses)
+        .where(eq(analyses.id, req.params.id))
+        .limit(1);
+
+      if (!analysis) {
+        return res.status(404).send("Analysis not found");
+      }
+
+      if (analysis.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      await db.transaction(async (tx) => {
+        // 1. 要件書の分析関連を削除
+        await tx
+          .delete(requirement_analyses)
+          .where(eq(requirement_analyses.analysis_id, req.params.id));
+
+        // 2. コンセプトとの関連を削除
+        await tx
+          .delete(concept_analyses)
+          .where(eq(concept_analyses.analysis_id, req.params.id));
+
+        // 3. コメントを削除
+        await tx
+          .delete(comments)
+          .where(eq(comments.analysis_id, req.params.id));
+
+        // 4. 共有設定を削除
+        await tx
+          .delete(shared_analyses)
+          .where(eq(shared_analyses.analysis_id, req.params.id));
+
+        // 5. 最後に分析自体を削除
+        await tx
+          .delete(analyses)
+          .where(eq(analyses.id, req.params.id));
+      });
+
+      res.json({ message: "Analysis deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting analysis:", error);
+      next(error);
+    }
+  });
+
   // 他のルート設定は変更なし
   const httpServer = createServer(app);
   return httpServer;

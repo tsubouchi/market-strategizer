@@ -1,15 +1,36 @@
-import { useAnalyses } from "@/hooks/use-analysis";
+import { useAnalyses, useDeleteAnalysis } from "@/hooks/use-analysis";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { Loader2, PlusCircle, Lightbulb } from "lucide-react";
+import { Loader2, PlusCircle, Lightbulb, Trash2 } from "lucide-react";
 import ConceptGenerator from "@/components/concept-generator";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const { data: analyses, isLoading } = useAnalyses();
+  const deleteAnalysis = useDeleteAnalysis();
   const [_, navigate] = useLocation();
+  const { toast } = useToast();
 
   if (isLoading) {
     return (
@@ -18,6 +39,22 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAnalysis.mutateAsync(id);
+      toast({
+        title: "削除完了",
+        description: "分析が正常に削除されました。",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message,
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -52,22 +89,67 @@ export default function Dashboard() {
         {analyses?.map((analysis) => (
           <Card
             key={analysis.id}
-            className="hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => navigate(`/analysis/${analysis.id}`)}
+            className="hover:shadow-lg transition-shadow relative group"
           >
-            <CardHeader>
-              <CardTitle>{analysis.analysis_type}分析</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {analysis.created_at && format(new Date(analysis.created_at), "PPP")}
-              </p>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground line-clamp-3">
-                {Object.entries(analysis.content as Record<string, string>)
-                  .map(([key, value]) => `${key}: ${value}`)
-                  .join("\n")}
-              </p>
-            </CardContent>
+            <div 
+              className="cursor-pointer"
+              onClick={() => navigate(`/analysis/${analysis.id}`)}
+            >
+              <CardHeader>
+                <CardTitle className="flex justify-between items-start">
+                  <div>
+                    <div className="text-xl">{analysis.title}</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {analysis.analysis_type}分析
+                    </div>
+                  </div>
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {analysis.created_at && format(new Date(analysis.created_at), "PPP")}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {Object.entries(analysis.content as Record<string, string>)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join("\n")}
+                </p>
+              </CardContent>
+            </div>
+
+            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>分析の削除</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      この分析を削除してもよろしいですか？この操作は取り消せません。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDelete(analysis.id)}
+                      className="bg-destructive/90 text-destructive-foreground hover:bg-destructive"
+                    >
+                      {deleteAnalysis.isPending && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      削除する
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </Card>
         ))}
       </div>

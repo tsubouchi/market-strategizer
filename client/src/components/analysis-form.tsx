@@ -93,6 +93,7 @@ interface AnalysisFormProps {
 export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [title, setTitle] = useState("");
   const [referenceUrl, setReferenceUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const createAnalysis = useCreateAnalysis();
@@ -103,6 +104,15 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const isLastStep = currentStep === steps.length - 1;
 
   const handleNext = () => {
+    if (!title && currentStep === 0) {
+      toast({
+        variant: "destructive",
+        title: "入力エラー",
+        description: "分析のタイトルを入力してください。",
+      });
+      return;
+    }
+
     if (formData[currentField.key]?.trim()) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -126,9 +136,19 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       return;
     }
 
+    if (!title.trim()) {
+      toast({
+        variant: "destructive",
+        title: "入力エラー",
+        description: "分析のタイトルを入力してください。",
+      });
+      return;
+    }
+
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("analysis_type", type);
+      formDataToSend.append("title", title);
       formDataToSend.append("content", JSON.stringify(formData));
       if (referenceUrl) {
         formDataToSend.append("reference_url", referenceUrl);
@@ -168,6 +188,19 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           {currentStep === 0 && (
             <>
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-base font-medium">
+                  分析タイトル
+                </Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="例：新製品の市場分析"
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="reference_url" className="flex items-center gap-2">
                   <LinkIcon className="w-4 h-4" />
