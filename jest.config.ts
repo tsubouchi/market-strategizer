@@ -15,20 +15,22 @@ const config: Config.InitialOptions = {
         jsx: "react-jsx",
         esModuleInterop: true,
         moduleResolution: "node"
-      }
+      },
+      useESM: true
     }],
     '^.+\\.(js|jsx|mjs)$': ['babel-jest', { 
-      configFile: './babel.config.mjs'
+      configFile: './babel.config.cjs'
     }]
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(wouter|@tanstack|lucide-react|react-markdown)/)'
+    'node_modules/(?!(wouter|@tanstack|lucide-react|react-markdown|react-syntax-highlighter|remark-gfm)/)'
   ],
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons']
   },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   testMatch: ['**/__tests__/**/*.test.{ts,tsx}'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'mjs']
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'mjs', 'cjs'],
 };
 
 export default config;

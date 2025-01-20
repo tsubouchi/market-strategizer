@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RequirementsHistory from '../client/src/pages/requirements-history';
 import RequirementsDetail from '../client/src/pages/requirements-detail';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 
 // Mock react-query
 const queryClient = new QueryClient({

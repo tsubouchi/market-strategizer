@@ -20,9 +20,7 @@ const createMockResponse = () => {
     status: 200,
     statusText: 'OK',
     headers: new Headers(),
-    clone: function() { 
-      return Promise.resolve(this);
-    },
+    clone: function() { return this },
     body: null,
     bodyUsed: false,
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
@@ -36,7 +34,7 @@ const createMockResponse = () => {
   return response as unknown as Response;
 };
 
-// Define fetch mock
+// @ts-ignore -- Temporarily disable type checking for fetch mock
 global.fetch = jest.fn().mockImplementation(async () => createMockResponse());
 
 // Mock wouter
