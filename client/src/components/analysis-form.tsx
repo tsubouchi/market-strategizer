@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import ReactMarkdown from "react-markdown";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Link as LinkIcon, Paperclip, ArrowLeft, ArrowRight } from "lucide-react";
 
@@ -98,6 +99,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processStatus, setProcessStatus] = useState<string>("");
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const createAnalysis = useCreateAnalysis();
   const { toast } = useToast();
 
@@ -134,11 +136,6 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isLastStep) {
-      handleNext();
-      return;
-    }
-
     if (!title.trim()) {
       toast({
         variant: "destructive",
@@ -149,7 +146,8 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
     }
 
     setIsProcessing(true);
-    setProcessStatus("分析データを準備中...");
+    setProcessStatus("分析を実行中...");
+    setAnalysisResult(null);
 
     try {
       const formDataToSend = new FormData();
@@ -165,9 +163,14 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
         formDataToSend.append("attachment", file);
       }
 
-      setProcessStatus("分析を実行中...");
       const analysis = await createAnalysis.mutateAsync(formDataToSend);
-      setProcessStatus("分析結果を保存中...");
+
+      if (analysis.content) {
+        const markdownContent = Object.entries(analysis.content)
+          .map(([key, value]) => `### ${key}\n${value}`)
+          .join('\n\n');
+        setAnalysisResult(markdownContent);
+      }
 
       toast({
         title: "分析完了",
@@ -258,6 +261,17 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
               className="min-h-[200px]"
             />
           </div>
+
+          {analysisResult && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>分析結果</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-sm dark:prose-invert">
+                <ReactMarkdown>{analysisResult}</ReactMarkdown>
+              </CardContent>
+            </Card>
+          )}
 
           {isProcessing && (
             <div className="flex items-center justify-center gap-2 py-4 text-primary">
