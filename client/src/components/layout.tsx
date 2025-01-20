@@ -76,7 +76,7 @@ export function Layout({ children }: LayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex min-h-[calc(100vh-3.5rem)]">
+        <div className="flex">
           <Sidebar>
             <SidebarHeader>
               <Link href="/" className="flex items-center gap-2 font-bold">
@@ -122,9 +122,7 @@ export function Layout({ children }: LayoutProps) {
             </SidebarContent>
           </Sidebar>
           <main className="flex-1">
-            <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-              {children}
-            </div>
+            {children}
           </main>
         </div>
       </div>

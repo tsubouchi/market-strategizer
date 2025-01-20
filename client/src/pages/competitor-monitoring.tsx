@@ -378,7 +378,7 @@ export default function CompetitorMonitoring() {
 
   if (isLoading) {
     return (
-      <>
+      <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold">競合他社モニタリング</h1>
@@ -397,12 +397,12 @@ export default function CompetitorMonitoring() {
             <LoadingCard key={i} />
           ))}
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold">競合他社モニタリング</h1>
@@ -622,6 +622,6 @@ export default function CompetitorMonitoring() {
           onOpenChange={(open) => !open && setEditingCompetitor(null)}
         />
       )}
-    </>
+    </div>
   );
 }
