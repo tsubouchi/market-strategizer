@@ -15,7 +15,7 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-// Request logging middleware
+// Request logging middleware with detailed error information
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -29,17 +29,11 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+    const logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+    if (capturedJsonResponse) {
+      console.log(`${logLine} :: Response:`, JSON.stringify(capturedJsonResponse));
+    } else {
+      console.log(logLine);
     }
   });
 
@@ -51,9 +45,14 @@ async function startServer() {
     log("Initializing server...");
     const server = registerRoutes(app);
 
-    // Error handling middleware
+    // Error handling middleware with detailed logging
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('Error occurred:', err);
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        status: err.status || err.statusCode || 500
+      });
+
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
 
@@ -63,7 +62,6 @@ async function startServer() {
       });
     });
 
-    // Setup static files and Vite
     const env = app.get("env");
     log(`Setting up server in ${env} mode`);
 
@@ -75,12 +73,13 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start server with port 8080
+    // Changed port to 8080 and added detailed startup logging
     const PORT = 8080;
     return new Promise((resolve, reject) => {
       server.listen(PORT, "0.0.0.0", () => {
         log(`Server is running on port ${PORT}`);
         log(`Environment: ${env}`);
+        log(`API endpoint: http://localhost:${PORT}/api`);
         resolve(server);
       }).on('error', (error) => {
         console.error('Failed to start server:', error);
@@ -93,7 +92,7 @@ async function startServer() {
   }
 }
 
-// Start the server
+// Start the server with enhanced error handling
 startServer().catch((error) => {
   console.error('Critical server error:', error);
   process.exit(1);
