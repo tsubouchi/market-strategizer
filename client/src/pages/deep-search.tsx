@@ -70,7 +70,7 @@ export default function DeepSearch() {
         </p>
       </div>
 
-      <Card className="mb-8">
+      <Card className="w-full mb-8">
         <CardHeader>
           <CardTitle>検索条件</CardTitle>
         </CardHeader>
@@ -123,11 +123,11 @@ export default function DeepSearch() {
       </Card>
 
       {results.length > 0 && (
-        <div className="space-y-4">
+        <div className="w-full space-y-4">
           <h2 className="text-2xl font-semibold mb-4">検索結果</h2>
-          <div className="grid gap-4">
+          <div className="grid gap-4 w-full">
             {results.map((result, index) => (
-              <Card key={index}>
+              <Card key={index} className="w-full">
                 <CardContent className="p-6">
                   <h3 className="text-xl font-semibold mb-2">
                     {result.url ? (
