@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import { Layout } from "@/components/layout";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 function Router() {
   return (
@@ -20,8 +21,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <SidebarProvider defaultOpen={false}>
+        <Router />
+        <Toaster />
+      </SidebarProvider>
     </QueryClientProvider>
   );
 }
