@@ -20,9 +20,9 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/dashboard" component={Dashboard} />
-        <Route path="/search" component={DeepSearch} />
-        <Route path="/monitoring" component={CompetitorMonitoring} />
-        <Route path="/concept" component={ConceptGenerator} />
+        <Route path="/deep-search" component={DeepSearch} />
+        <Route path="/competitor-monitoring" component={CompetitorMonitoring} />
+        <Route path="/concept-generator" component={ConceptGenerator} />
         <Route path="/concepts" component={Concepts} />
         <Route path="/settings" component={Settings} />
         {/* 分析関連のルート */}
