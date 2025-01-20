@@ -662,92 +662,107 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
       const { query, searchType = "all" } = req.body;
 
       if (!query) {
-        return res.status(400).json({ error: "Search query is required" });
+        return res.status(400).json({ error: "検索クエリを入力してください" });
       }
 
-      // Perplexity APIの設定を修正
+      // Perplexity APIの設定を確認
       if (!process.env.PERPLEXITY_API_KEY) {
-        throw new Error("PERPLEXITY_API_KEY is required");
+        throw new Error("PERPLEXITY_API_KEY is not configured");
       }
 
-      const headers = {
-        "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-        "Content-Type": "application/json"
-      };
+      const controller = new AbortController();
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 30000);
 
-      // 検索タイプに基づいてシステムプロンプトを設定
-      let systemPrompt = "深層的な情報検索を行い、結果を日本語で返してください。";
-      if (searchType === "news") {
-        systemPrompt += "特にニュース記事に焦点を当ててください。";
-      } else if (searchType === "academic") {
-        systemPrompt += "特に学術論文や研究に焦点を当ててください。";
-      } else if (searchType === "blog") {
-        systemPrompt += "特にブログや技術記事に焦点を当ててください。";
-      }
+      try {
+        // 検索タイプに基づいてシステムプロンプトを設定
+        let systemPrompt = "深層的な情報検索を行い、結果を日本語で返してください。";
+        if (searchType === "news") {
+          systemPrompt += "特にニュース記事に焦点を当ててください。";
+        } else if (searchType === "academic") {
+          systemPrompt += "特に学術論文や研究に焦点を当ててください。";
+        } else if (searchType === "blog") {
+          systemPrompt += "特にブログや技術記事に焦点を当ててください。";
+        }
 
-      const response = await fetch("https://api.perplexity.ai/chat/completions", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt
-            },
-            {
-              role: "user",
-              content: query
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 1000,
-          return_citations: true
-        }),
-        // タイムアウトを30秒に設定
-        timeout: 30000
-      });
+        const response = await fetch("https://api.perplexity.ai/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "llama-3.1-sonar-small-128k-online",
+            messages: [
+              {
+                role: "system",
+                content: systemPrompt
+              },
+              {
+                role: "user",
+                content: query
+              }
+            ],
+            temperature: 0.2,
+            max_tokens: 1000,
+            return_citations: true
+          }),
+          signal: controller.signal
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Perplexity API error:", errorText);
-        throw new Error(`Search API error: ${response.statusText}`);
-      }
+        clearTimeout(timeout);
 
-      const searchResult = await response.json();
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Perplexity API error:", errorText);
+          throw new Error(`検索APIエラー: ${response.statusText}`);
+        }
 
-      // 検索結果を整形
-      const results = [];
-      if (searchResult.choices && searchResult.choices.length > 0) {
-        const mainResult = {
-          title: "検索結果の要約",
-          summary: searchResult.choices[0].message.content,
-          citations: searchResult.citations || []
-        };
-        results.push(mainResult);
+        const searchResult = await response.json();
 
-        // 引用元の情報を別々の結果として追加
-        if (searchResult.citations?.length > 0) {
-          for (const [index, citation] of searchResult.citations.entries()) {
-            results.push({
-              title: `参考文献 ${index + 1}`,
-              url: citation,
-              summary: "引用元文献"
+        // 検索結果を整形
+        const results = [];
+        if (searchResult.choices && searchResult.choices.length > 0) {
+          const mainResult = {
+            title: "検索結果の要約",
+            summary: searchResult.choices[0].message.content,
+            citations: searchResult.citations || []
+          };
+          results.push(mainResult);
+
+          // 引用元の情報を別々の結果として追加
+          if (searchResult.citations?.length > 0) {
+            searchResult.citations.forEach((citation, index) => {
+              results.push({
+                title: `参考文献 ${index + 1}`,
+                url: citation,
+                summary: "引用元文献"
+              });
             });
           }
         }
-      }
 
-      res.json(results);
+        res.json(results);
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          return res.status(504).json({
+            error: "検索がタイムアウトしました",
+            details: "もう一度お試しください"
+          });
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeout);
+      }
     } catch (error) {
       console.error("Deep search error:", error);
-      if (error instanceof Error) {
-        return res.status(502).json({
-          error: "検索中にエラーが発生しました",
-          details: error.message
-        });
-      }
-      next(error);
+      const status = error.status || 502;
+      const message = error.message || "検索中に予期せぬエラーが発生しました";
+      res.status(status).json({
+        error: message,
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
