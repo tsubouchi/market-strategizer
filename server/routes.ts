@@ -282,7 +282,6 @@ export function registerRoutes(app: Express): Server {
   });
 
 
-
   // コンセプト生成API
   app.post("/api/concepts/generate", async (req, res, next) => {
     try {
@@ -534,45 +533,73 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Requirement not found");
       }
 
-      // データベースの要件書データをWebAppRequirementインターフェースの形式に変換
-      const webAppRequirement: WebAppRequirement = {
-        title: requirement.title,
-        purpose: {
-          background: "プロジェクトの背景情報",
-          goals: ["目標1"],
-          expected_effects: ["期待される効果1"]
-        },
-        overview: requirement.overview,
-        target_users: requirement.target_users,
-        features: JSON.parse(requirement.features as string),
-        non_functional_requirements: {
-          performance: ["性能要件1"],
-          security: ["セキュリティ要件1"],
-          availability: ["可用性要件1"],
-          scalability: ["拡張性要件1"],
-          maintainability: ["保守性要件1"]
-        },
-        api_requirements: {
-          external_apis: [],
-          internal_apis: []
-        },
-        screen_structure: {
-          flow_description: "画面遷移の概要説明",
-          main_screens: ["メイン画面1"]
-        },
-        screen_list: [{
-          name: "画面1",
-          path: "/",
-          description: "画面の説明",
-          main_features: ["主要機能1"]
-        }],
-        tech_stack: JSON.parse(requirement.tech_stack as string),
-        ui_ux_requirements: JSON.parse(requirement.ui_ux_requirements as string),
-        schedule: JSON.parse(requirement.schedule as string)
-      };
+      // Parse JSON strings if they are stored as strings
+      const features = typeof requirement.features === 'string' 
+        ? JSON.parse(requirement.features) 
+        : requirement.features;
+      const techStack = typeof requirement.tech_stack === 'string'
+        ? JSON.parse(requirement.tech_stack)
+        : requirement.tech_stack;
+      const uiUxRequirements = typeof requirement.ui_ux_requirements === 'string'
+        ? JSON.parse(requirement.ui_ux_requirements)
+        : requirement.ui_ux_requirements;
+      const schedule = typeof requirement.schedule === 'string'
+        ? JSON.parse(requirement.schedule)
+        : requirement.schedule;
 
-      const markdown = await generateMarkdownRequirements(webAppRequirement);
-      const filename = `basic_design_${requirement.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()}.md`;
+      // Generate markdown
+      const markdown = `# ${requirement.title}
+
+## 概要
+${requirement.overview}
+
+## 対象ユーザー
+${requirement.target_users}
+
+## 機能一覧
+${features.map((feature: any) => `
+### ${feature.name}
+- 優先度: ${feature.priority}
+- 説明: ${feature.description}
+- 受け入れ基準:
+${feature.acceptance_criteria.map((criteria: string) => `  - ${criteria}`).join('\n')}
+`).join('\n')}
+
+## 技術スタック
+### フロントエンド
+${techStack.frontend.map((tech: string) => `- ${tech}`).join('\n')}
+
+### バックエンド
+${techStack.backend.map((tech: string) => `- ${tech}`).join('\n')}
+
+### データベース
+${techStack.database.map((tech: string) => `- ${tech}`).join('\n')}
+
+### インフラストラクチャ
+${techStack.infrastructure.map((tech: string) => `- ${tech}`).join('\n')}
+
+## UI/UX要件
+- デザインシステム: ${uiUxRequirements.design_system}
+- レイアウト: ${uiUxRequirements.layout}
+- レスポンシブ対応: ${uiUxRequirements.responsive ? 'あり' : 'なし'}
+- アクセシビリティ対応:
+${uiUxRequirements.accessibility.map((item: string) => `  - ${item}`).join('\n')}
+- 特別機能:
+${uiUxRequirements.special_features.map((feature: string) => `  - ${feature}`).join('\n')}
+
+## 開発スケジュール
+${schedule.phases.map((phase: any) => `
+### ${phase.name}
+- 期間: ${phase.duration}
+- タスク:
+${phase.tasks.map((task: string) => `  - ${task}`).join('\n')}
+`).join('\n')}
+
+---
+作成日: ${new Date(requirement.created_at).toLocaleDateString('ja-JP')}
+`;
+
+      const filename = `requirements_${requirement.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()}.md`;
 
       res.setHeader("Content-Type", "text/markdown");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
