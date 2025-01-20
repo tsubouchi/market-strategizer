@@ -25,7 +25,7 @@ import { useMutation } from "@tanstack/react-query";
 
 export default function RequirementDetail({ requirement }) {
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, navigate] = useNavigate();
 
   const deleteRequirementMutation = useMutation({
     mutationFn: async () => {
@@ -85,7 +85,39 @@ export default function RequirementDetail({ requirement }) {
         <CardTitle>{requirement.title}</CardTitle>
         <CardDescription>要件書の詳細情報</CardDescription>
       </CardHeader>
-      {/* 残りのカードコンテンツ */}
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-medium">概要</h3>
+            <p className="text-muted-foreground">{requirement.overview}</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-medium">対象ユーザー</h3>
+            <p className="text-muted-foreground">{requirement.target_users}</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-medium">機能一覧</h3>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+              {JSON.parse(requirement.features).map((feature: string, index: number) => (
+                <li key={index}>{feature}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-lg font-medium">技術スタック</h3>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+              {JSON.parse(requirement.tech_stack).map((tech: string, index: number) => (
+                <li key={index}>{tech}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <p className="text-sm text-muted-foreground">
+          作成日: {new Date(requirement.created_at).toLocaleDateString("ja-JP")}
+        </p>
+      </CardFooter>
     </Card>
   );
 }
