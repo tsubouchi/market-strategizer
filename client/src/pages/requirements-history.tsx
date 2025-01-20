@@ -9,17 +9,17 @@ interface Requirement {
   title: string;
   overview: string;
   target_users: string;
-  features: string;
-  tech_stack: string;
-  ui_ux_requirements: string;
-  schedule: string;
+  features: string | string[];
+  tech_stack: string | Record<string, any>;
+  ui_ux_requirements: string | Record<string, any>;
+  schedule: string | Record<string, any>;
   created_at: string;
   concept_id: string;
 }
 
 export default function RequirementsHistory() {
   const { data: requirements, isLoading } = useQuery<Requirement[]>({
-    queryKey: ["/api/requirements"],
+    queryKey: ["/api/product_requirements"],
   });
 
   if (isLoading) {
@@ -100,9 +100,18 @@ export default function RequirementsHistory() {
                 <p className="text-sm">
                   <span className="font-medium">主要機能：</span>
                   <span className="line-clamp-2">
-                    {typeof requirement.features === 'string' 
-                      ? JSON.parse(requirement.features).slice(0, 3).join(', ') 
-                      : requirement.features.slice(0, 3).join(', ')}
+                    {(() => {
+                      try {
+                        const features = typeof requirement.features === 'string' 
+                          ? JSON.parse(requirement.features)
+                          : requirement.features;
+                        return Array.isArray(features) 
+                          ? features.slice(0, 3).join(', ')
+                          : '機能情報なし';
+                      } catch (e) {
+                        return '機能情報なし';
+                      }
+                    })()}
                   </span>
                 </p>
               </div>

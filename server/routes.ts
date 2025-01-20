@@ -974,8 +974,7 @@ export function registerRoutes(app: Express): Server {
       if (process.env.NODE_ENV !== "production") {
         await db
           .delete(product_requirements)
-          .where(eq(product_requirements.id, reqparams.id));
-        return res.json({ message: "Requirement deleted successfully" });
+          .where(eq(product_requirements.id, req.params.id));        return res.json({ message: "Requirement deleted successfully" });
       }
 
       if (requirement.user_id !== (req.user?.id || 1)) {
@@ -1211,6 +1210,21 @@ export function registerRoutes(app: Express): Server {
       res.json({ html: markdown });
     } catch (error) {
       console.error("Error generating markdown:", error);
+      next(error);
+    }
+  });
+
+  // 要件書一覧取得API
+  app.get("/api/product_requirements", async (req, res, next) => {
+    try {
+      const requirements = await db
+        .select()
+        .from(product_requirements)
+        .where(eq(product_requirements.user_id, req.user?.id || 1))
+        .orderBy(product_requirements.created_at);
+
+      res.json(requirements);
+    } catch (error) {
       next(error);
     }
   });
