@@ -853,12 +853,12 @@ export function registerRoutes(app: Express): Server {
           messages: [
             {
               role: "system",
-              content: `${competitor.company_name}に関する最新の情報を収集し、以下のカテゴリーで分類してください：
-              - 製品・サービス開発
-              - プレスリリース・ニュース
-              - 技術革新
-              - 市場動向
-              - サステナビリティ・環境対応`
+              content: `${competitor.company_name}に関する最新の情報を収集し、以下のカテゴリーごとに分類してください。それぞれ「なし」か具体的な情報を記載してください：
+              products: 製品・サービス開発の情報
+              press: プレスリリース・ニュースの情報
+              tech: 技術革新の情報
+              market: 市場動向の情報
+              sustainability: サステナビリティ・環境対応の情報`
             },
             {
               role: "user",
@@ -877,14 +877,36 @@ export function registerRoutes(app: Express): Server {
 
       const result = await searchResponse.json();
 
-      // 検索結果を分析して更新情報を生成
-      const content = result.choices[0].message.content.split('\n').reduce((acc: Record<string, string>, cur: string) => {
-        const [key, value] = cur.split(':');
-        if(key && value){
-          acc[key.trim()] = value.trim();
+      // 応答内容の解析を改善
+      const content = {
+        products: "情報なし",
+        press: "情報なし",
+        tech: "情報なし",
+        market: "情報なし",
+        sustainability: "情報なし"
+      };
+
+      try {
+        const responseText = result.choices[0].message.content;
+        const lines = responseText.split('\n');
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith('products:')) {
+            content.products = trimmedLine.replace('products:', '').trim() || "情報なし";
+          } else if (trimmedLine.startsWith('press:')) {
+            content.press = trimmedLine.replace('press:', '').trim() || "情報なし";
+          } else if (trimmedLine.startsWith('tech:')) {
+            content.tech = trimmedLine.replace('tech:', '').trim() || "情報なし";
+          } else if (trimmedLine.startsWith('market:')) {
+            content.market = trimmedLine.replace('market:', '').trim() || "情報なし";
+          } else if (trimmedLine.startsWith('sustainability:')) {
+            content.sustainability = trimmedLine.replace('sustainability:', '').trim() || "情報なし";
+          }
         }
-        return acc;
-      }, {});
+      } catch (error) {
+        console.error("Error parsing API response:", error);
+      }
 
       const importanceScore = determineImportance(content);
 
@@ -895,15 +917,9 @@ export function registerRoutes(app: Express): Server {
           competitor_id: competitor.id,
           update_type: "deep_search",
           content: {
-            summary: `${competitor.company_name}に関する最新の動向`,
+            summary: `${competitor.company_name}の最新動向分析`,
             sources: result.citations || [],
-            categories: {
-              products: content.products || "情報なし",
-              press: content.press || "情報なし",
-              tech: content.tech || "情報なし",
-              market: content.market || "情報なし",
-              sustainability: content.sustainability || "情報なし",
-            }
+            categories: content
           },
           source_url: result.citations?.[0] || null,
           importance_score: importanceScore,
