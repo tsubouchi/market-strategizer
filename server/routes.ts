@@ -1002,6 +1002,39 @@ export function registerRoutes(app: Express): Server {
   }
 
 
+  // 要件書削除API
+  app.delete("/api/requirements/:id", async (req, res, next) => {
+    try {
+      const [requirement] = await db
+        .select()
+        .from(product_requirements)
+        .where(eq(product_requirements.id, req.params.id))
+        .limit(1);
+
+      if (!requirement) {
+        return res.status(404).send("Requirement not found");
+      }
+
+      if (requirement.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      // 要件書を削除
+      await db
+        .delete(product_requirements)
+        .where(eq(product_requirements.id, req.params.id));
+
+      // 関連する分析との関連付けも削除
+      await db
+        .delete(requirement_analyses)
+        .where(eq(requirement_analyses.requirement_id, req.params.id));
+
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
