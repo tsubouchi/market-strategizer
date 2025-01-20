@@ -45,8 +45,8 @@ export default function Home() {
   ];
 
   return (
-    <>
-      <div className="flex justify-between items-center mb-8">
+    <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-8">
         <div>
           <h1 className="text-4xl font-bold">戦略分析</h1>
           <p className="text-muted-foreground">
@@ -90,6 +90,6 @@ export default function Home() {
           </motion.div>
         ))}
       </div>
-    </>
+    </div>
   );
 }

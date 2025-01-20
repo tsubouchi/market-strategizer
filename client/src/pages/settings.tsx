@@ -4,12 +4,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, EyeOff, Eye, Check } from "lucide-react";
+import { Copy, EyeOff, Eye, Check, ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function SettingsPage() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const apiKey = "sk-************************************"; // 実際のAPIキーは環境変数から取得
 
   const handleCopy = async () => {
@@ -32,15 +34,24 @@ export default function SettingsPage() {
 
   return (
     <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">設定</h1>
-        <p className="text-muted-foreground">
-          アプリケーションの設定を管理します
-        </p>
+      <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-4xl font-bold">設定</h1>
+          <p className="text-muted-foreground">
+            アプリケーションの設定を管理します
+          </p>
+        </div>
       </div>
 
       <div className="space-y-6">
-        <Card className="w-full">
+        <Card>
           <CardHeader>
             <CardTitle>APIモデル設定</CardTitle>
           </CardHeader>
@@ -59,7 +70,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="w-full">
+        <Card>
           <CardHeader>
             <CardTitle>APIキー設定</CardTitle>
           </CardHeader>

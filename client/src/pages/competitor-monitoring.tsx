@@ -40,9 +40,11 @@ import {
   AlertTriangle,
   CheckCircle,
   Edit2,
+  ArrowLeft,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
 
 interface Competitor {
   id: string;
@@ -283,6 +285,7 @@ export default function CompetitorMonitoring() {
   const [editingCompetitor, setEditingCompetitor] = useState<Competitor | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const { data: competitors, isLoading } = useQuery<Competitor[]>({
     queryKey: ["/api/competitors"],
@@ -379,19 +382,21 @@ export default function CompetitorMonitoring() {
   if (isLoading) {
     return (
       <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <div>
-            <h1 className="text-2xl font-bold">競合他社モニタリング</h1>
+            <h1 className="text-4xl font-bold">競合他社モニタリング</h1>
             <p className="text-muted-foreground">
               競合他社の動向をリアルタイムで監視します
             </p>
           </div>
-          <Button disabled>
-            <Plus className="h-4 w-4 mr-2" />
-            競合他社を追加
-          </Button>
         </div>
-
         <div className="grid gap-6">
           {[1, 2].map((i) => (
             <LoadingCard key={i} />
@@ -403,70 +408,79 @@ export default function CompetitorMonitoring() {
 
   return (
     <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
         <div>
           <h1 className="text-4xl font-bold">競合他社モニタリング</h1>
           <p className="text-muted-foreground">
             競合他社の動向をリアルタイムで監視します
           </p>
         </div>
-        <Dialog open={isAddingCompetitor} onOpenChange={setIsAddingCompetitor}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              競合他社を追加
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>競合他社の追加</DialogTitle>
-              <DialogDescription>
-                モニタリングしたい競合他社の情報を入力してください
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleAddCompetitor}>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="company_name">会社名</Label>
-                  <Input
-                    id="company_name"
-                    name="company_name"
-                    placeholder="例：株式会社Example"
-                  />
+        <div className="flex-1 flex justify-end">
+          <Dialog open={isAddingCompetitor} onOpenChange={setIsAddingCompetitor}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                競合他社を追加
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>競合他社の追加</DialogTitle>
+                <DialogDescription>
+                  モニタリングしたい競合他社の情報を入力してください
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddCompetitor}>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company_name">会社名</Label>
+                    <Input
+                      id="company_name"
+                      name="company_name"
+                      placeholder="例：株式会社Example"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="website_url">Webサイト</Label>
+                    <Input
+                      id="website_url"
+                      name="website_url"
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="keywords">
+                      モニタリングキーワード（カンマ区切り）
+                    </Label>
+                    <Input
+                      id="keywords"
+                      name="keywords"
+                      placeholder="製品名, サービス名, 技術キーワード"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="website_url">Webサイト</Label>
-                  <Input
-                    id="website_url"
-                    name="website_url"
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="keywords">
-                    モニタリングキーワード（カンマ区切り）
-                  </Label>
-                  <Input
-                    id="keywords"
-                    name="keywords"
-                    placeholder="製品名, サービス名, 技術キーワード"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  disabled={addCompetitorMutation.isPending}
-                >
-                  {addCompetitorMutation.isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  追加
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button
+                    type="submit"
+                    disabled={addCompetitorMutation.isPending}
+                  >
+                    {addCompetitorMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    追加
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-8">
