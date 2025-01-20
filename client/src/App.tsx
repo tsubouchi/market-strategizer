@@ -10,7 +10,6 @@ import CompetitorMonitoring from "@/pages/competitor-monitoring";
 import ConceptGenerator from "@/pages/concept-generator";
 import Analysis from "@/pages/analysis";
 import Settings from "@/pages/settings";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 function Router() {
   return (
@@ -22,10 +21,18 @@ function Router() {
         <Route path="/concept" component={ConceptGenerator} />
         <Route path="/settings" component={Settings} />
         {/* 分析関連のルート */}
-        <Route path="/analysis/new/3c" component={() => <Analysis type="3C" />} />
-        <Route path="/analysis/new/4p" component={() => <Analysis type="4P" />} />
-        <Route path="/analysis/new/pest" component={() => <Analysis type="PEST" />} />
-        <Route path="/analysis/:id" component={Analysis} />
+        <Route path="/analysis/new/3c">
+          {() => <Analysis type="3C" />}
+        </Route>
+        <Route path="/analysis/new/4p">
+          {() => <Analysis type="4P" />}
+        </Route>
+        <Route path="/analysis/new/pest">
+          {() => <Analysis type="PEST" />}
+        </Route>
+        <Route path="/analysis/:id">
+          {(params) => <Analysis id={params.id} />}
+        </Route>
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -35,10 +42,8 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <Router />
-        <Toaster />
-      </SidebarProvider>
+      <Router />
+      <Toaster />
     </QueryClientProvider>
   );
 }
