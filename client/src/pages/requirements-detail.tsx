@@ -23,7 +23,7 @@ import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 
@@ -174,19 +174,18 @@ export default function RequirementsDetail({ params }: { params: { id: string } 
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                code({className, children, ...props}) {
+                code({ className, children }) {
                   const match = /language-(\w+)/.exec(className || '');
                   return match ? (
                     <SyntaxHighlighter
-                      {...props}
-                      style={oneDark as any}
                       language={match[1]}
+                      style={oneDark}
                       PreTag="div"
                     >
                       {String(children).replace(/\n$/, '')}
                     </SyntaxHighlighter>
                   ) : (
-                    <code className={className} {...props}>
+                    <code className={className}>
                       {children}
                     </code>
                   );
