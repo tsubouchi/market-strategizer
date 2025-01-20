@@ -19,6 +19,8 @@ import {
   BarChart3,
   PieChart,
   TrendingUp,
+  History,
+  FileText,
 } from "lucide-react";
 
 const mainLinks = [
@@ -38,9 +40,14 @@ const mainLinks = [
     href: "/monitoring",
   },
   {
-    title: "コンセプト生成",
-    icon: Lightbulb,
-    href: "/concept",
+    title: "コンセプト履歴",
+    icon: History,
+    href: "/concept-history",
+  },
+  {
+    title: "要件書履歴",
+    icon: FileText,
+    href: "/requirements-history",
   },
   {
     title: "設定",
