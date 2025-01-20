@@ -1,7 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, PDFViewer } from "@react-pdf/renderer";
 import type { Analysis } from "@db/schema";
 
-// フォント登録なしでデフォルトフォントを使用
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
