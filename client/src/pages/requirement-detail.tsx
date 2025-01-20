@@ -114,7 +114,7 @@ export default function RequirementDetail({ params }: { params: { id: string } }
         <div className="absolute top-6 right-6">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="icon" className="h-9 w-9">
+              <Button variant="outline" size="icon" className="hover:bg-destructive/10 hover:text-destructive">
                 <Trash2 className="h-5 w-5" />
               </Button>
             </AlertDialogTrigger>
@@ -129,7 +129,7 @@ export default function RequirementDetail({ params }: { params: { id: string } }
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => deleteRequirementMutation.mutate()}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className="bg-destructive/90 text-destructive-foreground hover:bg-destructive"
                   disabled={deleteRequirementMutation.isPending}
                 >
                   {deleteRequirementMutation.isPending && (

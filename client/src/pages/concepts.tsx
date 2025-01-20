@@ -82,7 +82,7 @@ export default function Concepts() {
               <div className="absolute top-4 right-4">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon">
+                    <Button variant="outline" size="icon" className="hover:bg-destructive/10 hover:text-destructive">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
@@ -97,7 +97,7 @@ export default function Concepts() {
                       <AlertDialogCancel>キャンセル</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDelete(concept.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="bg-destructive/90 text-destructive-foreground hover:bg-destructive"
                       >
                         {deleteConcept.isPending && (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

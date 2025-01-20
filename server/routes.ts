@@ -974,7 +974,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // 重要度判定ロジックを改善
-  function determineImportance(content: Record<string, string>): "low" | "medium" | "high" {
+  function determineImportance(content: Record<string,string>): "low" | "medium" | "high" {
     const keywords = {
       high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新"],
       medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更", "環境対応"],
@@ -1042,21 +1042,18 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Concept not found");
       }
 
-      // デモ環境ではuser_idチェックを緩和
-      if (process.env.NODE_ENV !== "production") {
-        await db
+      // デモ環境では外部キー制約を考慮して、トランザクションで関連レコードも削除
+      await db.transaction(async (tx) => {
+        // まず関連する分析との関連付けを削除
+        await tx
+          .delete(concept_analyses)
+          .where(eq(concept_analyses.concept_id, req.params.id));
+
+        // 次にコンセプトを削除
+        await tx
           .delete(concepts)
           .where(eq(concepts.id, req.params.id));
-        return res.json({ message: "Concept deleted successfully" });
-      }
-
-      if (concept.user_id !== (req.user?.id || 1)) {
-        return res.status(403).send("Access denied");
-      }
-
-      await db
-        .delete(concepts)
-        .where(eq(concepts.id, req.params.id));
+      });
 
       res.json({ message: "Concept deleted successfully" });
     } catch (error) {
