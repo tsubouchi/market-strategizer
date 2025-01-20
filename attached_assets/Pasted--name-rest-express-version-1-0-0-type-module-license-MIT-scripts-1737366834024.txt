@@ -8,8 +8,7 @@
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push",
-    "test": "jest"
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@babel/preset-react": "^7.26.3",
@@ -92,7 +91,6 @@
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "vaul": "^1.1.0",
-    "whatwg-fetch": "^3.6.20",
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
     "zod": "^3.24.1"
