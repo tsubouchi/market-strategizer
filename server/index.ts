@@ -75,8 +75,8 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start server
-    const PORT = 5000;
+    // Start server with port 8080
+    const PORT = 8080;
     return new Promise((resolve, reject) => {
       server.listen(PORT, "0.0.0.0", () => {
         log(`Server is running on port ${PORT}`);
