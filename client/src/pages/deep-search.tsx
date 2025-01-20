@@ -62,15 +62,15 @@ export default function DeepSearch() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div>
+    <div className="min-h-screen w-full p-4">
+      <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">深層検索エージェント</h1>
         <p className="text-muted-foreground">
           AIを活用して深い洞察を得るための検索を実行します
         </p>
       </div>
 
-      <Card className="mt-8">
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle>検索条件</CardTitle>
         </CardHeader>
@@ -123,7 +123,7 @@ export default function DeepSearch() {
       </Card>
 
       {results.length > 0 && (
-        <div className="space-y-4 mt-8">
+        <div className="space-y-4">
           <h2 className="text-2xl font-semibold mb-4">検索結果</h2>
           <div className="grid gap-4">
             {results.map((result, index) => (
