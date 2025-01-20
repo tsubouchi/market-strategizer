@@ -6,6 +6,9 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import { Layout } from "@/components/layout";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import DeepSearch from "@/pages/deep-search";
+import CompetitorMonitoring from "@/pages/competitor-monitoring";
+import ConceptGenerator from "@/pages/concept-generator";
 
 function Router() {
   return (
@@ -13,9 +16,9 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/history" component={() => <div>作成履歴</div>} />
-        <Route path="/search" component={() => <div>深層検索エージェント</div>} />
-        <Route path="/monitoring" component={() => <div>競合他社モニタリング</div>} />
-        <Route path="/concept" component={() => <div>コンセプト生成</div>} />
+        <Route path="/search" component={DeepSearch} />
+        <Route path="/monitoring" component={CompetitorMonitoring} />
+        <Route path="/concept" component={ConceptGenerator} />
         <Route path="/requirements" component={() => <div>要件書</div>} />
         <Route path="/settings" component={() => <div>設定</div>} />
         <Route path="/analysis/3c" component={() => <div>3C分析</div>} />
