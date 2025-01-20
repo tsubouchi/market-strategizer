@@ -4,11 +4,9 @@ import { Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButto
 import { Link, useLocation } from "wouter";
 import {
   Home,
-  History,
   Search,
   Eye,
   Lightbulb,
-  FileText,
   Settings,
   BarChart3,
   PieChart,
@@ -27,7 +25,7 @@ export function Layout({ children }: LayoutProps) {
       <Header />
       <div className="flex min-h-[calc(100vh-3.5rem)]">
         <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
-          <SidebarContent className="pt-14"> {/* Add top padding to avoid header overlap */}
+          <SidebarContent className="pt-14">
             <div className="px-4 pt-4 pb-4">
               <h2 className="text-xl font-semibold">戦略AIコンパス</h2>
               <p className="text-sm text-muted-foreground mt-1">
@@ -40,14 +38,6 @@ export function Layout({ children }: LayoutProps) {
                   <SidebarMenuButton tooltip="ホーム" isActive={location === "/"}>
                     <Home className="w-4 h-4" />
                     <span>ホーム</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link href="/history">
-                  <SidebarMenuButton tooltip="作成履歴" isActive={location === "/history"}>
-                    <History className="w-4 h-4" />
-                    <span>作成履歴</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -72,14 +62,6 @@ export function Layout({ children }: LayoutProps) {
                   <SidebarMenuButton tooltip="コンセプト生成" isActive={location === "/concept"}>
                     <Lightbulb className="w-4 h-4" />
                     <span>コンセプト生成</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link href="/requirements">
-                  <SidebarMenuButton tooltip="要件書" isActive={location === "/requirements"}>
-                    <FileText className="w-4 h-4" />
-                    <span>要件書</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>

@@ -21,11 +21,9 @@ export function SideMenu({ children }: SideMenuProps) {
             </p>
             <nav className="space-y-4">
               <Link href="/" className="block text-lg hover:text-primary">ホーム</Link>
-              <Link href="/history" className="block text-lg hover:text-primary">作成履歴</Link>
               <Link href="/search" className="block text-lg hover:text-primary">深層検索エージェント</Link>
               <Link href="/monitoring" className="block text-lg hover:text-primary">競合他社モニタリング</Link>
               <Link href="/concept" className="block text-lg hover:text-primary">コンセプト生成</Link>
-              <Link href="/requirements" className="block text-lg hover:text-primary">要件書</Link>
               <Link href="/settings" className="block text-lg hover:text-primary">設定</Link>
             </nav>
             <h3 className="text-lg font-semibold mt-8 mb-4">分析を開始</h3>
