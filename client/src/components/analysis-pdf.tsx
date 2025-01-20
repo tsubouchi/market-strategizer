@@ -23,11 +23,6 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
     marginBottom: 8,
   },
-  aiSection: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: "#f8f9fa",
-  },
 });
 
 interface AnalysisPDFProps {
@@ -36,15 +31,6 @@ interface AnalysisPDFProps {
 
 export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
   const content = analysis.content as Record<string, string>;
-  let aiContent = { initial_analysis: {}, deep_analysis: {}, recommendations: {} };
-
-  try {
-    if (analysis.ai_feedback) {
-      aiContent = JSON.parse(analysis.ai_feedback);
-    }
-  } catch (error) {
-    console.error("Failed to parse AI feedback:", error);
-  }
 
   const formatDate = (date: string | null | undefined): string => {
     if (!date) return "";
@@ -75,41 +61,6 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
               <Text style={styles.text}>{value}</Text>
             </View>
           ))}
-        </View>
-
-        {/* AI Analysis */}
-        <View style={styles.aiSection}>
-          <Text style={styles.subtitle}>AI分析結果</Text>
-
-          {/* Initial Analysis */}
-          <View style={styles.section}>
-            <Text style={styles.text}>初期分析</Text>
-            {Object.entries(aiContent.initial_analysis).map(([key, value]) => (
-              <Text key={key} style={styles.text}>
-                {key}: {Array.isArray(value) ? value.join(", ") : String(value)}
-              </Text>
-            ))}
-          </View>
-
-          {/* Deep Analysis */}
-          <View style={styles.section}>
-            <Text style={styles.text}>詳細分析</Text>
-            {Object.entries(aiContent.deep_analysis).map(([key, value]) => (
-              <Text key={key} style={styles.text}>
-                {key}: {Array.isArray(value) ? value.join(", ") : String(value)}
-              </Text>
-            ))}
-          </View>
-
-          {/* Recommendations */}
-          <View style={styles.section}>
-            <Text style={styles.text}>提案</Text>
-            {Object.entries(aiContent.recommendations).map(([key, value]) => (
-              <Text key={key} style={styles.text}>
-                {key}: {Array.isArray(value) ? value.join(", ") : String(value)}
-              </Text>
-            ))}
-          </View>
         </View>
 
         {/* References */}
