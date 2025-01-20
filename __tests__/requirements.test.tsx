@@ -46,25 +46,6 @@ const mockRequirement = {
   created_at: new Date().toISOString()
 };
 
-// Mock navigation
-jest.mock('wouter', () => ({
-  useLocation: () => ['/requirements/1', () => {}],
-  Link: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-// Mock ReactMarkdown
-jest.mock('react-markdown', () => ({
-  __esModule: true,
-  default: ({ children }: { children: string }) => <div data-testid="markdown-content">{children}</div>,
-}));
-
-// Mock react-syntax-highlighter
-jest.mock('react-syntax-highlighter', () => ({
-  PrismLight: ({ children }: { children: string }) => (
-    <pre data-testid="syntax-highlighter">{children}</pre>
-  ),
-}));
-
 // Mock fetch responses
 global.fetch = jest.fn(() =>
   Promise.resolve({
@@ -83,9 +64,9 @@ describe('Requirements Workflow Tests', () => {
   describe('Requirements History', () => {
     it('renders requirements list', async () => {
       render(
-        <QueryClientProvider client={queryClient}>
-          <RequirementsHistory />
-        </QueryClientProvider>
+        React.createElement(QueryClientProvider, { client: queryClient }, 
+          React.createElement(RequirementsHistory)
+        )
       );
 
       // Loading state should be shown initially
@@ -106,9 +87,9 @@ describe('Requirements Workflow Tests', () => {
       );
 
       render(
-        <QueryClientProvider client={queryClient}>
-          <RequirementsHistory />
-        </QueryClientProvider>
+        React.createElement(QueryClientProvider, { client: queryClient },
+          React.createElement(RequirementsHistory)
+        )
       );
 
       await waitFor(() => {
@@ -121,9 +102,9 @@ describe('Requirements Workflow Tests', () => {
   describe('Requirements Detail', () => {
     it('renders requirement details and markdown preview', async () => {
       render(
-        <QueryClientProvider client={queryClient}>
-          <RequirementsDetail params={{ id: '1' }} />
-        </QueryClientProvider>
+        React.createElement(QueryClientProvider, { client: queryClient },
+          React.createElement(RequirementsDetail, { params: { id: '1' } })
+        )
       );
 
       // Check if the title is rendered
@@ -151,9 +132,9 @@ describe('Requirements Workflow Tests', () => {
       );
 
       render(
-        <QueryClientProvider client={queryClient}>
-          <RequirementsDetail params={{ id: '1' }} />
-        </QueryClientProvider>
+        React.createElement(QueryClientProvider, { client: queryClient },
+          React.createElement(RequirementsDetail, { params: { id: '1' } })
+        )
       );
 
       // Wait for the component to load
@@ -162,10 +143,10 @@ describe('Requirements Workflow Tests', () => {
       });
 
       // Click delete button and handle confirmation
-      const deleteButton = screen.getByLabelText('削除');
+      const deleteButton = screen.getByRole('button', { name: /削除/i });
       await user.click(deleteButton);
 
-      const confirmButton = screen.getByRole('button', { name: '削除' });
+      const confirmButton = screen.getByRole('button', { name: /削除/i });
       await user.click(confirmButton);
 
       // Verify deletion request was made
@@ -177,9 +158,9 @@ describe('Requirements Workflow Tests', () => {
 
     it('handles markdown download', async () => {
       render(
-        <QueryClientProvider client={queryClient}>
-          <RequirementsDetail params={{ id: '1' }} />
-        </QueryClientProvider>
+        React.createElement(QueryClientProvider, { client: queryClient },
+          React.createElement(RequirementsDetail, { params: { id: '1' } })
+        )
       );
 
       // Wait for the component to load
@@ -188,7 +169,7 @@ describe('Requirements Workflow Tests', () => {
       });
 
       // Click download button
-      const downloadButton = screen.getByLabelText('ダウンロード');
+      const downloadButton = screen.getByRole('button', { name: /ダウンロード/i });
       fireEvent.click(downloadButton);
 
       // Verify download URL was set
@@ -204,12 +185,13 @@ describe('Requirements Workflow Tests', () => {
       );
 
       render(
-        <QueryClientProvider client={queryClient}>
-          <RequirementsDetail params={{ id: '1' }} />
-        </QueryClientProvider>
+        React.createElement(QueryClientProvider, { client: queryClient },
+          React.createElement(RequirementsDetail, { params: { id: '1' } })
+        )
       );
 
-      expect(screen.getByRole('status')).toBeInTheDocument();
+      const loader = screen.getByRole('status');
+      expect(loader).toBeInTheDocument();
     });
   });
 });
