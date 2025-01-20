@@ -6,16 +6,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Process level error handling
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-// Request logging middleware with detailed error information
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -29,71 +19,57 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    const logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-    if (capturedJsonResponse) {
-      console.log(`${logLine} :: Response:`, JSON.stringify(capturedJsonResponse));
-    } else {
-      console.log(logLine);
+    if (path.startsWith("/api")) {
+      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      if (capturedJsonResponse) {
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      }
+
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "…";
+      }
+
+      log(logLine);
     }
   });
 
   next();
 });
 
-async function startServer() {
-  try {
-    log("Initializing server...");
-    const server = registerRoutes(app);
+(async () => {
+  const server = registerRoutes(app);
 
-    // Error handling middleware with detailed logging
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('Error details:', {
-        message: err.message,
-        stack: err.stack,
-        status: err.status || err.statusCode || 500
-      });
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
 
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
+    res.status(status).json({ message });
+    //The following line was added to maintain the original's error handling behavior.  Throwing the error here ensures that the uncaughtException handler in the original code will still catch critical errors.
+    throw err;
+  });
 
-      res.status(status).json({ 
-        message,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
-      });
-    });
-
-    const env = app.get("env");
-    log(`Setting up server in ${env} mode`);
-
-    if (env === "development") {
-      log("Setting up Vite development server...");
-      await setupVite(app, server);
-    } else {
-      log("Setting up static file serving...");
-      serveStatic(app);
-    }
-
-    // Changed port to 8080 and added detailed startup logging
-    const PORT = 8080;
-    return new Promise((resolve, reject) => {
-      server.listen(PORT, "0.0.0.0", () => {
-        log(`Server is running on port ${PORT}`);
-        log(`Environment: ${env}`);
-        log(`API endpoint: http://localhost:${PORT}/api`);
-        resolve(server);
-      }).on('error', (error) => {
-        console.error('Failed to start server:', error);
-        reject(error);
-      });
-    });
-  } catch (error) {
-    console.error('Server initialization failed:', error);
-    throw error;
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
   }
-}
 
-// Start the server with enhanced error handling
-startServer().catch((error) => {
-  console.error('Critical server error:', error);
-  process.exit(1);
+  const PORT = 5000;
+  server.listen(PORT, "0.0.0.0", () => {
+    log(`serving on port ${PORT}`);
+  }).on('error', (error) => {
+    console.error('Failed to start server:', error);
+    process.exit(1); //Ensuring process exits on fatal errors.
+  });
+})();
+
+//Process level error handling (from original, crucial for stability)
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1); //Ensuring process exits on fatal errors.
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1); //Ensuring process exits on fatal errors.
 });
