@@ -24,6 +24,9 @@ import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
 
 interface Requirement {
   id: string;
@@ -158,7 +161,7 @@ export default function RequirementsDetail({ params }: { params: { id: string } 
         </CardHeader>
       </Card>
 
-      {/* Markdown Preview */}
+      {/* Markdown Preview with Syntax Highlighting */}
       <Card>
         <CardHeader>
           <CardTitle>要件書プレビュー</CardTitle>
@@ -169,7 +172,30 @@ export default function RequirementsDetail({ params }: { params: { id: string } 
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <ReactMarkdown>{markdownContent || ''}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                code({node, inline, className, children, ...props}) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline && match ? (
+                    <SyntaxHighlighter
+                      style={oneDark}
+                      language={match[1]}
+                      PreTag="div"
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                }
+              }}
+            >
+              {markdownContent || ''}
+            </ReactMarkdown>
           )}
         </CardContent>
       </Card>
