@@ -1,16 +1,6 @@
 import { Header } from "./header";
 import { ReactNode } from "react";
 import { Sidebar } from "@/components/ui/sidebar";
-import {
-  Home,
-  Search,
-  Eye,
-  Lightbulb,
-  Settings,
-  BarChart3,
-  PieChart,
-  TrendingUp
-} from "lucide-react";
 
 interface LayoutProps {
   children: ReactNode;
@@ -23,7 +13,9 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex min-h-[calc(100vh-3.5rem)]">
         <Sidebar />
         <main className="flex-1">
-          {children}
+          <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+            {children}
+          </div>
         </main>
       </div>
     </div>
