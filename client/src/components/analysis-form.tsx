@@ -262,10 +262,88 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   // 分析結果をマークダウン形式に変換
   const getMarkdownContent = () => {
     if (!analysisResult?.content) return "";
-    return Object.entries(analysisResult.content)
-      .filter(([_, value]) => !value.message?.includes("準備中"))
-      .map(([key, value]) => `### ${key}\n${value}`)
-      .join('\n\n');
+
+    let markdown = "";
+    const content = analysisResult.content;
+
+    // 初期分析
+    if (content.initial_analysis) {
+      markdown += "## 初期分析\n\n";
+      if (content.initial_analysis.key_points) {
+        markdown += "### 主要ポイント\n";
+        content.initial_analysis.key_points.forEach((point: string) => {
+          markdown += `- ${point}\n`;
+        });
+        markdown += "\n";
+      }
+      if (content.initial_analysis.opportunities) {
+        markdown += "### 機会\n";
+        content.initial_analysis.opportunities.forEach((opp: string) => {
+          markdown += `- ${opp}\n`;
+        });
+        markdown += "\n";
+      }
+      if (content.initial_analysis.challenges) {
+        markdown += "### 課題\n";
+        content.initial_analysis.challenges.forEach((challenge: string) => {
+          markdown += `- ${challenge}\n`;
+        });
+        markdown += "\n";
+      }
+    }
+
+    // 詳細分析
+    if (content.deep_analysis) {
+      markdown += "## 詳細分析\n\n";
+      if (content.deep_analysis.company_insights) {
+        markdown += "### 企業への示唆\n";
+        content.deep_analysis.company_insights.forEach((insight: string) => {
+          markdown += `- ${insight}\n`;
+        });
+        markdown += "\n";
+      }
+      if (content.deep_analysis.market_insights) {
+        markdown += "### 市場への示唆\n";
+        content.deep_analysis.market_insights.forEach((insight: string) => {
+          markdown += `- ${insight}\n`;
+        });
+        markdown += "\n";
+      }
+      if (content.deep_analysis.competitive_insights) {
+        markdown += "### 競争環境への示唆\n";
+        content.deep_analysis.competitive_insights.forEach((insight: string) => {
+          markdown += `- ${insight}\n`;
+        });
+        markdown += "\n";
+      }
+    }
+
+    // 最終提案
+    if (content.final_recommendations) {
+      markdown += "## 最終提案\n\n";
+      if (content.final_recommendations.strategic_moves) {
+        markdown += "### 戦略的アクション\n";
+        content.final_recommendations.strategic_moves.forEach((move: string) => {
+          markdown += `- ${move}\n`;
+        });
+        markdown += "\n";
+      }
+      if (content.final_recommendations.action_items) {
+        markdown += "### 具体的なアクション\n";
+        content.final_recommendations.action_items.forEach((item: string) => {
+          markdown += `- ${item}\n`;
+        });
+        markdown += "\n";
+      }
+      if (content.final_recommendations.risk_factors) {
+        markdown += "### リスク要因\n";
+        content.final_recommendations.risk_factors.forEach((risk: string) => {
+          markdown += `- ${risk}\n`;
+        });
+      }
+    }
+
+    return markdown;
   };
 
   return (

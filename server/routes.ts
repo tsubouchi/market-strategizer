@@ -6,7 +6,7 @@ import fs from "fs";
 import { db } from "@db";
 import { analyses, comments, shared_analyses } from "@db/schema";
 import { eq, and } from "drizzle-orm";
-import { analyze3C, convertAnalysisToMarkdown } from "./lib/openai";
+import { analyze3C, analyze4P, analyzePEST, convertAnalysisToMarkdown } from "./lib/openai";
 
 // Configure multer for file upload
 const upload = multer({
@@ -43,12 +43,20 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).send("Invalid content format");
       }
 
-      // 分析の実行
+      // 分析タイプに応じた分析の実行
       let aiAnalysis;
-      if (analysis_type === "3C") {
-        aiAnalysis = await analyze3C(parsedContent);
-      } else {
-        return res.status(400).send("Unsupported analysis type");
+      switch (analysis_type) {
+        case "3C":
+          aiAnalysis = await analyze3C(parsedContent);
+          break;
+        case "4P":
+          aiAnalysis = await analyze4P(parsedContent);
+          break;
+        case "PEST":
+          aiAnalysis = await analyzePEST(parsedContent);
+          break;
+        default:
+          return res.status(400).send("Unsupported analysis type");
       }
 
       // Convert analysis result to markdown
@@ -254,6 +262,7 @@ export function registerRoutes(app: Express): Server {
     const filePath = path.join(process.cwd(), "uploads", filename);
     res.sendFile(filePath);
   });
+
 
 
   // コンセプト生成API
@@ -958,6 +967,8 @@ export function registerRoutes(app: Express): Server {
       await db
         .delete(product_requirements)
         .where(eq(product_requirements.id, req.params.id));
+
+
 
       res.json({ message: "Requirement deleted successfully" });
     } catch (error) {

@@ -633,3 +633,229 @@ ${result.final_recommendations.risk_factors.map(risk => `- ${risk}`).join('\n')}
 生成日時: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}
 `;
 }
+
+export async function analyze4P(formData: Record<string, string>): Promise<AnalysisResult> {
+  try {
+    // 初期分析: 4Pの基本要素を分析
+    const initialAnalysisResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "4P分析の初期評価を行います。Product（製品）、Price（価格）、Place（流通）、Promotion（プロモーション）の基本的な分析を行い、主要なポイント、機会、課題を抽出してください。",
+        },
+        {
+          role: "user",
+          content: `以下の4P分析データを基に、初期分析を行ってください：
+
+Product分析:
+${formData.product}
+
+Price分析:
+${formData.price}
+
+Place分析:
+${formData.place}
+
+Promotion分析:
+${formData.promotion}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "key_points": ["主要なポイント1", "主要なポイント2", ...],
+  "opportunities": ["機会1", "機会2", ...],
+  "challenges": ["課題1", "課題2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const initialAnalysis = JSON.parse(initialAnalysisResponse.choices[0].message.content || "{}");
+
+    // 詳細分析: マーケティングミックスの観点から深く分析
+    const deepAnalysisResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "初期分析結果を基に、より深いマーケティング戦略の洞察を導き出します。各4P要素の関連性や影響を分析し、具体的な示唆を提供してください。",
+        },
+        {
+          role: "user",
+          content: `初期分析結果と元データを基に、詳細な分析を行ってください：
+
+初期分析結果:
+${JSON.stringify(initialAnalysis, null, 2)}
+
+元データ:
+${JSON.stringify(formData, null, 2)}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "company_insights": ["製品戦略に関する洞察1", "製品戦略に関する洞察2", ...],
+  "market_insights": ["市場戦略に関する洞察1", "市場戦略に関する洞察2", ...],
+  "competitive_insights": ["競争戦略に関する洞察1", "競争戦略に関する洞察2", ...],
+  "recommendations": ["戦略的示唆1", "戦略的示唆2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const deepAnalysis = JSON.parse(deepAnalysisResponse.choices[0].message.content || "{}");
+
+    // 最終提案: 具体的なアクションプランの生成
+    const finalRecommendationsResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "これまでの4P分析結果を統合し、具体的なマーケティング戦略とアクションプランを作成します。実行可能な施策とリスク要因も含めて提示してください。",
+        },
+        {
+          role: "user",
+          content: `これまでの分析結果を基に、最終的な提案を作成してください：
+
+初期分析:
+${JSON.stringify(initialAnalysis, null, 2)}
+
+詳細分析:
+${JSON.stringify(deepAnalysis, null, 2)}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "strategic_moves": ["戦略的アクション1", "戦略的アクション2", ...],
+  "action_items": ["具体的なアクション1", "具体的なアクション2", ...],
+  "risk_factors": ["リスク要因1", "リスク要因2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const finalRecommendations = JSON.parse(finalRecommendationsResponse.choices[0].message.content || "{}");
+
+    return {
+      initial_analysis: initialAnalysis,
+      deep_analysis: deepAnalysis,
+      final_recommendations: finalRecommendations,
+    };
+  } catch (error: any) {
+    console.error("Error in 4P analysis:", error);
+    throw new Error(`分析中にエラーが発生しました: ${error.message}`);
+  }
+}
+
+export async function analyzePEST(formData: Record<string, string>): Promise<AnalysisResult> {
+  try {
+    // 初期分析: PESTの基本要素を分析
+    const initialAnalysisResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "PEST分析の初期評価を行います。Political（政治）、Economic（経済）、Social（社会）、Technological（技術）の基本的な分析を行い、主要なポイント、機会、課題を抽出してください。",
+        },
+        {
+          role: "user",
+          content: `以下のPEST分析データを基に、初期分析を行ってください：
+
+Political分析:
+${formData.political}
+
+Economic分析:
+${formData.economic}
+
+Social分析:
+${formData.social}
+
+Technological分析:
+${formData.technological}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "key_points": ["主要なポイント1", "主要なポイント2", ...],
+  "opportunities": ["機会1", "機会2", ...],
+  "challenges": ["課題1", "課題2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const initialAnalysis = JSON.parse(initialAnalysisResponse.choices[0].message.content || "{}");
+
+    // 詳細分析: マクロ環境の観点から深く分析
+    const deepAnalysisResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "初期分析結果を基に、より深いマクロ環境分析の洞察を導き出します。各PEST要素の関連性や影響を分析し、具体的な示唆を提供してください。",
+        },
+        {
+          role: "user",
+          content: `初期分析結果と元データを基に、詳細な分析を行ってください：
+
+初期分析結果:
+${JSON.stringify(initialAnalysis, null, 2)}
+
+元データ:
+${JSON.stringify(formData, null, 2)}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "company_insights": ["事業環境に関する洞察1", "事業環境に関する洞察2", ...],
+  "market_insights": ["市場環境に関する洞察1", "市場環境に関する洞察2", ...],
+  "competitive_insights": ["競争環境に関する洞察1", "競争環境に関する洞察2", ...],
+  "recommendations": ["戦略的示唆1", "戦略的示唆2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const deepAnalysis = JSON.parse(deepAnalysisResponse.choices[0].message.content || "{}");
+
+    // 最終提案: 具体的なアクションプランの生成
+    const finalRecommendationsResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "これまでのPEST分析結果を統合し、具体的な事業戦略とアクションプランを作成します。実行可能な施策とリスク要因も含めて提示してください。",
+        },
+        {
+          role: "user",
+          content: `これまでの分析結果を基に、最終的な提案を作成してください：
+
+初期分析:
+${JSON.stringify(initialAnalysis, null, 2)}
+
+詳細分析:
+${JSON.stringify(deepAnalysis, null, 2)}
+
+JSONフォーマットで以下の構造で出力してください：
+{
+  "strategic_moves": ["戦略的アクション1", "戦略的アクション2", ...],
+  "action_items": ["具体的なアクション1", "具体的なアクション2", ...],
+  "risk_factors": ["リスク要因1", "リスク要因2", ...]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const finalRecommendations = JSON.parse(finalRecommendationsResponse.choices[0].message.content || "{}");
+
+    return {
+      initial_analysis: initialAnalysis,
+      deep_analysis: deepAnalysis,
+      final_recommendations: finalRecommendations,
+    };
+  } catch (error: any) {
+    console.error("Error in PEST analysis:", error);
+    throw new Error(`分析中にエラーが発生しました: ${error.message}`);
+  }
+}
