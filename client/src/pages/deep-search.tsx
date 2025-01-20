@@ -10,9 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Loader2, Link as LinkIcon, ArrowLeft } from "lucide-react";
+import { Search,  Link as LinkIcon, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface SearchResult {
   title: string;
@@ -125,7 +126,7 @@ export default function DeepSearch() {
               className="w-full"
             >
               {isSearching ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <LoadingSpinner className="mr-2" size="sm" />
               ) : (
                 <Search className="mr-2 h-4 w-4" />
               )}

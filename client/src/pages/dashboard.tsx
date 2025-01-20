@@ -3,8 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { Loader2, PlusCircle, Lightbulb, Trash2, ArrowLeft } from "lucide-react";
+import { PlusCircle, Lightbulb, Trash2, ArrowLeft } from "lucide-react";
 import ConceptGenerator from "@/components/concept-generator";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
   Dialog, 
   DialogContent, 
@@ -32,6 +33,22 @@ export default function Dashboard() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
 
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAnalysis.mutateAsync(id);
+      toast({
+        title: "分析を削除しました",
+        description: "分析が正常に削除されました",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message || "削除中にエラーが発生しました",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
@@ -51,7 +68,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center justify-center min-h-[200px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <LoadingSpinner size="lg" className="text-primary" />
         </div>
       </div>
     );
@@ -155,7 +172,7 @@ export default function Dashboard() {
                       className="bg-destructive/90 text-destructive-foreground hover:bg-destructive"
                     >
                       {deleteAnalysis.isPending && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <LoadingSpinner className="mr-2" size="sm" />
                       )}
                       削除する
                     </AlertDialogAction>
