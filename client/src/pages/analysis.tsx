@@ -63,6 +63,21 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
   if (isLoading) {
     return (
       <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-4xl font-bold">分析詳細</h1>
+            <p className="text-muted-foreground">
+              分析結果の詳細を確認できます
+            </p>
+          </div>
+        </div>
         <div className="flex items-center justify-center min-h-[200px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -73,6 +88,21 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
   if (!analysis) {
     return (
       <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-4xl font-bold">分析詳細</h1>
+            <p className="text-muted-foreground">
+              分析結果の詳細を確認できます
+            </p>
+          </div>
+        </div>
         <Card>
           <CardContent className="flex items-center justify-center min-h-[200px]">
             <p className="text-muted-foreground">分析が見つかりません</p>

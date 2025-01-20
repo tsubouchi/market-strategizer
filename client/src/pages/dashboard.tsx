@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { Loader2, PlusCircle, Lightbulb, Trash2 } from "lucide-react";
+import { Loader2, PlusCircle, Lightbulb, Trash2, ArrowLeft } from "lucide-react";
 import ConceptGenerator from "@/components/concept-generator";
 import { 
   Dialog, 
@@ -34,8 +34,25 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-4xl font-bold">分析一覧</h1>
+            <p className="text-muted-foreground">
+              戦略分析の履歴と結果の管理
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
@@ -57,9 +74,21 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">分析一覧</h1>
+    <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-4xl font-bold">分析一覧</h1>
+          <p className="text-muted-foreground">
+            戦略分析の履歴と結果の管理
+          </p>
+        </div>
         <div className="flex gap-4">
           <Button onClick={() => navigate("/analysis/new")}>
             <PlusCircle className="w-4 h-4 mr-2" />
