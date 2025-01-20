@@ -547,9 +547,9 @@ export function registerRoutes(app: Express): Server {
         ? JSON.parse(requirement.schedule)
         : requirement.schedule;
 
-      // Generate markdown
+      // Generate markdown with proper null checks
       const markdown = `# ${requirement.title}
-      
+        
 ## 概要
 ${requirement.overview}
 
@@ -557,46 +557,49 @@ ${requirement.overview}
 ${requirement.target_users}
 
 ## 機能一覧
-${features.map((feature: any) => `
+${Array.isArray(features) ? features.map((feature: any) => `
 ### ${feature.name}
 - 優先度: ${feature.priority}
 - 説明: ${feature.description}
 - 受け入れ基準:
-${feature.acceptance_criteria.map((criteria: string) => `  - ${criteria}`).join('\n')}
-`).join('\n')}
+${Array.isArray(feature.acceptance_criteria) ? feature.acceptance_criteria.map((criteria: string) => `  - ${criteria}`).join('\n') : ''}
+`).join('\n') : ''}
 
 ## 技術スタック
+${techStack ? `
 ### フロントエンド
-${techStack.frontend.map((tech: string) => `- ${tech}`).join('\n')}
+${Array.isArray(techStack.frontend) ? techStack.frontend.map((tech: string) => `- ${tech}`).join('\n') : ''}
 
 ### バックエンド
-${techStack.backend.map((tech: string) => `- ${tech}`).join('\n')}
+${Array.isArray(techStack.backend) ? techStack.backend.map((tech: string) => `- ${tech}`).join('\n') : ''}
 
 ### データベース
-${techStack.database.map((tech: string) => `- ${tech}`).join('\n')}
+${Array.isArray(techStack.database) ? techStack.database.map((tech: string) => `- ${tech}`).join('\n') : ''}
 
 ### インフラストラクチャ
-${techStack.infrastructure.map((tech: string) => `- ${tech}`).join('\n')}
+${Array.isArray(techStack.infrastructure) ? techStack.infrastructure.map((tech: string) => `- ${tech}`).join('\n') : ''}
+` : ''}
 
+${uiUxRequirements ? `
 ## UI/UX要件
-- デザインシステム: ${uiUxRequirements.design_system}
-- レイアウト: ${uiUxRequirements.layout}
+- デザインシステム: ${uiUxRequirements.design_system || '未定義'}
+- レイアウト: ${uiUxRequirements.layout || '未定義'}
 - レスポンシブ対応: ${uiUxRequirements.responsive ? 'あり' : 'なし'}
-- アクセシビリティ対応:
-${uiUxRequirements.accessibility.map((item: string) => `  - ${item}`).join('\n')}
-- 特別機能:
-${uiUxRequirements.special_features.map((feature: string) => `  - ${feature}`).join('\n')}
+${Array.isArray(uiUxRequirements.accessibility) ? `- アクセシビリティ対応:\n${uiUxRequirements.accessibility.map((item: string) => `  - ${item}`).join('\n')}` : ''}
+${Array.isArray(uiUxRequirements.special_features) ? `- 特別機能:\n${uiUxRequirements.special_features.map((feature: string) => `  - ${feature}`).join('\n')}` : ''}
+` : ''}
 
+${schedule && Array.isArray(schedule.phases) ? `
 ## 開発スケジュール
 ${schedule.phases.map((phase: any) => `
 ### ${phase.name}
 - 期間: ${phase.duration}
-- タスク:
-${phase.tasks.map((task: string) => `  - ${task}`).join('\n')}
+${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) => `  - ${task}`).join('\n')}` : ''}
 `).join('\n')}
+` : ''}
 
 ---
-作成日: ${new Date(requirement.created_at).toLocaleDateString('ja-JP')}
+作成日: ${requirement.created_at ? new Date(requirement.created_at).toLocaleDateString('ja-JP') : '日付なし'}
 `;
 
       const filename = `requirements_${requirement.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()}.md`;
@@ -1012,7 +1015,6 @@ ${phase.tasks.map((task: string) => `  - ${task}`).join('\n')}
         .delete(product_requirements)
         .where(eq(product_requirements.id, req.params.id));
 
-
       res.json({ message: "Requirement deleted successfully" });
     } catch (error) {
       next(error);
@@ -1250,6 +1252,45 @@ ${phase.tasks.map((task: string) => `  - ${task}`).join('\n')}
         .orderBy(product_requirements.created_at);
 
       res.json(requirements);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // 要件書詳細取得API
+  app.get("/api/requirements/:id", async (req, res, next) => {
+    try {
+      const [requirement] = await db
+        .select()
+        .from(product_requirements)
+        .where(eq(product_requirements.id, req.params.id))
+        .limit(1);
+
+      if (!requirement) {
+        return res.status(404).send("Requirement not found");
+      }
+
+      // Parse JSON strings if they are stored as strings
+      const features = typeof requirement.features === 'string' 
+        ? JSON.parse(requirement.features) 
+        : requirement.features;
+      const techStack = typeof requirement.tech_stack === 'string'
+        ? JSON.parse(requirement.tech_stack)
+        : requirement.tech_stack;
+      const uiUxRequirements = typeof requirement.ui_ux_requirements === 'string'
+        ? JSON.parse(requirement.ui_ux_requirements)
+        : requirement.ui_ux_requirements;
+      const schedule = typeof requirement.schedule === 'string'
+        ? JSON.parse(requirement.schedule)
+        : requirement.schedule;
+
+      res.json({
+        ...requirement,
+        features,
+        tech_stack: techStack,
+        ui_ux_requirements: uiUxRequirements,
+        schedule
+      });
     } catch (error) {
       next(error);
     }
