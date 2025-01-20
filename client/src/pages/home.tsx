@@ -45,7 +45,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen w-full p-4">
+    <>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold">戦略分析</h1>
@@ -55,7 +55,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {analysisTypes.map((type, index) => (
           <motion.div
             key={type.id}
@@ -90,6 +90,6 @@ export default function Home() {
           </motion.div>
         ))}
       </div>
-    </div>
+    </>
   );
 }
