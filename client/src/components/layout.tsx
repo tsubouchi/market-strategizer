@@ -22,13 +22,13 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="flex">
+      <div className="flex min-h-[calc(100vh-3.5rem)] pt-14">
         <Sidebar>
           <SidebarContent>
             <div className="px-4 pt-2 pb-4">
               <h2 className="text-xl font-semibold">戦略AIコンパス</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                不確実な時代の羅針盤。AIと多段分析でビジネスの方向性を明確化し、次なるアクションプランを見える化します。
+                不確実な時代の羅針盤。AIが導く羅針盤
               </p>
             </div>
             <SidebarMenu>
