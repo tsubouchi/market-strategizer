@@ -19,10 +19,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Loader2 } from "lucide-react";
+import { Download, Trash2, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import ReactMarkdown from 'react-markdown';
 
 interface Requirement {
   id: string;
@@ -40,6 +41,12 @@ export default function RequirementsDetail({ params }: { params: { id: string } 
 
   const { data: requirement, isLoading } = useQuery<Requirement>({
     queryKey: [`/api/requirements/${params.id}`],
+  });
+
+  // Fetch markdown content
+  const { data: markdownContent, isLoading: isLoadingMarkdown } = useQuery<string>({
+    queryKey: [`/api/requirements/${params.id}/download`],
+    select: (data) => data,
   });
 
   const deleteRequirementMutation = useMutation({
@@ -60,7 +67,7 @@ export default function RequirementsDetail({ params }: { params: { id: string } 
         title: "要件書を削除しました",
         description: "要件書が正常に削除されました",
       });
-      navigate("/concepts");
+      navigate("/requirements-history");
     },
     onError: (error: Error) => {
       toast({
@@ -104,79 +111,68 @@ export default function RequirementsDetail({ params }: { params: { id: string } 
     );
   }
 
-  // Parse JSON strings
-  const features = JSON.parse(requirement.features);
-  const techStack = JSON.parse(requirement.tech_stack);
-
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader className="relative">
-        <div className="absolute top-6 right-6">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon" className="hover:bg-destructive/10 hover:text-destructive">
-                <Trash2 className="h-5 w-5" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>要件書の削除</AlertDialogTitle>
-                <AlertDialogDescription>
-                  この要件書を削除してもよろしいですか？この操作は取り消せません。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => deleteRequirementMutation.mutate()}
-                  className="bg-destructive/90 text-destructive-foreground hover:bg-destructive"
-                  disabled={deleteRequirementMutation.isPending}
-                >
-                  {deleteRequirementMutation.isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  削除
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-        <CardTitle className="text-2xl font-bold mb-2">{requirement.title}</CardTitle>
-        <CardDescription className="text-lg text-muted-foreground">要件書の詳細情報</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-8">
-          <div className="bg-card rounded-lg p-6 shadow-sm">
-            <h3 className="text-xl font-semibold mb-4">概要</h3>
-            <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{requirement.overview}</p>
+    <div className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <Card className="w-full">
+        <CardHeader className="relative">
+          <div className="absolute top-6 right-6 flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => window.location.href = `/api/requirements/${params.id}/download`}
+              title="ダウンロード"
+            >
+              <Download className="h-5 w-5" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="icon" className="hover:bg-destructive/10 hover:text-destructive">
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>要件書の削除</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    この要件書を削除してもよろしいですか？この操作は取り消せません。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteRequirementMutation.mutate()}
+                    className="bg-destructive/90 text-destructive-foreground hover:bg-destructive"
+                    disabled={deleteRequirementMutation.isPending}
+                  >
+                    {deleteRequirementMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    削除
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
-          <div className="bg-card rounded-lg p-6 shadow-sm">
-            <h3 className="text-xl font-semibold mb-4">対象ユーザー</h3>
-            <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{requirement.target_users}</p>
-          </div>
-          <div className="bg-card rounded-lg p-6 shadow-sm">
-            <h3 className="text-xl font-semibold mb-4">機能一覧</h3>
-            <ul className="list-disc list-inside space-y-3 text-muted-foreground">
-              {features.map((feature: string, index: number) => (
-                <li key={index} className="ml-4">{feature}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="bg-card rounded-lg p-6 shadow-sm">
-            <h3 className="text-xl font-semibold mb-4">技術スタック</h3>
-            <ul className="list-disc list-inside space-y-3 text-muted-foreground">
-              {techStack.map((tech: string, index: number) => (
-                <li key={index} className="ml-4">{tech}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between items-center py-6 px-6 bg-muted/5">
-        <p className="text-sm text-muted-foreground">
-          作成日: {new Date(requirement.created_at).toLocaleDateString("ja-JP")}
-        </p>
-      </CardFooter>
-    </Card>
+          <CardTitle className="text-2xl font-bold mb-2">{requirement.title}</CardTitle>
+          <CardDescription className="text-lg text-muted-foreground">要件書の詳細情報</CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* Markdown Preview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>要件書プレビュー</CardTitle>
+        </CardHeader>
+        <CardContent className="prose prose-sm max-w-none dark:prose-invert">
+          {isLoadingMarkdown ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <ReactMarkdown>{markdownContent || ''}</ReactMarkdown>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

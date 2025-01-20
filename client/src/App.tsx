@@ -9,6 +9,7 @@ import DeepSearch from "@/pages/deep-search";
 import CompetitorMonitoring from "@/pages/competitor-monitoring";
 import ConceptHistory from "@/pages/concept-history";
 import RequirementsHistory from "@/pages/requirements-history";
+import RequirementsDetail from "@/pages/requirements-detail";
 import ConceptGenerator from "@/pages/concept-generator";
 import Analysis from "@/pages/analysis";
 import Settings from "@/pages/settings";
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/concept" component={ConceptGenerator} />
         <Route path="/concept-history" component={ConceptHistory} />
         <Route path="/requirements-history" component={RequirementsHistory} />
+        <Route path="/requirements/:id" component={RequirementsDetail} />
         <Route path="/settings" component={Settings} />
         {/* 分析関連のルート */}
         <Route path="/analysis/new/3c">

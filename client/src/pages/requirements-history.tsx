@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 
 interface Requirement {
   id: string;
@@ -18,6 +19,7 @@ interface Requirement {
 }
 
 export default function RequirementsHistory() {
+  const [, navigate] = useLocation();
   const { data: requirements, isLoading } = useQuery<Requirement[]>({
     queryKey: ["/api/product_requirements"],
   });
@@ -79,7 +81,8 @@ export default function RequirementsHistory() {
         {requirements.map((requirement) => (
           <Card
             key={requirement.id}
-            className="hover:shadow-lg transition-shadow bg-card/50 backdrop-blur-sm"
+            className="hover:shadow-lg transition-shadow bg-card/50 backdrop-blur-sm cursor-pointer"
+            onClick={() => navigate(`/requirements/${requirement.id}`)}
           >
             <CardHeader>
               <CardTitle className="line-clamp-2">{requirement.title}</CardTitle>
