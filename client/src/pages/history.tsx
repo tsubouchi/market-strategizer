@@ -15,9 +15,23 @@ interface HistoryItem {
 
 export default function History() {
   const [_, navigate] = useLocation();
+
   const { data: history, isLoading } = useQuery<HistoryItem[]>({
     queryKey: ["/api/history"],
   });
+
+  const handleNavigate = (item: HistoryItem) => {
+    switch (item.type.toLowerCase()) {
+      case 'analysis':
+        navigate(`/analysis/${item.id}`);
+        break;
+      case 'requirement':
+        navigate(`/requirements/${item.id}`);
+        break;
+      default:
+        navigate(`/${item.type.toLowerCase()}/${item.id}`);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -37,33 +51,29 @@ export default function History() {
         {history?.map((item) => (
           <Card
             key={item.id}
-            className="hover:shadow-lg transition-shadow relative group"
+            className="hover:shadow-lg transition-shadow relative group cursor-pointer"
+            onClick={() => handleNavigate(item)}
           >
-            <div 
-              className="cursor-pointer"
-              onClick={() => navigate(`/analysis/${item.id}`)}
-            >
-              <CardHeader>
-                <CardTitle className="flex justify-between items-start">
-                  <div>
-                    <div className="text-xl">{item.title}</div>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {item.type}分析
-                    </div>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-start">
+                <div>
+                  <div className="text-xl">{item.title}</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {item.type}
                   </div>
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {item.created_at && format(new Date(item.created_at), "PPP")}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-3">
-                  {Object.entries(item.content)
-                    .map(([key, value]) => `${key}: ${value}`)
-                    .join("\n")}
-                </p>
-              </CardContent>
-            </div>
+                </div>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {item.created_at && format(new Date(item.created_at), "PPP")}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground line-clamp-3">
+                {Object.entries(item.content)
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join("\n")}
+              </p>
+            </CardContent>
           </Card>
         ))}
       </div>
