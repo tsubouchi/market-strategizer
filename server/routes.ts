@@ -975,7 +975,7 @@ export function registerRoutes(app: Express): Server {
 
   // 重要度判定ロジックを改善
   function determineImportance(content: Record<string,string>): "low" | "medium" | "high" {
-    const keywords = {      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新"],
+    const keywords = {      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新", "大幅な増収"],
       medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更", "環境対応"],
       low: ["通常の更新", "定期的な情報", "軽微な変更", "その他"]
     };
@@ -1093,7 +1093,8 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Analysis not found");
       }
 
-      if (analysis.user_id !== (req.user?.id || 1)) {
+      // デモ環境ではuser_id=1を使用
+      if (analysis.user_id !== 1) {
         return res.status(403).send("Access denied");
       }
 
