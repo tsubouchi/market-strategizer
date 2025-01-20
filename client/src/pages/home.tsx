@@ -45,34 +45,34 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-12 px-4">
+      <div className="container mx-auto py-8 px-4 sm:py-12 sm:px-6">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-6 text-white">
+        <div className="text-center mb-12 sm:mb-16">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 sm:mb-6 text-white">
             戦略AIコンパス
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
             不確実な時代の羅針盤。AIと多段分析でビジネスの方向性を明確化し、次なるアクションプランを見える化します。
           </p>
         </div>
 
         {/* Analysis Types Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-16 sm:mb-20">
           {analysisTypes.map((type) => (
             <Card key={type.id} className="transition-all hover:shadow-lg h-full flex flex-col">
               <CardHeader>
                 <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 mb-4">
                   <type.icon className="w-6 h-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl mb-2">{type.title}</CardTitle>
-                <CardDescription className="text-base">
+                <CardTitle className="text-xl sm:text-2xl mb-2">{type.title}</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   {type.description}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">
                 <ul className="space-y-2 mb-6 flex-1">
                   {type.details.map((detail, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <li key={index} className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground">
                       <span className="block w-1 h-1 mt-2 rounded-full bg-primary/50" />
                       {detail}
                     </li>
@@ -91,32 +91,32 @@ export default function Home() {
 
         {/* Features Section */}
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-12">特徴</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-6">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8 sm:mb-12">特徴</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <div className="p-4 sm:p-6">
               <div className="mb-4 text-primary">
-                <BarChart3 className="w-10 h-10 mx-auto" />
+                <BarChart3 className="w-8 h-8 sm:w-10 sm:h-10 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">ステップ形式の分析</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">ステップ形式の分析</h3>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 各分析を段階的に進め、漏れのない戦略立案をサポート
               </p>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="mb-4 text-primary">
-                <PieChart className="w-10 h-10 mx-auto" />
+                <PieChart className="w-8 h-8 sm:w-10 sm:h-10 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">多段階AI分析</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">多段階AI分析</h3>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 初期分析から深堀分析、具体的な提案まで、AIが段階的にサポート
               </p>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="mb-4 text-primary">
-                <TrendingUp className="w-10 h-10 mx-auto" />
+                <TrendingUp className="w-8 h-8 sm:w-10 sm:h-10 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">根拠に基づく分析</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">根拠に基づく分析</h3>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 参考URLや関連資料を添付し、より具体的な分析の根拠を残せます
               </p>
             </div>
