@@ -549,7 +549,7 @@ export function registerRoutes(app: Express): Server {
 
       // Generate markdown
       const markdown = `# ${requirement.title}
-
+      
 ## 概要
 ${requirement.overview}
 
@@ -967,7 +967,7 @@ ${phase.tasks.map((task: string) => `  - ${task}`).join('\n')}
   function determineImportance(content: Record<string, string>): "low" | "medium" | "high" {
     const keywords = {
       high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新", "大幅な増収"],
-      medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更", "環境対応"],
+      medium:["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更", "環境対応"],
       low: ["通常の更新", "定期的な情報", "軽微な変更", "その他"]
     };
 
@@ -1247,7 +1247,6 @@ ${phase.tasks.map((task: string) => `  - ${task}`).join('\n')}
       const requirements = await db
         .select()
         .from(product_requirements)
-        .where(eq(product_requirements.user_id, req.user?.id || 1))
         .orderBy(product_requirements.created_at);
 
       res.json(requirements);
