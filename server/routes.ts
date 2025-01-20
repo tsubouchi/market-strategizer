@@ -1043,17 +1043,31 @@ export function registerRoutes(app: Express): Server {
 
       // デモ環境では外部キー制約を考慮して、トランザクションで関連レコードも削除
       await db.transaction(async (tx) => {
-        // まず関連する要件書を削除
+        // 1. まず要件書の分析関連を削除
+        await tx
+          .delete(requirement_analyses)
+          .where(
+            eq(
+              requirement_analyses.requirement_id,
+              db
+                .select({ id: product_requirements.id })
+                .from(product_requirements)
+                .where(eq(product_requirements.concept_id, req.params.id))
+                .limit(1)
+            )
+          );
+
+        // 2. 次に要件書を削除
         await tx
           .delete(product_requirements)
           .where(eq(product_requirements.concept_id, req.params.id));
 
-        // 次にコンセプトと分析の関連付けを削除
+        // 3. コンセプトと分析の関連付けを削除
         await tx
           .delete(concept_analyses)
           .where(eq(concept_analyses.concept_id, req.params.id));
 
-        // 最後にコンセプトを削除
+        // 4. 最後にコンセプトを削除
         await tx
           .delete(concepts)
           .where(eq(concepts.id, req.params.id));
