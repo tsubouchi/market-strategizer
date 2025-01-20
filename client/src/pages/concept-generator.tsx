@@ -27,6 +27,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Settings, CheckCircle2, XCircle, Trash2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -50,7 +61,6 @@ interface GenerationStep {
 interface Requirements {
   id: string;
   title: string; 
-  // その他の必要なプロパティ
 }
 
 export default function ConceptGenerator() {
@@ -118,7 +128,8 @@ export default function ConceptGenerator() {
       status: "waiting",
     },
   ]);
-  const [requirements, setRequirements] = useState<Requirements | null>(null); 
+
+  const [requirements, setRequirements] = useState<Requirements | null>(null);
 
   const handleAnalysisSelect = (analysisId: string) => {
     setSelectedAnalyses((current) =>
@@ -190,6 +201,7 @@ export default function ConceptGenerator() {
         },
         body: JSON.stringify({
           conditions: requirementsForm,
+          user_id: 1, // user_idを1に固定
         }),
       });
 
@@ -198,13 +210,12 @@ export default function ConceptGenerator() {
       }
 
       const requirementsData = await requirementsResponse.json();
-      setRequirements(requirementsData); 
+      setRequirements(requirementsData);
       updateStepStatus("requirements", "completed");
       toast({
         title: "要件書生成完了",
         description: "要件書が正常に生成されました。",
       });
-
 
     } catch (error: any) {
       const currentStep = steps.find((step) => step.status === "processing");
@@ -276,12 +287,6 @@ export default function ConceptGenerator() {
       setIsPreviewOpen(true);
     }
   };
-
-  useEffect(() => {
-    if (requirements) {
-      handleDownload(requirements.id);
-    }
-  }, [requirements]);
 
   if (isLoading) {
     return (
