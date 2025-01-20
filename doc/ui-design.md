@@ -81,6 +81,176 @@
 - キーボードナビゲーション: フォーカス可能な要素の視認性確保
 - スクリーンリーダー対応: 適切なaria属性とラベルの提供
 
+## 6. 新規ページ作成のガイドライン
+
+### 基本レイアウト構造
+```tsx
+export default function NewPage() {
+  return (
+    <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+      {/* ヘッダー領域 */}
+      <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-4xl font-bold">ページタイトル</h1>
+          <p className="text-muted-foreground">
+            ページの説明文
+          </p>
+        </div>
+      </div>
+
+      {/* メインコンテンツ */}
+      <div className="space-y-6">
+        {/* コンテンツをここに配置 */}
+      </div>
+    </div>
+  );
+}
+```
+
+### コンテナとマージン規則
+1. ページコンテナ
+   - 最大幅: max-w-7xl
+   - 水平パディング: px-4 md:px-6 lg:px-8
+   - 垂直パディング: py-8
+
+2. カード間のスペーシング
+   - 基本間隔: space-y-6
+   - グリッドギャップ: gap-6 (グリッドレイアウトの場合)
+
+3. セクション間のマージン
+   - 大きなセクション: mb-8
+   - 小さなセクション: mb-4
+
+### コンポーネントの配置規則
+1. ヘッダー部分
+   - 戻るボタン + タイトル: flex items-center gap-4
+   - アクションボタン: ml-auto (右寄せ)
+
+2. グリッドレイアウト
+```tsx
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {/* カードコンポーネント */}
+</div>
+```
+
+3. フォーム要素
+```tsx
+<div className="space-y-2">
+  <Label>ラベル</Label>
+  <Input />
+  <p className="text-sm text-muted-foreground">
+    ヘルプテキスト
+  </p>
+</div>
+```
+
+### アクションとインタラクション
+1. ボタン配置
+   - プライマリーアクション: 右寄せまたは幅いっぱい
+   - セカンダリーアクション: プライマリーの左側
+
+2. ローディング状態
+```tsx
+<Button disabled={isLoading}>
+  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+  アクション
+</Button>
+```
+
+### エラー処理とフィードバック
+1. エラーメッセージ
+   - フォーム内: form.formState.errors経由
+   - トースト: useToast()フックを使用
+
+2. 確認ダイアログ
+   - 危険な操作: AlertDialogを使用
+   - 通常の確認: Dialogを使用
+
+### レスポンシブデザインの実装
+1. コンテナの幅
+```tsx
+<div className="w-full max-w-4xl mx-auto">
+  {/* コンテンツ */}
+</div>
+```
+
+2. グリッドレイアウト
+```tsx
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {/* グリッドアイテム */}
+</div>
+```
+
+3. フォントサイズ
+- ヘッダー: text-4xl
+- サブヘッダー: text-2xl
+- 本文: text-base
+
+### 共通コンポーネントの使用
+1. カード
+```tsx
+<Card>
+  <CardHeader>
+    <CardTitle>タイトル</CardTitle>
+    <CardDescription>説明</CardDescription>
+  </CardHeader>
+  <CardContent>
+    {/* コンテンツ */}
+  </CardContent>
+</Card>
+```
+
+2. フォーム
+```tsx
+const form = useForm({
+  resolver: zodResolver(schema),
+  defaultValues: {},
+});
+
+<Form {...form}>
+  <form onSubmit={form.handleSubmit(onSubmit)}>
+    {/* フォームフィールド */}
+  </form>
+</Form>
+```
+
+### テーマとカラー
+1. テキストカラー
+- 主要テキスト: text-foreground
+- 補足テキスト: text-muted-foreground
+- アクセント: text-primary
+
+2. 背景色
+- メイン: bg-background
+- カード: bg-card
+- アクセント: bg-primary/10
+
+### 実装時の注意点
+1. レイアウトコンポーネント
+   - 必ずLayoutコンポーネントでラップする
+   - App.tsxのRouterコンポーネント内で実装
+
+2. ナビゲーション
+   - useLocation フックを使用
+   - 直接のwindow.location操作は避ける
+
+3. データフェッチ
+   - react-queryを使用
+   - ローディング状態を適切に処理
+
+4. エラー処理
+   - try-catch内でtoastを使用
+   - ユーザーフレンドリーなエラーメッセージ
+
+これらのガイドラインに従うことで、一貫性のある使いやすいUIを実現できます。
+
 ## ユーザーストーリー
 
 1. コンセプト作成ユーザー
