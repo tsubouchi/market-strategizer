@@ -10,6 +10,7 @@ import Concepts from "@/pages/concepts";
 import DeepSearch from "@/pages/deep-search";
 import ConceptGenerator from "@/pages/concept-generator";
 import CompetitorMonitoring from "@/pages/competitor-monitoring";
+import RequirementDetail from "@/pages/requirement-detail";  // 追加
 import Sidebar from "@/components/sidebar";
 import { queryClient } from "./lib/queryClient";
 
@@ -28,6 +29,7 @@ function Router() {
             <Route path="/deep-search" component={DeepSearch} />
             <Route path="/concept-generator" component={ConceptGenerator} />
             <Route path="/competitor-monitoring" component={CompetitorMonitoring} />
+            <Route path="/requirements/:id" component={RequirementDetail} />  {/* 追加 */}
             <Route component={NotFound} />
           </Switch>
         </div>

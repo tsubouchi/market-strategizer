@@ -20,16 +20,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Loader2 } from "lucide-react";
-import { useNavigate } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-export default function RequirementDetail({ requirement }) {
+export default function RequirementDetail({ params }: { params: { id: string } }) {
   const { toast } = useToast();
-  const [, navigate] = useNavigate();
+  const [, navigate] = useLocation();
+
+  // 要件書データの取得
+  const { data: requirement, isLoading } = useQuery({
+    queryKey: [`/api/requirements/${params.id}`],
+  });
 
   const deleteRequirementMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/requirements/${requirement.id}`, {
+      const response = await fetch(`/api/requirements/${params.id}`, {
         method: "DELETE",
       });
 
@@ -42,7 +47,7 @@ export default function RequirementDetail({ requirement }) {
         title: "要件書を削除しました",
         description: "要件書が正常に削除されました",
       });
-      navigate("/requirements");
+      navigate("/concepts");
     },
     onError: (error: Error) => {
       toast({
@@ -52,6 +57,14 @@ export default function RequirementDetail({ requirement }) {
       });
     },
   });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!requirement) {
+    return <div>要件書が見つかりません</div>;
+  }
 
   return (
     <Card>
