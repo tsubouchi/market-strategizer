@@ -62,7 +62,7 @@ export default function DeepSearch() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div>
         <h1 className="text-4xl font-bold mb-2">深層検索エージェント</h1>
         <p className="text-muted-foreground">
@@ -70,7 +70,7 @@ export default function DeepSearch() {
         </p>
       </div>
 
-      <Card>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle>検索条件</CardTitle>
         </CardHeader>
@@ -123,51 +123,53 @@ export default function DeepSearch() {
       </Card>
 
       {results.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-4 mt-8">
           <h2 className="text-2xl font-semibold mb-4">検索結果</h2>
-          {results.map((result, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2">
-                  {result.url ? (
-                    <a
-                      href={result.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline flex items-center gap-2"
-                    >
-                      {result.title}
-                      <LinkIcon className="h-4 w-4" />
-                    </a>
-                  ) : (
-                    result.title
+          <div className="grid gap-4">
+            {results.map((result, index) => (
+              <Card key={index}>
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-semibold mb-2">
+                    {result.url ? (
+                      <a
+                        href={result.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline flex items-center gap-2"
+                      >
+                        {result.title}
+                        <LinkIcon className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      result.title
+                    )}
+                  </h3>
+                  <p className="text-muted-foreground whitespace-pre-wrap">
+                    {result.summary}
+                  </p>
+                  {result.citations && result.citations.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="font-semibold mb-2">参考文献：</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {result.citations.map((citation, idx) => (
+                          <li key={idx}>
+                            <a
+                              href={citation}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {citation}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
-                </h3>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {result.summary}
-                </p>
-                {result.citations && result.citations.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="font-semibold mb-2">参考文献：</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                      {result.citations.map((citation, idx) => (
-                        <li key={idx}>
-                          <a
-                            href={citation}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            {citation}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
     </div>

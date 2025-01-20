@@ -141,13 +141,13 @@ const LoadingCard = () => (
   </Card>
 );
 
-const KeywordEditDialog = ({ 
-  competitor, 
-  isOpen, 
-  onOpenChange 
-}: { 
-  competitor: Competitor; 
-  isOpen: boolean; 
+const KeywordEditDialog = ({
+  competitor,
+  isOpen,
+  onOpenChange
+}: {
+  competitor: Competitor;
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) => {
   const queryClient = useQueryClient();
@@ -402,10 +402,10 @@ export default function CompetitorMonitoring() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold">競合他社モニタリング</h1>
+          <h1 className="text-4xl font-bold">競合他社モニタリング</h1>
           <p className="text-muted-foreground">
             競合他社の動向をリアルタイムで監視します
           </p>
@@ -469,7 +469,7 @@ export default function CompetitorMonitoring() {
         </Dialog>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-8">
         <AnimatePresence>
           {competitors?.map((competitor) => (
             <motion.div

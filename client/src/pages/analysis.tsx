@@ -34,8 +34,8 @@ export default function AnalysisPage() {
     }
 
     return (
-      <div className="container mx-auto py-8">
-        <div className="max-w-3xl mx-auto">
+      <div className="container mx-auto py-8 px-4 max-w-7xl">
+        <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <Button
               variant="ghost"
@@ -91,8 +91,8 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <div className="max-w-6xl mx-auto">
         <Button
           variant="ghost"
           onClick={() => navigate("/dashboard")}
