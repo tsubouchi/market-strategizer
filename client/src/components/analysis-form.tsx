@@ -1,3 +1,4 @@
+typescript
 import { useState } from "react";
 import { useCreateAnalysis } from "@/hooks/use-analysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { Loader2, Link as LinkIcon, Paperclip, ArrowLeft, ArrowRight } from "luc
 
 export type AnalysisType = "3C" | "4P" | "PEST";
 
+// ステップ定義 (既存のコードは変更なし)
 const analysisSteps = {
   "3C": [
     {
@@ -96,6 +98,8 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [title, setTitle] = useState("");
   const [referenceUrl, setReferenceUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processStatus, setProcessStatus] = useState<string>("");
   const createAnalysis = useCreateAnalysis();
   const { toast } = useToast();
 
@@ -146,6 +150,9 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       return;
     }
 
+    setIsProcessing(true);
+    setProcessStatus("分析データを準備中...");
+
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("analysis_type", type);
@@ -160,7 +167,10 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
         formDataToSend.append("attachment", file);
       }
 
+      setProcessStatus("分析を実行中...");
       const analysis = await createAnalysis.mutateAsync(formDataToSend);
+
+      setProcessStatus("分析結果を保存中...");
 
       toast({
         title: "分析完了",
@@ -176,6 +186,9 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
         title: "エラー",
         description: error.message || "分析の保存中にエラーが発生しました。",
       });
+    } finally {
+      setIsProcessing(false);
+      setProcessStatus("");
     }
   };
 
@@ -249,6 +262,13 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
             />
           </div>
 
+          {isProcessing && (
+            <div className="flex items-center justify-center gap-2 py-4 text-primary">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">{processStatus}</span>
+            </div>
+          )}
+
           <div className="flex justify-between gap-4">
             {currentStep > 0 && (
               <Button type="button" variant="outline" onClick={handleBack}>
@@ -259,9 +279,9 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
             <Button
               type="submit"
               className={currentStep === 0 ? "w-full" : "ml-auto"}
-              disabled={createAnalysis.isPending}
+              disabled={createAnalysis.isPending || isProcessing}
             >
-              {createAnalysis.isPending && (
+              {(createAnalysis.isPending || isProcessing) && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               {isLastStep ? "分析をする" : (

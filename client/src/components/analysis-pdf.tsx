@@ -1,18 +1,12 @@
-import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, PDFViewer } from "@react-pdf/renderer";
 import type { Analysis } from "@db/schema";
 
-// 日本語フォントの登録
-Font.register({
-  family: 'NotoSansJP',
-  src: 'https://fonts.gstatic.com/s/notosansjp/v52/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEj75g.ttf'
-});
-
+// フォント登録なしでデフォルトフォントを使用
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#ffffff",
     padding: 30,
-    fontFamily: "NotoSansJP",
   },
   section: {
     marginBottom: 20,
@@ -20,18 +14,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     marginBottom: 20,
-    fontFamily: "NotoSansJP",
   },
   subtitle: {
     fontSize: 18,
     marginBottom: 10,
-    fontFamily: "NotoSansJP",
   },
   text: {
     fontSize: 12,
     lineHeight: 1.5,
     marginBottom: 8,
-    fontFamily: "NotoSansJP",
   },
   aiSection: {
     marginTop: 20,
@@ -58,7 +49,7 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
 
   const formatDate = (date: string | null | undefined): string => {
     if (!date) return "";
-    return new Date(date).toLocaleString('ja-JP');
+    return new Date(date).toLocaleDateString('ja-JP');
   };
 
   return (
@@ -79,7 +70,7 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
           <Text style={styles.subtitle}>分析内容</Text>
           {Object.entries(content).map(([key, value]) => (
             <View key={key} style={styles.section}>
-              <Text style={{ ...styles.text, fontWeight: "bold" }}>
+              <Text style={styles.text}>
                 {key}
               </Text>
               <Text style={styles.text}>{value}</Text>
@@ -93,7 +84,7 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
 
           {/* Initial Analysis */}
           <View style={styles.section}>
-            <Text style={{ ...styles.text, fontWeight: "bold" }}>初期分析</Text>
+            <Text style={styles.text}>初期分析</Text>
             {Object.entries(aiContent.initial_analysis).map(([key, value]) => (
               <Text key={key} style={styles.text}>
                 {key}: {Array.isArray(value) ? value.join(", ") : String(value)}
@@ -103,7 +94,7 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
 
           {/* Deep Analysis */}
           <View style={styles.section}>
-            <Text style={{ ...styles.text, fontWeight: "bold" }}>詳細分析</Text>
+            <Text style={styles.text}>詳細分析</Text>
             {Object.entries(aiContent.deep_analysis).map(([key, value]) => (
               <Text key={key} style={styles.text}>
                 {key}: {Array.isArray(value) ? value.join(", ") : String(value)}
@@ -113,7 +104,7 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
 
           {/* Recommendations */}
           <View style={styles.section}>
-            <Text style={{ ...styles.text, fontWeight: "bold" }}>提案</Text>
+            <Text style={styles.text}>提案</Text>
             {Object.entries(aiContent.recommendations).map(([key, value]) => (
               <Text key={key} style={styles.text}>
                 {key}: {Array.isArray(value) ? value.join(", ") : String(value)}
@@ -136,8 +127,10 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
 
 export function AnalysisPDFViewer({ analysis }: AnalysisPDFProps) {
   return (
-    <PDFViewer style={{ width: "100%", height: "800px" }}>
-      <AnalysisPDFDocument analysis={analysis} />
-    </PDFViewer>
+    <div className="h-[500px] w-full">
+      <PDFViewer style={{ width: "100%", height: "100%" }}>
+        <AnalysisPDFDocument analysis={analysis} />
+      </PDFViewer>
+    </div>
   );
 }
