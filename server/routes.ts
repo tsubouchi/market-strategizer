@@ -1192,6 +1192,64 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get markdown content for requirement
+  app.get("/api/requirements/:id/markdown", async (req, res, next) => {
+    try {
+      const [requirement] = await db
+        .select()
+        .from(product_requirements)
+        .where(eq(product_requirements.id, req.params.id))
+        .limit(1);
+
+      if (!requirement) {
+        return res.status(404).send("Requirement not found");
+      }
+
+      // データベースの要件書データをWebAppRequirementインターフェースの形式に変換
+      const webAppRequirement: WebAppRequirement = {
+        title: requirement.title,
+        purpose: {
+          background: "プロジェクトの背景情報",
+          goals: ["目標1"],
+          expected_effects: ["期待される効果1"]
+        },
+        overview: requirement.overview,
+        target_users: requirement.target_users,
+        features: JSON.parse(requirement.features as string),
+        non_functional_requirements: {
+          performance: ["性能要件1"],
+          security: ["セキュリティ要件1"],
+          availability: ["可用性要件1"],
+          scalability: ["拡張性要件1"],
+          maintainability: ["保守性要件1"]
+        },
+        api_requirements: {
+          external_apis: [],
+          internal_apis: []
+        },
+        screen_structure: {
+          flow_description: "画面遷移の概要説明",
+          main_screens: ["メイン画面1"]
+        },
+        screen_list: [{
+          name: "画面1",
+          path: "/",
+          description: "画面の説明",
+          main_features: ["主要機能1"]
+        }],
+        tech_stack: JSON.parse(requirement.tech_stack as string),
+        ui_ux_requirements: JSON.parse(requirement.ui_ux_requirements as string),
+        schedule: JSON.parse(requirement.schedule as string)
+      };
+
+      const markdown = await generateMarkdownRequirements(webAppRequirement);
+      res.json({ html: markdown });
+    } catch (error) {
+      console.error("Error generating markdown:", error);
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
