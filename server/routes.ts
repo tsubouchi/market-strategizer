@@ -594,7 +594,7 @@ export function registerRoutes(app: Express): Server {
         },
         overview: requirement.overview,
         target_users: requirement.target_users,
-        features: JSON.parse(requirement.features),
+        features: JSON.parse(requirement.features as string),
         non_functional_requirements: {
           performance: ["性能要件1"],
           security: ["セキュリティ要件1"],
@@ -616,9 +616,9 @@ export function registerRoutes(app: Express): Server {
           description: "画面の説明",
           main_features: ["主要機能1"]
         }],
-        tech_stack: JSON.parse(requirement.tech_stack),
-        ui_ux_requirements: JSON.parse(requirement.ui_ux_requirements),
-        schedule: JSON.parse(requirement.schedule)
+        tech_stack: JSON.parse(requirement.tech_stack as string),
+        ui_ux_requirements: JSON.parse(requirement.ui_ux_requirements as string),
+        schedule: JSON.parse(requirement.schedule as string)
       };
 
       const markdown = await generateMarkdownRequirements(webAppRequirement);
@@ -975,7 +975,7 @@ export function registerRoutes(app: Express): Server {
 
   // 重要度判定ロジックを改善
   function determineImportance(content: Record<string,string>): "low" | "medium" | "high" {
-    const keywords = {      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新", "大幅な増収"],
+    const keywords = {      high: ["新製品発表", "重要な発表", "戦略的提携","M&A", "特許取得", "業績予想修正", "重大な技術革新", "大幅な増収"],
       medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更", "環境対応"],
       low: ["通常の更新", "定期的な情報", "軽微な変更", "その他"]
     };
@@ -1133,6 +1133,65 @@ export function registerRoutes(app: Express): Server {
   });
 
   // 他のルート設定は変更なし
+  // 要件書のマークダウン内容取得API
+  app.get("/api/requirements/:id/content", async (req, res, next) => {
+    try {
+      const [requirement] = await db
+        .select()
+        .from(product_requirements)
+        .where(eq(product_requirements.id, req.params.id))
+        .limit(1);
+
+      if (!requirement) {
+        return res.status(404).send("Requirement not found");
+      }
+
+      // データベースの要件書データをWebAppRequirementインターフェースの形式に変換
+      const webAppRequirement: WebAppRequirement = {
+        title: requirement.title,
+        purpose: {
+          background: "プロジェクトの背景情報",
+          goals: ["目標1"],
+          expected_effects: ["期待される効果1"]
+        },
+        overview: requirement.overview,
+        target_users: requirement.target_users,
+        features: JSON.parse(requirement.features as string),
+        non_functional_requirements: {
+          performance: ["性能要件1"],
+          security: ["セキュリティ要件1"],
+          availability: ["可用性要件1"],
+          scalability: ["拡張性要件1"],
+          maintainability: ["保守性要件1"]
+        },
+        api_requirements: {
+          external_apis: [],
+          internal_apis: []
+        },
+        screen_structure: {
+          flow_description: "画面遷移の概要説明",
+          main_screens: ["メイン画面1"]
+        },
+        screen_list: [{
+          name: "画面1",
+          path: "/",
+          description: "画面の説明",
+          main_features: ["主要機能1"]
+        }],
+        tech_stack: JSON.parse(requirement.tech_stack as string),
+        ui_ux_requirements: JSON.parse(requirement.ui_ux_requirements as string),
+        schedule: JSON.parse(requirement.schedule as string)
+      };
+
+      const markdown = await generateMarkdownRequirements(webAppRequirement);
+      res.setHeader("Content-Type", "text/markdown");
+      res.send(markdown);
+    } catch (error) {
+      console.error("Error generating markdown:", error);
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

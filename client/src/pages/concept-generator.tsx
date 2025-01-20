@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAnalyses } from "@/hooks/use-analysis";
+import ReactMarkdown from "react-markdown";
 import {
   Card,
   CardHeader,
@@ -19,21 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Settings, CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { Loader2, Settings, CheckCircle2, XCircle, Trash2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 interface RequirementsForm {
   timeline?: string;
@@ -52,7 +49,7 @@ interface GenerationStep {
 
 interface Requirements {
   id: string;
-  title: string; // Added title property
+  title: string; 
   // その他の必要なプロパティ
 }
 
@@ -63,6 +60,8 @@ export default function ConceptGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [selectedRequirement, setSelectedRequirement] = useState<{id: string, content: string} | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -80,7 +79,7 @@ export default function ConceptGenerator() {
         title: "削除完了",
         description: "要件書を削除しました",
       });
-      setRequirements(null); //added to clear requirement after delete
+      setRequirements(null); 
     },
     onError: (error: Error) => {
       toast({
@@ -119,8 +118,7 @@ export default function ConceptGenerator() {
       status: "waiting",
     },
   ]);
-  const [requirements, setRequirements] = useState<Requirements | null>(null); // Added state for requirements
-
+  const [requirements, setRequirements] = useState<Requirements | null>(null); 
 
   const handleAnalysisSelect = (analysisId: string) => {
     setSelectedAnalyses((current) =>
@@ -159,7 +157,6 @@ export default function ConceptGenerator() {
 
     setIsGenerating(true);
     try {
-      // Step 1: コンセプト生成
       updateStepStatus("analyze", "processing");
       const response = await fetch("/api/concepts/generate", {
         method: "POST",
@@ -184,7 +181,6 @@ export default function ConceptGenerator() {
         description: "商品コンセプトが正常に生成されました。",
       });
 
-      // Step 2: 要件書の生成
       updateStepStatus("concept", "completed");
       updateStepStatus("requirements", "processing");
       const requirementsResponse = await fetch(`/api/concepts/${result.id}/requirements`, {
@@ -202,7 +198,7 @@ export default function ConceptGenerator() {
       }
 
       const requirementsData = await requirementsResponse.json();
-      setRequirements(requirementsData); // Update requirements state
+      setRequirements(requirementsData); 
       updateStepStatus("requirements", "completed");
       toast({
         title: "要件書生成完了",
@@ -252,6 +248,32 @@ export default function ConceptGenerator() {
         title: "エラー",
         description: error.message,
       });
+    }
+  };
+
+  const fetchRequirementContent = async (id: string) => {
+    try {
+      const response = await fetch(`/api/requirements/${id}/content`);
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      const content = await response.text();
+      return content;
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message,
+      });
+      return null;
+    }
+  };
+
+  const handlePreviewRequirement = async (requirement: Requirements) => {
+    const content = await fetchRequirementContent(requirement.id);
+    if (content) {
+      setSelectedRequirement({ id: requirement.id, content });
+      setIsPreviewOpen(true);
     }
   };
 
@@ -386,7 +408,6 @@ export default function ConceptGenerator() {
           </CardContent>
         </Card>
 
-        {/* 要件書一覧セクションを追加 */}
         {requirements && (
           <Card>
             <CardHeader>
@@ -396,7 +417,10 @@ export default function ConceptGenerator() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div 
+                className="space-y-4 cursor-pointer hover:bg-accent/10 p-4 rounded-lg transition-colors"
+                onClick={() => handlePreviewRequirement(requirements)}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-medium">{requirements.title}</h3>
@@ -434,7 +458,37 @@ export default function ConceptGenerator() {
           </Card>
         )}
 
-        {/* 生成ステップの表示 */}
+        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>要件書プレビュー</DialogTitle>
+              <DialogDescription>
+                要件書の内容を確認できます
+              </DialogDescription>
+            </DialogHeader>
+            <div className="prose prose-sm dark:prose-invert mt-4">
+              {selectedRequirement && (
+                <ReactMarkdown>{selectedRequirement.content}</ReactMarkdown>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => handleDownload(selectedRequirement?.id!)}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                ダウンロード
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setIsPreviewOpen(false)}
+              >
+                閉じる
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {isGenerating && (
           <Card>
             <CardHeader>
