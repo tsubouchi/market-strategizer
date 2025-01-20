@@ -9,6 +9,7 @@ import DeepSearch from "@/pages/deep-search";
 import CompetitorMonitoring from "@/pages/competitor-monitoring";
 import ConceptHistory from "@/pages/concept-history";
 import RequirementsHistory from "@/pages/requirements-history";
+import ConceptGenerator from "@/pages/concept-generator";
 import Analysis from "@/pages/analysis";
 import Settings from "@/pages/settings";
 
@@ -24,6 +25,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/search" component={DeepSearch} />
         <Route path="/monitoring" component={CompetitorMonitoring} />
+        <Route path="/concept" component={ConceptGenerator} />
         <Route path="/concept-history" component={ConceptHistory} />
         <Route path="/requirements-history" component={RequirementsHistory} />
         <Route path="/settings" component={Settings} />
@@ -38,7 +40,7 @@ function Router() {
           {() => <Analysis type="PEST" />}
         </Route>
         <Route path="/analysis/:id">
-          {(params) => <Analysis analysisId={params.id} />}
+          {(params) => <Analysis type={undefined} analysisId={params.id} />}
         </Route>
         <Route component={NotFound} />
       </Switch>

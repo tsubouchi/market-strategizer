@@ -40,6 +40,11 @@ const mainLinks = [
     href: "/monitoring",
   },
   {
+    title: "コンセプト生成",
+    icon: Lightbulb,
+    href: "/concept",
+  },
+  {
     title: "コンセプト履歴",
     icon: History,
     href: "/concept-history",
