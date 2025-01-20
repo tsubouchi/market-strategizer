@@ -107,7 +107,7 @@ export default function RequirementDetail({ params }: { params: { id: string } }
   const techStack = JSON.parse(requirement.tech_stack);
 
   return (
-    <Card>
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader className="relative">
         <div className="absolute top-4 right-4">
           <AlertDialog>
@@ -139,30 +139,30 @@ export default function RequirementDetail({ params }: { params: { id: string } }
             </AlertDialogContent>
           </AlertDialog>
         </div>
-        <CardTitle>{requirement.title}</CardTitle>
-        <CardDescription>要件書の詳細情報</CardDescription>
+        <CardTitle className="text-2xl font-bold mb-2">{requirement.title}</CardTitle>
+        <CardDescription className="text-lg text-muted-foreground">要件書の詳細情報</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">概要</h3>
-            <p className="text-muted-foreground whitespace-pre-wrap">{requirement.overview}</p>
+        <div className="space-y-8">
+          <div className="bg-card rounded-lg p-6 shadow-sm">
+            <h3 className="text-xl font-semibold mb-4">概要</h3>
+            <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{requirement.overview}</p>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-2">対象ユーザー</h3>
-            <p className="text-muted-foreground whitespace-pre-wrap">{requirement.target_users}</p>
+          <div className="bg-card rounded-lg p-6 shadow-sm">
+            <h3 className="text-xl font-semibold mb-4">対象ユーザー</h3>
+            <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{requirement.target_users}</p>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-2">機能一覧</h3>
-            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+          <div className="bg-card rounded-lg p-6 shadow-sm">
+            <h3 className="text-xl font-semibold mb-4">機能一覧</h3>
+            <ul className="list-disc list-inside space-y-3 text-muted-foreground">
               {features.map((feature: string, index: number) => (
                 <li key={index} className="ml-4">{feature}</li>
               ))}
             </ul>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-2">技術スタック</h3>
-            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+          <div className="bg-card rounded-lg p-6 shadow-sm">
+            <h3 className="text-xl font-semibold mb-4">技術スタック</h3>
+            <ul className="list-disc list-inside space-y-3 text-muted-foreground">
               {techStack.map((tech: string, index: number) => (
                 <li key={index} className="ml-4">{tech}</li>
               ))}
@@ -170,7 +170,7 @@ export default function RequirementDetail({ params }: { params: { id: string } }
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between items-center">
+      <CardFooter className="flex justify-between items-center py-6 px-6 bg-muted/5">
         <p className="text-sm text-muted-foreground">
           作成日: {new Date(requirement.created_at).toLocaleDateString("ja-JP")}
         </p>
