@@ -18,16 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 interface GenerationStep {
   id: string;
@@ -47,6 +41,7 @@ export default function ConceptGenerator() {
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const [steps, setSteps] = useState<GenerationStep[]>([
     {
@@ -180,14 +175,32 @@ export default function ConceptGenerator() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6">
+    <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-4xl font-bold">コンセプト生成</h1>
+          <p className="text-muted-foreground">
+            分析データを基にAIが最適な商品コンセプトを提案します
+          </p>
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto space-y-8">
         <Card>
           <CardHeader>

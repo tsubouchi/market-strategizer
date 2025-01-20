@@ -10,8 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Loader2, Link as LinkIcon } from "lucide-react";
+import { Search, Loader2, Link as LinkIcon, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface SearchResult {
   title: string;
@@ -26,6 +27,7 @@ export default function DeepSearch() {
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,11 +67,20 @@ export default function DeepSearch() {
 
   return (
     <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">深層検索エージェント</h1>
-        <p className="text-muted-foreground">
-          AIを活用して深い洞察を得るための検索を実行します
-        </p>
+      <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-4xl font-bold">深層検索エージェント</h1>
+          <p className="text-muted-foreground">
+            AIを活用して深い洞察を得るための検索を実行します
+          </p>
+        </div>
       </div>
 
       <Card>
