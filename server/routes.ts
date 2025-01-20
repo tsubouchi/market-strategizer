@@ -996,11 +996,6 @@ export function registerRoutes(app: Express): Server {
     return "medium";
   }
 
-  async function analyzeBusinessStrategy(analysis_type: string, content: any): Promise<string> {
-    //  This is a placeholder.  Replace with your actual AI analysis logic.
-    return JSON.stringify({ initial_analysis: "Initial Analysis", deep_analysis: "Deep Analysis", recommendations: "Recommendations" });
-  }
-
   // 要件書削除API
   app.delete("/api/requirements/:id", async (req, res, next) => {
     try {
@@ -1014,48 +1009,25 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Requirement not found");
       }
 
-      if (requirement.user_id !== (req.user?.id || 1)) {
-        return res.status(403).send("Access denied");
-      }
+      // デモ環境では認証チェックを無効化
+      // if (requirement.user_id !== (req.user?.id || 1)) {
+      //   return res.status(403).send("Access denied");
+      // }
 
       // トランザクションで削除を実行
       await db.transaction(async (tx) => {
-        // まず関連する分析との関連付けを削除
+        // 関連する分析との関連付けを削除
         await tx
           .delete(requirement_analyses)
           .where(eq(requirement_analyses.requirement_id, req.params.id));
 
-        // 次に要件書を削除
+        // 要件書を削除
         await tx
           .delete(product_requirements)
           .where(eq(product_requirements.id, req.params.id));
       });
 
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting requirement:", error);
-      next(error);
-    }
-  });
-
-  // 個別の要件書取得API
-  app.get("/api/requirements/:id", async (req, res, next) => {
-    try {
-      const [requirement] = await db
-        .select()
-        .from(product_requirements)
-        .where(eq(product_requirements.id, req.params.id))
-        .limit(1);
-
-      if (!requirement) {
-        return res.status(404).send("Requirement not found");
-      }
-
-      if (requirement.user_id !== (req.user?.id || 1)) {
-        return res.status(403).send("Access denied");
-      }
-
-      res.json(requirement);
+      res.json({ message: "要件書を削除しました" });
     } catch (error) {
       next(error);
     }
