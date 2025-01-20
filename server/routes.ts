@@ -535,11 +535,11 @@ export function registerRoutes(app: Express): Server {
         conditions
       );
 
-      // 要件書をデータベースに保存
+      // 要件書をデータベースに保存（デモ環境ではuser_id=1で統一）
       const [requirement] = await db
         .insert(product_requirements)
         .values({
-          user_id: req.user?.id || 1,
+          user_id: 1, // デモ環境では固定値として1を使用
           concept_id: concept.id,
           title: requirements.title,
           overview: requirements.overview,
@@ -552,7 +552,6 @@ export function registerRoutes(app: Express): Server {
         })
         .returning();
 
-      // 要件書と分析の関連付けを作成
       const analyses = await db
         .select()
         .from(concept_analyses)
@@ -565,7 +564,6 @@ export function registerRoutes(app: Express): Server {
         }))
       );
 
-      console.log("Generated requirement:", requirement);
       res.json(requirement);
     } catch (error) {
       console.error("Error generating requirements:", error);
@@ -969,7 +967,7 @@ export function registerRoutes(app: Express): Server {
         .where(eq(competitors.id, competitor.id));
 
       res.json([update]);
-    } catch (error) {
+    } catch(error) {
       console.error("Error refreshing competitor data:", error);
       next(error);
     }
@@ -1006,15 +1004,10 @@ export function registerRoutes(app: Express): Server {
         .limit(1);
 
       if (!requirement) {
-        return res.status(404).send("Requirement not found");
+        return res.status(404).send("要件書が見つかりません");
       }
 
-      // デモ環境では認証チェックを無効化
-      // if (requirement.user_id !== (req.user?.id || 1)) {
-      //   return res.status(403).send("Access denied");
-      // }
-
-      // トランザクションで削除を実行
+      // デモ環境では認証チェックを無効化し、すべてのユーザーに削除を許可
       await db.transaction(async (tx) => {
         // 関連する分析との関連付けを削除
         await tx
@@ -1029,6 +1022,7 @@ export function registerRoutes(app: Express): Server {
 
       res.json({ message: "要件書を削除しました" });
     } catch (error) {
+      console.error("Error deleting requirement:", error);
       next(error);
     }
   });
