@@ -1,15 +1,45 @@
-import { useConcepts } from "@/hooks/use-concept";
+import { useConcepts, useDeleteConcept } from "@/hooks/use-concept";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import ConceptGenerator from "@/components/concept-generator";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Concepts() {
   const { data: concepts, isLoading } = useConcepts();
   const [_, navigate] = useLocation();
+  const { toast } = useToast();
+  const deleteConcept = useDeleteConcept();
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteConcept.mutateAsync(id);
+      toast({
+        title: "削除完了",
+        description: "コンセプトを削除しました",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message || "削除中にエラーが発生しました",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -46,10 +76,39 @@ export default function Concepts() {
         {concepts?.map((concept) => (
           <Card
             key={concept.id}
-            className="hover:shadow-lg transition-shadow cursor-pointer"
+            className="hover:shadow-lg transition-shadow"
           >
-            <CardHeader>
-              <CardTitle>{concept.title}</CardTitle>
+            <CardHeader className="relative">
+              <div className="absolute top-4 right-4">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>コンセプトの削除</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        このコンセプトを削除してもよろしいですか？この操作は取り消せません。
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(concept.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deleteConcept.isPending && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        削除
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              <CardTitle className="pr-12">{concept.title}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {concept.created_at && format(new Date(concept.created_at), "PPP")}
               </p>

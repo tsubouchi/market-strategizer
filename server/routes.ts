@@ -1004,25 +1004,62 @@ export function registerRoutes(app: Express): Server {
         .limit(1);
 
       if (!requirement) {
-        return res.status(404).send("要件書が見つかりません");
+        return res.status(404).send("Requirement not found");
       }
 
-      // デモ環境では認証チェックを無効化し、すべてのユーザーに削除を許可
-      await db.transaction(async (tx) => {
-        // 関連する分析との関連付けを削除
-        await tx
-          .delete(requirement_analyses)
-          .where(eq(requirement_analyses.requirement_id, req.params.id));
-
-        // 要件書を削除
-        await tx
+      // デモ環境ではuser_idチェックを緩和
+      if (process.env.NODE_ENV !== "production") {
+        await db
           .delete(product_requirements)
           .where(eq(product_requirements.id, req.params.id));
-      });
+        return res.json({ message: "Requirement deleted successfully" });
+      }
 
-      res.json({ message: "要件書を削除しました" });
+      if (requirement.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      await db
+        .delete(product_requirements)
+        .where(eq(product_requirements.id, req.params.id));
+
+      res.json({ message: "Requirement deleted successfully" });
     } catch (error) {
-      console.error("Error deleting requirement:", error);
+      next(error);
+    }
+  });
+
+  // コンセプト削除API
+  app.delete("/api/concepts/:id", async (req, res, next) => {
+    try {
+      const [concept] = await db
+        .select()
+        .from(concepts)
+        .where(eq(concepts.id, req.params.id))
+        .limit(1);
+
+      if (!concept) {
+        return res.status(404).send("Concept not found");
+      }
+
+      // デモ環境ではuser_idチェックを緩和
+      if (process.env.NODE_ENV !== "production") {
+        await db
+          .delete(concepts)
+          .where(eq(concepts.id, req.params.id));
+        return res.json({ message: "Concept deleted successfully" });
+      }
+
+      if (concept.user_id !== (req.user?.id || 1)) {
+        return res.status(403).send("Access denied");
+      }
+
+      await db
+        .delete(concepts)
+        .where(eq(concepts.id, req.params.id));
+
+      res.json({ message: "Concept deleted successfully" });
+    } catch (error) {
       next(error);
     }
   });
