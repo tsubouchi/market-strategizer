@@ -49,7 +49,6 @@ export default function SettingsPage() {
           </p>
         </div>
       </div>
-
       <div className="space-y-6">
         <Card>
           <CardHeader>
