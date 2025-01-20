@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { useCreateAnalysis } from "@/hooks/use-analysis";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import ReactMarkdown from "react-markdown";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Link as LinkIcon, Paperclip, ArrowLeft, ArrowRight } from "lucide-react";
-import { AnalysisPDFViewer } from "./analysis-pdf";
 import { Typewriter } from "@/components/ui/typewriter";
 
 export type AnalysisType = "3C" | "4P" | "PEST";
@@ -108,7 +106,6 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [referenceUrl, setReferenceUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showPDF, setShowPDF] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const createAnalysis = useCreateAnalysis();
   const { toast } = useToast();
@@ -201,7 +198,6 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
     }
 
     setIsProcessing(true);
-    setShowPDF(false);
     setAnalysisResult(null);
 
     try {
@@ -257,93 +253,6 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  // 分析結果をマークダウン形式に変換
-  const getMarkdownContent = () => {
-    if (!analysisResult?.content) return "";
-
-    let markdown = "";
-    const content = analysisResult.content;
-
-    // 初期分析
-    if (content.initial_analysis) {
-      markdown += "## 初期分析\n\n";
-      if (content.initial_analysis.key_points) {
-        markdown += "### 主要ポイント\n";
-        content.initial_analysis.key_points.forEach((point: string) => {
-          markdown += `- ${point}\n`;
-        });
-        markdown += "\n";
-      }
-      if (content.initial_analysis.opportunities) {
-        markdown += "### 機会\n";
-        content.initial_analysis.opportunities.forEach((opp: string) => {
-          markdown += `- ${opp}\n`;
-        });
-        markdown += "\n";
-      }
-      if (content.initial_analysis.challenges) {
-        markdown += "### 課題\n";
-        content.initial_analysis.challenges.forEach((challenge: string) => {
-          markdown += `- ${challenge}\n`;
-        });
-        markdown += "\n";
-      }
-    }
-
-    // 詳細分析
-    if (content.deep_analysis) {
-      markdown += "## 詳細分析\n\n";
-      if (content.deep_analysis.company_insights) {
-        markdown += "### 企業への示唆\n";
-        content.deep_analysis.company_insights.forEach((insight: string) => {
-          markdown += `- ${insight}\n`;
-        });
-        markdown += "\n";
-      }
-      if (content.deep_analysis.market_insights) {
-        markdown += "### 市場への示唆\n";
-        content.deep_analysis.market_insights.forEach((insight: string) => {
-          markdown += `- ${insight}\n`;
-        });
-        markdown += "\n";
-      }
-      if (content.deep_analysis.competitive_insights) {
-        markdown += "### 競争環境への示唆\n";
-        content.deep_analysis.competitive_insights.forEach((insight: string) => {
-          markdown += `- ${insight}\n`;
-        });
-        markdown += "\n";
-      }
-    }
-
-    // 最終提案
-    if (content.final_recommendations) {
-      markdown += "## 最終提案\n\n";
-      if (content.final_recommendations.strategic_moves) {
-        markdown += "### 戦略的アクション\n";
-        content.final_recommendations.strategic_moves.forEach((move: string) => {
-          markdown += `- ${move}\n`;
-        });
-        markdown += "\n";
-      }
-      if (content.final_recommendations.action_items) {
-        markdown += "### 具体的なアクション\n";
-        content.final_recommendations.action_items.forEach((item: string) => {
-          markdown += `- ${item}\n`;
-        });
-        markdown += "\n";
-      }
-      if (content.final_recommendations.risk_factors) {
-        markdown += "### リスク要因\n";
-        content.final_recommendations.risk_factors.forEach((risk: string) => {
-          markdown += `- ${risk}\n`;
-        });
-      }
-    }
-
-    return markdown;
   };
 
   return (
@@ -476,32 +385,17 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
 
           {/* 分析結果の表示 */}
           {analysisResult && !isProcessing && (
-            <>
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>分析結果</CardTitle>
-                </CardHeader>
-                <CardContent className="prose prose-sm dark:prose-invert">
-                  <Typewriter
-                    content={getMarkdownContent()}
-                    speed={30}
-                    onComplete={() => setShowPDF(true)}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* PDFプレビュー - タイプライター表示完了後に表示 */}
-              {showPDF && (
-                <Card className="mt-6">
-                  <CardHeader>
-                    <CardTitle>PDFプレビュー</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <AnalysisPDFViewer analysis={analysisResult} />
-                  </CardContent>
-                </Card>
-              )}
-            </>
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>分析結果</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-sm dark:prose-invert">
+                <Typewriter
+                  content={analysisResult.ai_feedback}
+                  speed={30}
+                />
+              </CardContent>
+            </Card>
           )}
 
           {/* ナビゲーションボタン */}

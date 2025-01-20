@@ -7,11 +7,9 @@ import {
   Loader2,
   Link as LinkIcon,
   Paperclip,
-  FileDown,
   Globe,
   Lock,
 } from "lucide-react";
-import { AnalysisPDFViewer } from "@/components/analysis-pdf";
 import Comments from "@/components/comments";
 import { useToast } from "@/hooks/use-toast";
 import ShareAnalysis from "@/components/share-analysis";
@@ -101,7 +99,7 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
         ← ダッシュボードに戻る
       </Button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         {/* Analysis Content */}
         <Card>
           <CardHeader>
@@ -126,15 +124,6 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
                       非公開
                     </>
                   )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => window.print()}
-                >
-                  <FileDown className="w-4 h-4" />
-                  PDF
                 </Button>
               </div>
             </CardTitle>
@@ -194,21 +183,8 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
           </CardContent>
         </Card>
 
-        {/* Right Column: PDF Preview and Comments */}
-        <div className="space-y-8">
-          {/* PDF Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>PDFプレビュー</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <AnalysisPDFViewer analysis={analysis} />
-            </CardContent>
-          </Card>
-
-          {/* Comments Section */}
-          <Comments analysisId={analysis.id} />
-        </div>
+        {/* Comments Section */}
+        <Comments analysisId={analysis.id} />
       </div>
     </div>
   );
