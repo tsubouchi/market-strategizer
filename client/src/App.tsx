@@ -15,7 +15,7 @@ import Concepts from "@/pages/concepts";
 import Settings from "@/pages/settings";
 import History from "@/pages/history";
 import Requirements from "@/pages/requirements";
-import RequirementDetail from "@/pages/requirement-detail";
+import RequirementsDetail from "@/pages/requirements-detail";
 
 function Router() {
   return (
@@ -29,7 +29,7 @@ function Router() {
         <Route path="/concept" component={ConceptGenerator} />
         <Route path="/concepts" component={Concepts} />
         <Route path="/requirements" component={Requirements} />
-        <Route path="/requirements/:id" component={RequirementDetail} />
+        <Route path="/requirements/:id" component={RequirementsDetail} />
         <Route path="/settings" component={Settings} />
         {/* 分析関連のルート */}
         <Route path="/analysis/new" component={Analysis} />
