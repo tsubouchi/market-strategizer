@@ -113,15 +113,16 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       return;
     }
 
-    if (formData[currentField.key]?.trim()) {
-      setCurrentStep(currentStep + 1);
-    } else {
+    if (!formData[currentField.key]?.trim()) {
       toast({
         variant: "destructive",
         title: "入力エラー",
         description: "分析内容を入力してください。",
       });
+      return;
     }
+
+    setCurrentStep(currentStep + 1);
   };
 
   const handleBack = () => {
@@ -150,9 +151,11 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       formDataToSend.append("analysis_type", type);
       formDataToSend.append("title", title);
       formDataToSend.append("content", JSON.stringify(formData));
+
       if (referenceUrl) {
         formDataToSend.append("reference_url", referenceUrl);
       }
+
       if (file) {
         formDataToSend.append("attachment", file);
       }
@@ -161,15 +164,17 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
 
       toast({
         title: "分析完了",
-        description: "分析が正常に完了しました。",
+        description: "分析が正常に保存されました。",
       });
 
-      onComplete?.(analysis);
+      if (onComplete) {
+        onComplete(analysis);
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "エラー",
-        description: error.message,
+        description: error.message || "分析の保存中にエラーが発生しました。",
       });
     }
   };
@@ -204,7 +209,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="reference_url" className="flex items-center gap-2">
                   <LinkIcon className="w-4 h-4" />
-                  参考URL
+                  参考URL（任意）
                 </Label>
                 <Input
                   id="reference_url"
@@ -218,7 +223,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="attachment" className="flex items-center gap-2">
                   <Paperclip className="w-4 h-4" />
-                  添付資料
+                  添付資料（任意）
                 </Label>
                 <Input
                   id="attachment"
