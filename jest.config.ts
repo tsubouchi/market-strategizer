@@ -17,9 +17,6 @@ const config: Config.InitialOptions = {
         moduleResolution: "node"
       },
       useESM: true
-    }],
-    '^.+\\.(js|jsx|mjs)$': ['babel-jest', { 
-      configFile: './babel.config.cjs'
     }]
   },
   transformIgnorePatterns: [

@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RequirementsHistory from '../client/src/pages/requirements-history';
@@ -48,13 +49,27 @@ const mockRequirement = {
 };
 
 // Mock fetch responses
-global.fetch = jest.fn(() =>
-  Promise.resolve({
+const mockFetch = jest.fn((input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  return Promise.resolve({
     ok: true,
     json: () => Promise.resolve([mockRequirement]),
     text: () => Promise.resolve('# Test Markdown\n\nTest content'),
-  })
-) as jest.Mock;
+    status: 200,
+    statusText: 'OK',
+    headers: new Headers(),
+    clone: function() { return this },
+    body: null,
+    bodyUsed: false,
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+    blob: () => Promise.resolve(new Blob()),
+    formData: () => Promise.resolve(new FormData()),
+    redirected: false,
+    type: 'basic' as ResponseType,
+    url: 'http://localhost',
+  } as Response);
+});
+
+global.fetch = mockFetch;
 
 describe('Requirements Workflow Tests', () => {
   beforeEach(() => {
@@ -80,11 +95,17 @@ describe('Requirements Workflow Tests', () => {
     });
 
     it('shows empty state when no requirements exist', async () => {
-      (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      mockFetch.mockImplementationOnce((input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve([]),
-        })
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers(),
+          text: () => Promise.resolve(''),
+          body: null,
+          bodyUsed: false,
+        } as Response)
       );
 
       render(
@@ -117,11 +138,17 @@ describe('Requirements Workflow Tests', () => {
     it('handles requirement deletion', async () => {
       const user = userEvent.setup();
 
-      (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      mockFetch.mockImplementationOnce((input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ message: 'Requirement deleted successfully' }),
-        })
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers(),
+          text: () => Promise.resolve(''),
+          body: null,
+          bodyUsed: false,
+        } as Response)
       );
 
       render(
@@ -143,7 +170,7 @@ describe('Requirements Workflow Tests', () => {
       await user.click(confirmButton);
 
       // Verify deletion request was made
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         '/api/requirements/1',
         expect.objectContaining({ method: 'DELETE' })
       );
@@ -170,11 +197,16 @@ describe('Requirements Workflow Tests', () => {
     });
 
     it('displays loading state while fetching markdown', async () => {
-      (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      mockFetch.mockImplementationOnce((input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
         new Promise(resolve => setTimeout(() => resolve({
           ok: true,
-          text: () => Promise.resolve('Loading content...')
-        }), 100))
+          text: () => Promise.resolve('Loading content...'),
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers(),
+          body: null,
+          bodyUsed: false,
+        } as Response), 100))
       );
 
       render(

@@ -11,32 +11,6 @@ Object.defineProperty(window, 'location', {
   writable: true
 });
 
-// Mock fetch
-const createMockResponse = () => {
-  const response = {
-    ok: true,
-    json: () => Promise.resolve({}),
-    text: () => Promise.resolve(''),
-    status: 200,
-    statusText: 'OK',
-    headers: new Headers(),
-    clone: function() { return this },
-    body: null,
-    bodyUsed: false,
-    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-    blob: () => Promise.resolve(new Blob()),
-    formData: () => Promise.resolve(new FormData()),
-    redirected: false,
-    type: 'basic' as ResponseType,
-    url: 'http://localhost',
-  };
-
-  return response as unknown as Response;
-};
-
-// @ts-ignore -- Temporarily disable type checking for fetch mock
-global.fetch = jest.fn().mockImplementation(async () => createMockResponse());
-
 // Mock wouter
 jest.mock('wouter', () => ({
   useLocation: () => ['/', jest.fn()],
@@ -50,3 +24,12 @@ jest.mock('react-markdown', () => ({
     return createElement('div', { 'data-testid': 'markdown-content' }, children);
   }
 }));
+
+// Add type augmentation for jest-dom
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeInTheDocument(): R;
+    }
+  }
+}
