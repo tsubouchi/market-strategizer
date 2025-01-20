@@ -48,7 +48,7 @@ export default function Home() {
       <div className="container mx-auto py-8 px-4 sm:py-12 sm:px-6">
         {/* Hero Section */}
         <div className="text-center mb-12 sm:mb-16">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 sm:mb-6 text-white">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-6 text-white">
             戦略AIコンパス
           </h1>
           <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
