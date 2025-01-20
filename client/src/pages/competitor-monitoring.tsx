@@ -40,6 +40,8 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Competitor {
   id: string;
@@ -47,7 +49,7 @@ interface Competitor {
   website_url: string;
   monitoring_keywords: string[];
   last_updated: string;
-  updates?: CompetitorUpdate[]; // Added updates property
+  updates?: CompetitorUpdate[];
 }
 
 interface CompetitorUpdate {
@@ -80,6 +82,63 @@ const CategoryInfo = ({ category, content }: { category: string; content: string
     </div>
   );
 };
+
+const LoadingCard = () => (
+  <Card className="shadow-sm">
+    <CardHeader>
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        <div>
+          <Skeleton className="h-4 w-32 mb-2" />
+          <div className="flex flex-wrap gap-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-6 w-24" />
+            ))}
+          </div>
+        </div>
+        <div>
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-48" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[1, 2].map((i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-16 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </CardContent>
+    <CardFooter className="text-sm text-muted-foreground">
+      <Skeleton className="h-4 w-48" />
+    </CardFooter>
+  </Card>
+);
 
 export default function CompetitorMonitoring() {
   const [isAddingCompetitor, setIsAddingCompetitor] = useState(false);
@@ -208,10 +267,28 @@ export default function CompetitorMonitoring() {
     }
   };
 
+  // Show loading skeletons during initial load
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">競合他社モニタリング</h1>
+            <p className="text-muted-foreground">
+              競合他社の動向をリアルタイムで監視します
+            </p>
+          </div>
+          <Button disabled>
+            <Plus className="h-4 w-4 mr-2" />
+            競合他社を追加
+          </Button>
+        </div>
+
+        <div className="grid gap-6">
+          {[1, 2].map((i) => (
+            <LoadingCard key={i} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -285,122 +362,140 @@ export default function CompetitorMonitoring() {
       </div>
 
       <div className="grid gap-6">
-        {competitors?.map((competitor) => (
-          <Card key={competitor.id} className="shadow-sm">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{competitor.company_name}</CardTitle>
-                  <CardDescription>
-                    <a
-                      href={competitor.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline"
-                    >
-                      {competitor.website_url}
-                    </a>
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => refreshCompetitorMutation.mutate(competitor.id)}
-                    disabled={refreshCompetitorMutation.isPending}
-                  >
-                    {refreshCompetitorMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCcw className="h-4 w-4 mr-2" />
-                    )}
-                    更新
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id={`notifications-${competitor.id}`}
-                      defaultChecked={true}
-                    />
-                    <Label htmlFor={`notifications-${competitor.id}`}>通知</Label>
+        <AnimatePresence>
+          {competitors?.map((competitor) => (
+            <motion.div
+              key={competitor.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle>{competitor.company_name}</CardTitle>
+                      <CardDescription>
+                        <a
+                          href={competitor.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {competitor.website_url}
+                        </a>
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => refreshCompetitorMutation.mutate(competitor.id)}
+                        disabled={refreshCompetitorMutation.isPending}
+                        className="relative"
+                      >
+                        {refreshCompetitorMutation.isPending && (
+                          <motion.div
+                            className="absolute inset-0 bg-primary/10 rounded-md"
+                            animate={{ opacity: [0.5, 0.2] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                          />
+                        )}
+                        {refreshCompetitorMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCcw className="h-4 w-4 mr-2" />
+                        )}
+                        更新
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id={`notifications-${competitor.id}`}
+                          defaultChecked={true}
+                        />
+                        <Label htmlFor={`notifications-${competitor.id}`}>通知</Label>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-2">
-                    モニタリングキーワード
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {competitor.monitoring_keywords.map((keyword, index) => (
-                      <Badge key={index} variant="secondary">
-                        {keyword}
-                      </Badge>
-                    ))}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">
+                        モニタリングキーワード
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {competitor.monitoring_keywords.map((keyword, index) => (
+                          <Badge key={index} variant="secondary">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">最新の更新</h4>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>種類</TableHead>
+                            <TableHead className="w-[40%]">内容</TableHead>
+                            <TableHead>重要度</TableHead>
+                            <TableHead>日時</TableHead>
+                            <TableHead>ソース</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {competitor.updates?.map((update) => (
+                            <TableRow key={update.id}>
+                              <TableCell>{update.update_type === "deep_search" ? "AI分析" : update.update_type}</TableCell>
+                              <TableCell>
+                                <div className="space-y-4">
+                                  <p className="font-medium">{update.content.summary}</p>
+                                  <div className="space-y-2">
+                                    <CategoryInfo category="製品・サービス" content={update.content.categories.products} />
+                                    <CategoryInfo category="プレス情報" content={update.content.categories.press} />
+                                    <CategoryInfo category="技術革新" content={update.content.categories.tech} />
+                                    <CategoryInfo category="市場動向" content={update.content.categories.market} />
+                                    <CategoryInfo category="サステナビリティ" content={update.content.categories.sustainability} />
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <ImportanceBadge score={update.importance_score} />
+                              </TableCell>
+                              <TableCell>{new Date(update.created_at).toLocaleDateString("ja-JP")}</TableCell>
+                              <TableCell>
+                                {update.content.sources && update.content.sources.length > 0 && (
+                                  <div className="space-y-1">
+                                    {update.content.sources.map((source, index) => (
+                                      <a
+                                        key={index}
+                                        href={source}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline block"
+                                      >
+                                        ソース {index + 1}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium mb-2">最新の更新</h4>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>種類</TableHead>
-                        <TableHead className="w-[40%]">内容</TableHead>
-                        <TableHead>重要度</TableHead>
-                        <TableHead>日時</TableHead>
-                        <TableHead>ソース</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {competitor.updates?.map((update) => (
-                        <TableRow key={update.id}>
-                          <TableCell>{update.update_type === "deep_search" ? "AI分析" : update.update_type}</TableCell>
-                          <TableCell>
-                            <div className="space-y-4">
-                              <p className="font-medium">{update.content.summary}</p>
-                              <div className="space-y-2">
-                                <CategoryInfo category="製品・サービス" content={update.content.categories.products} />
-                                <CategoryInfo category="プレス情報" content={update.content.categories.press} />
-                                <CategoryInfo category="技術革新" content={update.content.categories.tech} />
-                                <CategoryInfo category="市場動向" content={update.content.categories.market} />
-                                <CategoryInfo category="サステナビリティ" content={update.content.categories.sustainability} />
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <ImportanceBadge score={update.importance_score} />
-                          </TableCell>
-                          <TableCell>{new Date(update.created_at).toLocaleDateString("ja-JP")}</TableCell>
-                          <TableCell>
-                            {update.content.sources && update.content.sources.length > 0 && (
-                              <div className="space-y-1">
-                                {update.content.sources.map((source, index) => (
-                                  <a
-                                    key={index}
-                                    href={source}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline block"
-                                  >
-                                    ソース {index + 1}
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="text-sm text-muted-foreground">
-              最終更新: {new Date(competitor.last_updated).toLocaleString("ja-JP")}
-            </CardFooter>
-          </Card>
-        ))}
+                </CardContent>
+                <CardFooter className="text-sm text-muted-foreground">
+                  最終更新: {new Date(competitor.last_updated).toLocaleString("ja-JP")}
+                </CardFooter>
+              </Card>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );
