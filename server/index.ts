@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// エラーハンドリングの強化
+// Process level error handling
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
 });
@@ -15,7 +15,7 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-// リクエストロギング
+// Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -46,39 +46,55 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+async function startServer() {
   try {
-    // 静的ファイルの提供を先に設定
-    if (app.get("env") !== "development") {
-      serveStatic(app);
-    }
-
+    log("Initializing server...");
     const server = registerRoutes(app);
 
-    // エラーハンドリングミドルウェアの強化
+    // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Error occurred:', err);
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
+
       res.status(status).json({ 
         message,
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
       });
     });
 
-    // 開発環境の場合はViteのセットアップを最後に行う
-    if (app.get("env") === "development") {
+    // Setup static files and Vite
+    const env = app.get("env");
+    log(`Setting up server in ${env} mode`);
+
+    if (env === "development") {
+      log("Setting up Vite development server...");
       await setupVite(app, server);
+    } else {
+      log("Setting up static file serving...");
+      serveStatic(app);
     }
 
-    // ポート2で起動
-    const PORT = 2;
-    server.listen(PORT, "0.0.0.0", () => {
-      log(`Server is running on port ${PORT}`);
-      log(`Environment: ${app.get("env")}`);
+    // Start server
+    const PORT = 5000;
+    return new Promise((resolve, reject) => {
+      server.listen(PORT, "0.0.0.0", () => {
+        log(`Server is running on port ${PORT}`);
+        log(`Environment: ${env}`);
+        resolve(server);
+      }).on('error', (error) => {
+        console.error('Failed to start server:', error);
+        reject(error);
+      });
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+    console.error('Server initialization failed:', error);
+    throw error;
   }
-})();
+}
+
+// Start the server
+startServer().catch((error) => {
+  console.error('Critical server error:', error);
+  process.exit(1);
+});
