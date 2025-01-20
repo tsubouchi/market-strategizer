@@ -6,26 +6,19 @@ const config: Config.InitialOptions = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/client/src/$1',
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    '\\.(jpg|jpeg|png|gif|webp|svg)$': 'jest-transform-stub'
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-      jsx: 'react-jsx'
+      tsconfig: 'tsconfig.json'
     }],
-    '^.+\\.(js|jsx)$': ['babel-jest', {
-      presets: [
-        '@babel/preset-env',
-        '@babel/preset-react'
-      ]
-    }]
+    '^.+\\.(js|jsx)$': 'babel-jest'
   },
-  testMatch: ['**/__tests__/**/*.test.{ts,tsx}'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transformIgnorePatterns: [
-    '/node_modules/(?!(@radix-ui|@hookform|lucide-react)/)'
-  ]
+    'node_modules/(?!(wouter|@tanstack|lucide-react)/)'
+  ],
+  testMatch: ['**/__tests__/**/*.test.{ts,tsx}'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json']
 };
 
 export default config;

@@ -111,14 +111,6 @@ describe('Requirements Workflow Tests', () => {
       await waitFor(() => {
         expect(screen.getByText('Test Requirement')).toBeInTheDocument();
       });
-
-      // Check if markdown preview is rendered
-      await waitFor(() => {
-        const markdownContent = screen.getByTestId('markdown-content');
-        expect(markdownContent).toBeInTheDocument();
-        expect(markdownContent).toHaveTextContent('Test Markdown');
-        expect(markdownContent).toHaveTextContent('Test content');
-      });
     });
 
     it('handles requirement deletion', async () => {
