@@ -4,11 +4,9 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "@db";
-import { analyses, comments, shared_analyses, concepts, concept_analyses, product_requirements, requirement_analyses, competitors, competitor_updates } from "@db/schema";
-import { eq, and, sql } from "drizzle-orm";
-import { generateConcept, refineConceptWithConditions, generateWebAppRequirements, refineRequirements, generateMarkdownRequirements } from "./lib/openai";
-import fetch from "node-fetch";
-import * as cheerio from 'cheerio';
+import { analyses, comments, shared_analyses } from "@db/schema";
+import { eq, and } from "drizzle-orm";
+import { analyze3C, convertAnalysisToMarkdown } from "./lib/openai";
 
 // Configure multer for file upload
 const upload = multer({
@@ -26,43 +24,6 @@ const upload = multer({
     }
   })
 });
-
-interface WebAppRequirement {
-  title: string;
-  purpose: {
-    background: string;
-    goals: string[];
-    expected_effects: string[];
-  };
-  overview: string;
-  target_users: string;
-  features: string[];
-  non_functional_requirements: {
-    performance: string[];
-    security: string[];
-    availability: string[];
-    scalability: string[];
-    maintainability: string[];
-  };
-  api_requirements: {
-    external_apis: string[];
-    internal_apis: string[];
-  };
-  screen_structure: {
-    flow_description: string;
-    main_screens: string[];
-  };
-  screen_list: {
-    name: string;
-    path: string;
-    description: string;
-    main_features: string[];
-  }[];
-  tech_stack: string[];
-  ui_ux_requirements: string;
-  schedule: string;
-}
-
 
 export function registerRoutes(app: Express): Server {
   // Create new analysis
@@ -82,61 +43,51 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).send("Invalid content format");
       }
 
-      // Get AI feedback
-      let aiFeedback = JSON.stringify({
-        initial_analysis: { message: "AI分析は現在準備中です" },
-        deep_analysis: { message: "詳細分析は現在準備中です" },
-        recommendations: { message: "提案は現在準備中です" }
-      });
+      // 分析の実行
+      let aiAnalysis;
+      if (analysis_type === "3C") {
+        aiAnalysis = await analyze3C(parsedContent);
+      } else {
+        return res.status(400).send("Unsupported analysis type");
+      }
+
+      // Convert analysis result to markdown
+      const markdownContent = convertAnalysisToMarkdown(aiAnalysis);
 
       const [analysis] = await db
         .insert(analyses)
         .values({
-          user_id: req.user?.id || 1, // デモユーザー
-          title, // Add title here
+          user_id: req.user?.id || 1,
+          title,
           analysis_type,
           content: parsedContent,
-          ai_feedback: aiFeedback,
+          ai_feedback: markdownContent,
           reference_url: reference_url || null,
           attachment_path: req.file?.path || null,
           is_public: false
         })
         .returning();
 
-      res.json(analysis);
+      res.json({
+        ...analysis,
+        content: aiAnalysis
+      });
     } catch (error) {
       console.error('Route error:', error);
       next(error);
     }
   });
 
-  // Get all analyses (including shared ones)
+  // Get all analyses
   app.get("/api/analyses", async (req, res, next) => {
     try {
       const userAnalyses = await db
-        .select({
-          analysis: analyses,
-          shared: shared_analyses,
-        })
+        .select()
         .from(analyses)
-        .leftJoin(
-          shared_analyses,
-          and(
-            eq(analyses.id, shared_analyses.analysis_id),
-            eq(shared_analyses.user_id, req.user?.id || 1)
-          )
-        )
-        .where(
-          req.user?.id
-            ? and(
-                eq(analyses.user_id, req.user.id),
-                eq(analyses.is_public, true)
-              )
-            : eq(analyses.user_id, 1) // デモユーザー
-        )
+        .where(eq(analyses.user_id, req.user?.id || 1))
         .orderBy(analyses.created_at);
 
-      res.json(userAnalyses.map(({ analysis }) => analysis));
+      res.json(userAnalyses);
     } catch (error) {
       next(error);
     }
@@ -145,10 +96,6 @@ export function registerRoutes(app: Express): Server {
   // Get specific analysis
   app.get("/api/analyses/:id", async (req, res, next) => {
     try {
-      if (req.params.id === 'new') {
-        return res.status(404).send("Analysis not found");
-      }
-
       const [analysis] = await db
         .select()
         .from(analyses)
@@ -157,24 +104,6 @@ export function registerRoutes(app: Express): Server {
 
       if (!analysis) {
         return res.status(404).send("Analysis not found");
-      }
-
-      // Check if user has access
-      if (analysis.user_id !== (req.user?.id || 1)) {
-        const [shared] = await db
-          .select()
-          .from(shared_analyses)
-          .where(
-            and(
-              eq(shared_analyses.analysis_id, analysis.id),
-              eq(shared_analyses.user_id, req.user?.id || 1)
-            )
-          )
-          .limit(1);
-
-        if (!shared && !analysis.is_public) {
-          return res.status(403).send("Access denied");
-        }
       }
 
       res.json(analysis);
@@ -319,7 +248,6 @@ export function registerRoutes(app: Express): Server {
       next(error);
     }
   });
-
   // Serve uploaded files
   app.get("/api/uploads/:filename", (req, res) => {
     const filename = req.params.filename;
