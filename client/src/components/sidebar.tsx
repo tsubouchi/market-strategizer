@@ -21,11 +21,6 @@ const mainLinks = [
     href: "/",
   },
   {
-    title: "ダッシュボード",
-    icon: BarChart3,
-    href: "/dashboard",
-  },
-  {
     title: "深層検索エージェント",
     icon: Search,
     href: "/search",
@@ -49,43 +44,19 @@ const mainLinks = [
 
 const analysisTypes = [
   {
-    id: "3C",
     title: "3C分析",
     icon: BarChart3,
     href: "/analysis/new/3c",
-    description: "企業・顧客・競合の視点から戦略を立案",
-    details: [
-      "自社（Company）の強みと経営資源を分析",
-      "顧客（Customer）のニーズと行動を理解",
-      "競合（Competitor）との差別化要因を特定",
-      "3つの要素を統合し、競争優位性を確立"
-    ],
   },
   {
-    id: "4P",
     title: "4P分析",
     icon: PieChart,
     href: "/analysis/new/4p",
-    description: "マーケティングミックスを体系的に分析",
-    details: [
-      "製品（Product）の特徴と価値を明確化",
-      "価格（Price）の戦略的な設定を検討",
-      "流通（Place）のチャネル戦略を最適化",
-      "プロモーション（Promotion）の効果を向上"
-    ],
   },
   {
-    id: "PEST",
     title: "PEST分析",
     icon: TrendingUp,
     href: "/analysis/new/pest",
-    description: "マクロ環境から事業機会とリスクを把握",
-    details: [
-      "政治的要因（Political）：規制や政策の影響を予測",
-      "経済的要因（Economic）：市場環境の変化を分析",
-      "社会的要因（Social）：価値観や人口動態を把握",
-      "技術的要因（Technological）：技術革新の影響を評価"
-    ],
   },
 ];
 
@@ -99,7 +70,7 @@ const SidebarContent = () => {
           <BarChart3 className="h-6 w-6" />
           <div>
             <div className="text-lg">戦略AIコンパス</div>
-            <div className="text-xs text-muted-foreground">不確実な時代の羅針盤。AIが導く最適解</div>
+            <div className="text-xs text-muted-foreground">不確実な時代の羅針盤。AIが導く羅針盤</div>
           </div>
         </Link>
       </div>
@@ -124,30 +95,18 @@ const SidebarContent = () => {
             分析を開始
           </p>
           {analysisTypes.map((analysis) => (
-            <div key={analysis.href} className="mb-4">
-              <Link href={analysis.href}>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start flex-col items-start gap-2 h-auto py-4",
-                    location === analysis.href && "bg-sidebar-accent"
-                  )}
-                >
-                  <div className="flex items-center gap-2 w-full">
-                    <analysis.icon className="h-4 w-4 flex-shrink-0" />
-                    <span>{analysis.title}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground text-left">
-                    {analysis.description}
-                  </div>
-                  <ul className="text-xs text-muted-foreground list-disc list-inside mt-2 text-left">
-                    {analysis.details.map((detail, index) => (
-                      <li key={index} className="ml-2">{detail}</li>
-                    ))}
-                  </ul>
-                </Button>
-              </Link>
-            </div>
+            <Link key={analysis.href} href={analysis.href}>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start gap-2",
+                  location === analysis.href && "bg-sidebar-accent"
+                )}
+              >
+                <analysis.icon className="h-4 w-4" />
+                {analysis.title}
+              </Button>
+            </Link>
           ))}
         </div>
       </nav>
@@ -159,7 +118,7 @@ export default function Sidebar() {
   return (
     <>
       {/* デスクトップサイドバー */}
-      <div className="hidden md:block h-screen w-80 border-r bg-background overflow-y-auto">
+      <div className="hidden md:block h-screen w-80 border-r bg-background">
         <SidebarContent />
       </div>
 
