@@ -1,6 +1,12 @@
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from "@react-pdf/renderer";
 import type { Analysis } from "@db/schema";
 
+// Register Japanese font
+Font.register({
+  family: 'NotoSansJP',
+  src: 'https://fonts.gstatic.com/ea/notosansjp/v5/NotoSansJP-Regular.otf',
+});
+
 // Register default font family
 Font.register({
   family: 'Helvetica',
@@ -15,7 +21,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     backgroundColor: "#ffffff",
     padding: 30,
-    fontFamily: 'Helvetica'
+    fontFamily: 'NotoSansJP'
   },
   section: {
     marginBottom: 20,
@@ -23,17 +29,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     marginBottom: 20,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    fontFamily: 'NotoSansJP'
   },
   subtitle: {
     fontSize: 18,
     marginBottom: 10,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    fontFamily: 'NotoSansJP'
   },
   text: {
     fontSize: 12,
     lineHeight: 1.5,
     marginBottom: 8,
+    fontFamily: 'NotoSansJP'
   },
   contentSection: {
     marginTop: 10,
@@ -43,10 +52,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 5,
+    fontFamily: 'NotoSansJP'
   },
   contentText: {
     fontSize: 11,
     lineHeight: 1.4,
+    fontFamily: 'NotoSansJP'
   }
 });
 
