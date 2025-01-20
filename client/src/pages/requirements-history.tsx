@@ -9,6 +9,10 @@ interface Requirement {
   title: string;
   overview: string;
   target_users: string;
+  features: string;
+  tech_stack: string;
+  ui_ux_requirements: string;
+  schedule: string;
   created_at: string;
   concept_id: string;
 }
@@ -92,6 +96,14 @@ export default function RequirementsHistory() {
                 <p className="text-sm">
                   <span className="font-medium">対象ユーザー：</span>
                   <span className="line-clamp-2">{requirement.target_users}</span>
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">主要機能：</span>
+                  <span className="line-clamp-2">
+                    {typeof requirement.features === 'string' 
+                      ? JSON.parse(requirement.features).slice(0, 3).join(', ') 
+                      : requirement.features.slice(0, 3).join(', ')}
+                  </span>
                 </p>
               </div>
             </CardContent>
