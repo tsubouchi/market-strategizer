@@ -79,11 +79,10 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex">
           <Sidebar>
             <SidebarHeader>
-              <Link href="/" className="flex items-center gap-2 font-bold pt-4">
+              <Link href="/" className="flex items-center gap-2 font-bold pt-8">
                 <BarChart3 className="h-6 w-6" />
                 <div>
                   <div className="text-lg">戦略AIコンパス</div>
-                  <div className="text-xs text-muted-foreground">不確実な時代の羅針盤。AIが導く羅針盤</div>
                 </div>
               </Link>
             </SidebarHeader>
