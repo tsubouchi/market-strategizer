@@ -20,7 +20,7 @@ export default function Requirements() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="w-full">
         <Card>
           <CardHeader>
             <CardTitle>要件書一覧</CardTitle>
@@ -42,7 +42,7 @@ export default function Requirements() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="w-full">
       <Card>
         <CardHeader>
           <CardTitle>要件書一覧</CardTitle>
