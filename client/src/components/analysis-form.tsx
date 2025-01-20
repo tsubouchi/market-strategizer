@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import ReactMarkdown from "react-markdown";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Link as LinkIcon, Paperclip, ArrowLeft, ArrowRight } from "lucide-react";
+import { AnalysisPDFViewer } from "./analysis-pdf";
 
 export type AnalysisType = "3C" | "4P" | "PEST";
 
@@ -99,7 +100,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processStatus, setProcessStatus] = useState<string>("");
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null); // Changed to any to accommodate potential structure
   const createAnalysis = useCreateAnalysis();
   const { toast } = useToast();
 
@@ -165,11 +166,9 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
 
       const analysis = await createAnalysis.mutateAsync(formDataToSend);
 
-      if (analysis.content) {
-        const markdownContent = Object.entries(analysis.content)
-          .map(([key, value]) => `### ${key}\n${value}`)
-          .join('\n\n');
-        setAnalysisResult(markdownContent);
+      // 分析が完了し、結果が有効な場合のみ表示
+      if (analysis.content && !analysis.content.message?.includes("準備中")) {
+        setAnalysisResult(analysis);
       }
 
       toast({
@@ -262,15 +261,33 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
             />
           </div>
 
-          {analysisResult && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>分析結果</CardTitle>
-              </CardHeader>
-              <CardContent className="prose prose-sm dark:prose-invert">
-                <ReactMarkdown>{analysisResult}</ReactMarkdown>
-              </CardContent>
-            </Card>
+          {/* 分析結果の表示 - 完了した結果のみ表示 */}
+          {analysisResult && !isProcessing && (
+            <>
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>分析結果</CardTitle>
+                </CardHeader>
+                <CardContent className="prose prose-sm dark:prose-invert">
+                  <ReactMarkdown>
+                    {Object.entries(analysisResult.content)
+                      .filter(([_, value]) => !value.message?.includes("準備中"))
+                      .map(([key, value]) => `### ${key}\n${value}`)
+                      .join('\n\n')}
+                  </ReactMarkdown>
+                </CardContent>
+              </Card>
+
+              {/* PDFプレビュー - 完了した分析結果のみ表示 */}
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>PDFプレビュー</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AnalysisPDFViewer analysis={analysisResult} />
+                </CardContent>
+              </Card>
+            </>
           )}
 
           {isProcessing && (

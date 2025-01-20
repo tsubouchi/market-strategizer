@@ -32,10 +32,18 @@ interface AnalysisPDFProps {
 export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
   const content = analysis.content as Record<string, string>;
 
+  // 準備中のメッセージを含むエントリーを除外
+  const validContent = Object.entries(content).filter(
+    ([_, value]) => !value.message?.includes("準備中")
+  );
+
   const formatDate = (date: string | null | undefined): string => {
     if (!date) return "";
     return new Date(date).toLocaleDateString('ja-JP');
   };
+
+  // 有効なコンテンツがない場合はnullを返す
+  if (validContent.length === 0) return null;
 
   return (
     <Document>
@@ -50,10 +58,10 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
           </Text>
         </View>
 
-        {/* Content */}
+        {/* Content - 準備中ではないコンテンツのみ表示 */}
         <View style={styles.section}>
           <Text style={styles.subtitle}>分析内容</Text>
-          {Object.entries(content).map(([key, value]) => (
+          {validContent.map(([key, value]) => (
             <View key={key} style={styles.section}>
               <Text style={styles.text}>
                 {key}
@@ -76,6 +84,12 @@ export function AnalysisPDFDocument({ analysis }: AnalysisPDFProps) {
 }
 
 export function AnalysisPDFViewer({ analysis }: AnalysisPDFProps) {
+  // 準備中のメッセージを含むコンテンツがある場合は何も表示しない
+  const hasPreparingContent = Object.values(analysis.content as Record<string, string>)
+    .some(value => value.message?.includes("準備中"));
+
+  if (hasPreparingContent) return null;
+
   return (
     <div className="h-[500px] w-full">
       <PDFViewer style={{ width: "100%", height: "100%" }}>
