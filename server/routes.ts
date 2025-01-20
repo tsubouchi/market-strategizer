@@ -4,8 +4,18 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "@db";
-import { analyses, comments, shared_analyses } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { 
+  analyses, 
+  comments, 
+  shared_analyses,
+  concepts,
+  concept_analyses,
+  competitors,
+  competitor_updates,
+  product_requirements,
+  requirement_analyses
+} from "@db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { analyze3C, analyze4P, analyzePEST, convertAnalysisToMarkdown } from "./lib/openai";
 
 // Configure multer for file upload
@@ -967,7 +977,6 @@ export function registerRoutes(app: Express): Server {
       await db
         .delete(product_requirements)
         .where(eq(product_requirements.id, req.params.id));
-
 
 
       res.json({ message: "Requirement deleted successfully" });
