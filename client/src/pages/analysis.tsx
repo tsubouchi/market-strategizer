@@ -35,8 +35,8 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
     }
 
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-6">
+      <div className="w-full">
+        <div className="mb-8">
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
@@ -44,6 +44,10 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
           >
             ← トップに戻る
           </Button>
+          <h1 className="text-4xl font-bold mb-2">{analysisType}分析の作成</h1>
+          <p className="text-muted-foreground">
+            分析に必要な情報を入力してください
+          </p>
         </div>
         <AnalysisForm
           type={analysisType}
@@ -62,7 +66,15 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
   }
 
   if (!analysis) {
-    return <div>分析が見つかりません</div>;
+    return (
+      <div className="w-full">
+        <Card>
+          <CardContent className="flex items-center justify-center min-h-[200px]">
+            <p className="text-muted-foreground">分析が見つかりません</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const content = analysis.content as Record<string, string>;
@@ -90,21 +102,27 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        onClick={() => navigate("/dashboard")}
-        className="mb-4"
-      >
-        ← ダッシュボードに戻る
-      </Button>
+    <div className="w-full">
+      <div className="mb-8">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/dashboard")}
+          className="mb-4"
+        >
+          ← ダッシュボードに戻る
+        </Button>
+        <h1 className="text-4xl font-bold mb-2">{analysis.analysis_type}分析の結果</h1>
+        <p className="text-muted-foreground">
+          分析結果の詳細を確認できます
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 gap-8">
         {/* Analysis Content */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>{analysis.analysis_type}分析の結果</span>
+              <span>{analysis.title}</span>
               <div className="flex items-center gap-2">
                 <ShareAnalysis analysisId={analysis.id} />
                 <Button
