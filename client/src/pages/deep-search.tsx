@@ -62,7 +62,7 @@ export default function DeepSearch() {
   };
 
   return (
-    <div className="min-h-screen w-full p-4">
+    <div className="min-h-screen w-full p-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">深層検索エージェント</h1>
         <p className="text-muted-foreground">
@@ -123,7 +123,7 @@ export default function DeepSearch() {
       </Card>
 
       {results.length > 0 && (
-        <div className="w-full space-y-4">
+        <div className="">
           <h2 className="text-2xl font-semibold mb-4">検索結果</h2>
           <div className="grid gap-4 w-full">
             {results.map((result, index) => (
