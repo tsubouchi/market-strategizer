@@ -2,77 +2,71 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, FileText } from "lucide-react";
+import { format } from "date-fns";
+import { Loader2, FileText } from "lucide-react";
 
 interface HistoryItem {
   id: string;
   title: string;
   type: string;
+  content: Record<string, string>;
   created_at: string;
 }
 
 export default function History() {
-  const [, navigate] = useLocation();
+  const [_, navigate] = useLocation();
   const { data: history, isLoading } = useQuery<HistoryItem[]>({
     queryKey: ["/api/history"],
   });
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>作成履歴</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-12" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[250px]" />
-                  <Skeleton className="h-4 w-[200px]" />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>作成履歴</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {history?.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-accent transition-colors"
+    <div className="container mx-auto py-8 px-4 md:px-6">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">作成履歴</h1>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {history?.map((item) => (
+          <Card
+            key={item.id}
+            className="hover:shadow-lg transition-shadow relative group"
+          >
+            <div 
+              className="cursor-pointer"
+              onClick={() => navigate(`/analysis/${item.id}`)}
             >
-              <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium">{item.title}</h3>
+              <CardHeader>
+                <CardTitle className="flex justify-between items-start">
+                  <div>
+                    <div className="text-xl">{item.title}</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {item.type}分析
+                    </div>
+                  </div>
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  <Clock className="inline-block h-4 w-4 mr-1" />
-                  {new Date(item.created_at).toLocaleString("ja-JP")}
+                  {item.created_at && format(new Date(item.created_at), "PPP")}
                 </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => navigate(`/${item.type}/${item.id}`)}
-              >
-                詳細を見る
-              </Button>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {Object.entries(item.content)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join("\n")}
+                </p>
+              </CardContent>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
