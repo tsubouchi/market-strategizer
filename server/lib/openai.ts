@@ -484,7 +484,7 @@ export async function refineRequirements(
 
 export async function analyze3C(formData: Record<string, string>): Promise<AnalysisResult> {
   try {
-    // Step 1: 初期分析
+    // Step 1: 分析データの統合と初期分析
     const initialAnalysisResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -550,7 +550,7 @@ JSONフォーマットで以下の構造で出力してください：
 
     const deepAnalysis = JSON.parse(deepAnalysisResponse.choices[0].message.content || "{}");
 
-    // Step 3: 最終提案
+    // Step 3: 最終提案生成
     const finalRecommendationsResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [

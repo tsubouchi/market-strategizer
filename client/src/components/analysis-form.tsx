@@ -118,7 +118,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
   const isLastStep = currentStep === steps.length - 1;
 
   // 生成ステップの状態管理
-  const [generationSteps] = useState<GenerationStep[]>([
+  const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
     {
       id: "analyze",
       title: "分析データの統合",
@@ -144,6 +144,17 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
       status: "waiting",
     },
   ]);
+
+  // ステップのステータスを更新する関数
+  const updateStepStatus = (stepId: string, status: GenerationStep["status"], error?: string) => {
+    setGenerationSteps(prev =>
+      prev.map(step =>
+        step.id === stepId
+          ? { ...step, status, error }
+          : step
+      )
+    );
+  };
 
   const handleNext = () => {
     if (!formData[currentField.key]?.trim()) {
@@ -194,6 +205,8 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
     setAnalysisResult(null);
 
     try {
+      // 分析データの統合ステップを開始
+      updateStepStatus("analyze", "processing");
       const formDataToSend = new FormData();
       formDataToSend.append("analysis_type", type);
       formDataToSend.append("title", title);
@@ -207,22 +220,36 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
         formDataToSend.append("attachment", file);
       }
 
+      updateStepStatus("analyze", "completed");
+      updateStepStatus("initial", "processing");
+
       const analysis = await createAnalysis.mutateAsync(formDataToSend);
 
       // 分析が完了し、結果が有効な場合のみ表示
       if (analysis.content && !Object.values(analysis.content).some(value => value.message?.includes("準備中"))) {
         setAnalysisResult(analysis);
-      }
 
-      toast({
-        title: "分析完了",
-        description: "分析が正常に完了しました。",
-      });
+        // すべてのステップを完了としてマーク
+        updateStepStatus("initial", "completed");
+        updateStepStatus("deep", "completed");
+        updateStepStatus("recommendations", "completed");
 
-      if (onComplete) {
-        onComplete(analysis);
+        toast({
+          title: "分析完了",
+          description: "分析が正常に完了しました。",
+        });
+
+        if (onComplete) {
+          onComplete(analysis);
+        }
       }
     } catch (error: any) {
+      // エラーが発生した場合、現在のステップをエラー状態に
+      const currentStep = generationSteps.find(step => step.status === "processing");
+      if (currentStep) {
+        updateStepStatus(currentStep.id, "error", error.message);
+      }
+
       toast({
         variant: "destructive",
         title: "エラー",
@@ -335,9 +362,9 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
                       step.status === "processing"
                         ? "bg-muted animate-pulse"
                         : step.status === "completed"
-                        ? "bg-green-50"
+                        ? "bg-green-50 dark:bg-green-950"
                         : step.status === "error"
-                        ? "bg-red-50"
+                        ? "bg-red-50 dark:bg-red-950"
                         : ""
                     }`}
                   >
@@ -349,6 +376,10 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
                           <div className="w-full h-full rounded-full bg-green-500 text-white flex items-center justify-center">
                             ✓
                           </div>
+                        ) : step.status === "error" ? (
+                          <div className="w-full h-full rounded-full bg-red-500 text-white flex items-center justify-center">
+                            ✕
+                          </div>
                         ) : (
                           <div className="w-full h-full rounded-full border-2 border-gray-300" />
                         )}
@@ -356,7 +387,7 @@ export default function AnalysisForm({ type, onComplete }: AnalysisFormProps) {
                       <div>
                         <h4 className="font-medium">{step.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {step.description}
+                          {step.status === "error" ? step.error : step.description}
                         </p>
                       </div>
                     </div>
