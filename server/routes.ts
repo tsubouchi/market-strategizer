@@ -25,6 +25,7 @@ import {
   refineConceptWithConditions,
   generateWebAppRequirements
 } from "./lib/openai";
+import type { WebAppRequirement } from './lib/openai';
 
 // Configure multer for file upload
 const upload = multer({
@@ -304,13 +305,13 @@ export function registerRoutes(app: Express): Server {
 
       // 既存のコンセプトをチェック
       const conceptCount = await db
-        .select({ count: sql`count(*)` })
+        .select({ count: sql<number>`count(*)` })
         .from(concept_analyses)
         .where(
           and(...analysis_ids.map(id => eq(concept_analyses.analysis_id, id)))
         );
 
-      if (conceptCount[0].count > 0) {
+      if (Number(conceptCount[0].count) > 0) {
         return res.status(400).send("選択された分析の組み合わせから既にコンセプトが生成されています");
       }
 
@@ -382,7 +383,7 @@ export function registerRoutes(app: Express): Server {
           target_customer: refinedConcept.target_customer,
           advantage: refinedConcept.advantage,
           raw_data: {
-            ...concept.raw_data,
+            original: concept.raw_data as Record<string, unknown>,
             refined: refinedConcept,
           },
         })
@@ -827,7 +828,7 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
       // NULLの更新情報を空配列に変換
       const competitorsWithUpdates = userCompetitors.map(competitor => ({
         ...competitor,
-        updates: competitor.updates[0] === null ? [] : competitor.updates
+        updates: Array.isArray(competitor.updates) && competitor.updates[0] === null ? [] : competitor.updates
       }));
 
       res.json(competitorsWithUpdates);
@@ -885,7 +886,7 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
         .update(competitors)
         .set({
           monitoring_keywords,
-          updated_at: new Date(),
+          last_updated: new Date(),
         })
         .where(eq(competitors.id, req.params.id))
         .returning();
@@ -968,19 +969,19 @@ sustainability: サステナビリティ・環境対応の情報`
         const lines = responseText.split('\n');
 
         for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (trimmedLine.startsWith('products:')) {
-            content.products = trimmedLine.replace('products:', '').trim() || "情報なし";
-          } else if (trimmedLine.startsWith('press:')) {
-            content.press = trimmedLine.replace('press:', '').trim() || "情報なし";
-          } else if (trimmedLine.startsWith('tech:')) {
-            content.tech = trimmedLine.replace('tech:', '').trim() || "情報なし";
-          } else if (trimmedLine.startsWith('market:')) {
-            content.market = trimmedLine.replace('market:', '').trim() || "情報なし";
-          } else if (trimmedLine.startsWith('sustainability:')) {
-            content.sustainability = trimmedLine.replace('sustainability:', '').trim() || "情報なし";
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith('products:')) {
+              content.products = trimmedLine.replace('products:', '').trim() || "情報なし";
+            } else if (trimmedLine.startsWith('press:')) {
+              content.press = trimmedLine.replace('press:', '').trim() || "情報なし";
+            } else if (trimmedLine.startsWith('tech:')) {
+              content.tech = trimmedLine.replace('tech:', '').trim() || "情報なし";
+            } else if (trimmedLine.startsWith('market:')) {
+              content.market = trimmedLine.replace('market:', '').trim() || "情報なし";
+            } else if (trimmedLine.startsWith('sustainability:')) {
+              content.sustainability = trimmedLine.replace('sustainability:', '').trim() || "情報なし";
+            }
           }
-        }
       } catch (error) {
         console.error("Error parsing response:", error);
       }
