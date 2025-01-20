@@ -378,8 +378,8 @@ export default function CompetitorMonitoring() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="min-h-screen w-full p-4">
+        <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold">競合他社モニタリング</h1>
             <p className="text-muted-foreground">
@@ -402,7 +402,7 @@ export default function CompetitorMonitoring() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className="min-h-screen w-full p-4">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold">競合他社モニタリング</h1>
