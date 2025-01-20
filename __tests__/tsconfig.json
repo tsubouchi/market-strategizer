@@ -1,15 +1,14 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "strict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "types": ["node", "jest", "@testing-library/jest-dom"],
+    "module": "esnext",
+    "target": "ES2022",
+    "moduleResolution": "node",
     "jsx": "react-jsx",
     "esModuleInterop": true,
-    "moduleResolution": "node",
     "allowJs": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node", "jest", "@testing-library/jest-dom"],
   },
   "include": [
     "./**/*",
