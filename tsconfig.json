@@ -13,13 +13,19 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "baseUrl": ".",
     "types": ["node", "vite/client", "jest", "@testing-library/jest-dom"],
     "paths": {
       "@db": ["./db/index.ts"],
       "@db/*": ["./db/*"],
       "@/*": ["./client/src/*"]
+    }
+  },
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "module": "CommonJS"
     }
   }
 }

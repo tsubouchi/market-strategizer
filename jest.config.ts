@@ -9,11 +9,13 @@ const config: Config.InitialOptions = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '^lucide-react$': '<rootDir>/node_modules/lucide-react/dist/cjs/lucide-react.js'
   },
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-      useESM: true
+      tsconfig: {
+        jsx: "react-jsx",
+        esModuleInterop: true,
+        moduleResolution: "node"
+      }
     }],
     '^.+\\.(js|jsx|mjs)$': ['babel-jest', { 
       configFile: './babel.config.mjs'

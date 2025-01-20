@@ -12,13 +12,32 @@ Object.defineProperty(window, 'location', {
 });
 
 // Mock fetch
-global.fetch = jest.fn(() =>
-  Promise.resolve({
+const createMockResponse = () => {
+  const response = {
     ok: true,
     json: () => Promise.resolve({}),
-    text: () => Promise.resolve('')
-  })
-) as jest.Mock;
+    text: () => Promise.resolve(''),
+    status: 200,
+    statusText: 'OK',
+    headers: new Headers(),
+    clone: function() { 
+      return Promise.resolve(this);
+    },
+    body: null,
+    bodyUsed: false,
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+    blob: () => Promise.resolve(new Blob()),
+    formData: () => Promise.resolve(new FormData()),
+    redirected: false,
+    type: 'basic' as ResponseType,
+    url: 'http://localhost',
+  };
+
+  return response as unknown as Response;
+};
+
+// Define fetch mock
+global.fetch = jest.fn().mockImplementation(async () => createMockResponse());
 
 // Mock wouter
 jest.mock('wouter', () => ({
