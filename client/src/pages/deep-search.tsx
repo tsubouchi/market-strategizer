@@ -75,7 +75,7 @@ export default function DeepSearch() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-4xl font-bold">深層検索エージェント</h1>
           <p className="text-muted-foreground">
             AIを活用して深い洞察を得るための検索を実行します

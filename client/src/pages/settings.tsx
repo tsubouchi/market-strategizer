@@ -42,7 +42,7 @@ export default function SettingsPage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-4xl font-bold">設定</h1>
           <p className="text-muted-foreground">
             アプリケーションの設定を管理します

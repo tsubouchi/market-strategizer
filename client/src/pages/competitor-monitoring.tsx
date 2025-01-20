@@ -390,17 +390,15 @@ export default function CompetitorMonitoring() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-4xl font-bold">競合他社モニタリング</h1>
             <p className="text-muted-foreground">
               競合他社の動向をリアルタイムで監視します
             </p>
           </div>
         </div>
-        <div className="grid gap-6">
-          {[1, 2].map((i) => (
-            <LoadingCard key={i} />
-          ))}
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -416,13 +414,13 @@ export default function CompetitorMonitoring() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-4xl font-bold">競合他社モニタリング</h1>
           <p className="text-muted-foreground">
             競合他社の動向をリアルタイムで監視します
           </p>
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex gap-4">
           <Dialog open={isAddingCompetitor} onOpenChange={setIsAddingCompetitor}>
             <DialogTrigger asChild>
               <Button>
