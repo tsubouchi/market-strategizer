@@ -16,7 +16,15 @@ import {
   requirement_analyses
 } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
-import { analyze3C, analyze4P, analyzePEST, convertAnalysisToMarkdown } from "./lib/openai";
+import { 
+  analyze3C, 
+  analyze4P, 
+  analyzePEST, 
+  convertAnalysisToMarkdown,
+  generateConcept,
+  refineConceptWithConditions,
+  generateWebAppRequirements
+} from "./lib/openai";
 
 // Configure multer for file upload
 const upload = multer({
@@ -966,7 +974,7 @@ export function registerRoutes(app: Express): Server {
       if (process.env.NODE_ENV !== "production") {
         await db
           .delete(product_requirements)
-          .where(eq(product_requirements.id, req.params.id));
+          .where(eq(product_requirements.id, reqparams.id));
         return res.json({ message: "Requirement deleted successfully" });
       }
 
