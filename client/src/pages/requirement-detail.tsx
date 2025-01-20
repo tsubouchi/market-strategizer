@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { useNavigate } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 
@@ -59,7 +59,7 @@ export default function RequirementDetail({ requirement }) {
         <div className="absolute top-4 right-4">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </AlertDialogTrigger>
@@ -75,7 +75,11 @@ export default function RequirementDetail({ requirement }) {
                 <AlertDialogAction
                   onClick={() => deleteRequirementMutation.mutate()}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={deleteRequirementMutation.isPending}
                 >
+                  {deleteRequirementMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   削除
                 </AlertDialogAction>
               </AlertDialogFooter>
