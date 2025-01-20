@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, PieChart, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const analysisTypes = [
@@ -44,35 +45,51 @@ export default function Home() {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-      {analysisTypes.map((type) => (
-        <Card key={type.id} className="transition-all hover:shadow-lg h-full flex flex-col">
-          <CardHeader>
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 mb-4">
-              <type.icon className="w-6 h-6 text-primary" />
-            </div>
-            <CardTitle className="text-xl font-semibold mb-2">{type.title}</CardTitle>
-            <CardDescription className="text-sm">
-              {type.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            <ul className="space-y-2 mb-6 flex-1">
-              {type.details.map((detail, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <span className="block w-1 h-1 mt-2 rounded-full bg-primary/50" />
-                  {detail}
-                </li>
-              ))}
-            </ul>
-            <Button className="w-full mt-auto" asChild>
-              <Link href={`/analysis/new/${type.id.toLowerCase()}`}>
-                この分析を開始
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="min-h-screen w-full p-4">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-4xl font-bold">戦略分析</h1>
+          <p className="text-muted-foreground">
+            AIを活用した戦略分析で、ビジネスの方向性を明確に
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {analysisTypes.map((type, index) => (
+          <motion.div
+            key={type.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+          >
+            <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 mb-4">
+                  <type.icon className="w-6 h-6 text-primary" />
+                </div>
+                <CardTitle className="text-xl">{type.title}</CardTitle>
+                <CardDescription>{type.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col">
+                <ul className="space-y-2 mb-6 flex-1">
+                  {type.details.map((detail, index) => (
+                    <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="block w-1 h-1 mt-2 rounded-full bg-primary/50" />
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+                <Button className="w-full mt-auto" asChild>
+                  <Link href={`/analysis/new/${type.id.toLowerCase()}`}>
+                    この分析を開始
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
