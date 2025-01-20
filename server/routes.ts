@@ -975,8 +975,7 @@ export function registerRoutes(app: Express): Server {
 
   // 重要度判定ロジックを改善
   function determineImportance(content: Record<string,string>): "low" | "medium" | "high" {
-    const keywords = {
-      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新"],
+    const keywords = {      high: ["新製品発表", "重要な発表", "戦略的提携", "M&A", "特許取得", "業績予想修正", "重大な技術革新"],
       medium: ["技術革新", "サービス改善", "市場拡大", "新規顧客", "組織変更", "環境対応"],
       low: ["通常の更新", "定期的な情報", "軽微な変更", "その他"]
     };
@@ -1044,12 +1043,17 @@ export function registerRoutes(app: Express): Server {
 
       // デモ環境では外部キー制約を考慮して、トランザクションで関連レコードも削除
       await db.transaction(async (tx) => {
-        // まず関連する分析との関連付けを削除
+        // まず関連する要件書を削除
+        await tx
+          .delete(product_requirements)
+          .where(eq(product_requirements.concept_id, req.params.id));
+
+        // 次にコンセプトと分析の関連付けを削除
         await tx
           .delete(concept_analyses)
           .where(eq(concept_analyses.concept_id, req.params.id));
 
-        // 次にコンセプトを削除
+        // 最後にコンセプトを削除
         await tx
           .delete(concepts)
           .where(eq(concepts.id, req.params.id));
@@ -1057,6 +1061,7 @@ export function registerRoutes(app: Express): Server {
 
       res.json({ message: "Concept deleted successfully" });
     } catch (error) {
+      console.error("Error deleting concept:", error);
       next(error);
     }
   });
