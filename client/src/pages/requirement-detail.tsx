@@ -38,7 +38,6 @@ export default function RequirementDetail({ params }: { params: { id: string } }
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
-  // 要件書データの取得
   const { data: requirement, isLoading } = useQuery<Requirement>({
     queryKey: [`/api/requirements/${params.id}`],
   });
