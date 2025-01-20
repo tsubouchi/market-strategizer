@@ -22,13 +22,24 @@ import { useToast } from "@/hooks/use-toast";
 import { Trash2, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface Requirement {
+  id: string;
+  title: string;
+  overview: string;
+  target_users: string;
+  features: string;
+  tech_stack: string;
+  created_at: string;
+}
 
 export default function RequirementDetail({ params }: { params: { id: string } }) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
   // 要件書データの取得
-  const { data: requirement, isLoading } = useQuery({
+  const { data: requirement, isLoading } = useQuery<Requirement>({
     queryKey: [`/api/requirements/${params.id}`],
   });
 
@@ -59,12 +70,41 @@ export default function RequirementDetail({ params }: { params: { id: string } }
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-[200px]" />
+          <Skeleton className="h-4 w-[300px]" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Skeleton className="h-6 w-[100px] mb-2" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+            <div>
+              <Skeleton className="h-6 w-[150px] mb-2" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!requirement) {
-    return <div>要件書が見つかりません</div>;
+    return (
+      <Card className="p-6">
+        <div className="text-center text-muted-foreground">
+          要件書が見つかりません
+        </div>
+      </Card>
+    );
   }
+
+  // Parse JSON strings
+  const features = JSON.parse(requirement.features);
+  const techStack = JSON.parse(requirement.tech_stack);
 
   return (
     <Card>
@@ -103,34 +143,34 @@ export default function RequirementDetail({ params }: { params: { id: string } }
         <CardDescription>要件書の詳細情報</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <h3 className="text-lg font-medium">概要</h3>
-            <p className="text-muted-foreground">{requirement.overview}</p>
+            <h3 className="text-lg font-semibold mb-2">概要</h3>
+            <p className="text-muted-foreground whitespace-pre-wrap">{requirement.overview}</p>
           </div>
           <div>
-            <h3 className="text-lg font-medium">対象ユーザー</h3>
-            <p className="text-muted-foreground">{requirement.target_users}</p>
+            <h3 className="text-lg font-semibold mb-2">対象ユーザー</h3>
+            <p className="text-muted-foreground whitespace-pre-wrap">{requirement.target_users}</p>
           </div>
           <div>
-            <h3 className="text-lg font-medium">機能一覧</h3>
+            <h3 className="text-lg font-semibold mb-2">機能一覧</h3>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-              {JSON.parse(requirement.features).map((feature: string, index: number) => (
-                <li key={index}>{feature}</li>
+              {features.map((feature: string, index: number) => (
+                <li key={index} className="ml-4">{feature}</li>
               ))}
             </ul>
           </div>
           <div>
-            <h3 className="text-lg font-medium">技術スタック</h3>
+            <h3 className="text-lg font-semibold mb-2">技術スタック</h3>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-              {JSON.parse(requirement.tech_stack).map((tech: string, index: number) => (
-                <li key={index}>{tech}</li>
+              {techStack.map((tech: string, index: number) => (
+                <li key={index} className="ml-4">{tech}</li>
               ))}
             </ul>
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
           作成日: {new Date(requirement.created_at).toLocaleDateString("ja-JP")}
         </p>
