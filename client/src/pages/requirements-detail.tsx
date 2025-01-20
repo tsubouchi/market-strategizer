@@ -2,7 +2,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -175,14 +174,14 @@ export default function RequirementsDetail({ params }: { params: { id: string } 
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                code({node, inline, className, children, ...props}) {
+                code({className, children, ...props}) {
                   const match = /language-(\w+)/.exec(className || '');
-                  return !inline && match ? (
+                  return match ? (
                     <SyntaxHighlighter
-                      style={oneDark}
+                      {...props}
+                      style={oneDark as any}
                       language={match[1]}
                       PreTag="div"
-                      {...props}
                     >
                       {String(children).replace(/\n$/, '')}
                     </SyntaxHighlighter>

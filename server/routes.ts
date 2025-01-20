@@ -1000,17 +1000,12 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
         return res.status(404).send("Requirement not found");
       }
 
-      // デモ環境ではuser_idチェックを緩和
-      if (process.env.NODE_ENV !== "production") {
-        await db
-          .delete(product_requirements)
-          .where(eq(product_requirements.id, req.params.id));        return res.json({ message: "Requirement deleted successfully" });
-      }
+      // Delete related requirement_analyses first
+      await db
+        .delete(requirement_analyses)
+        .where(eq(requirement_analyses.requirement_id, requirement.id));
 
-      if (requirement.user_id !== (req.user?.id || 1)) {
-        return res.status(403).send("Access denied");
-      }
-
+      // Then delete the requirement
       await db
         .delete(product_requirements)
         .where(eq(product_requirements.id, req.params.id));
