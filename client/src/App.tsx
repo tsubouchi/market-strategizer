@@ -1,10 +1,11 @@
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { Layout } from "@/components/layout";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
+import { Layout } from "@/components/layout";
 import { queryClient } from "./lib/queryClient";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 function Router() {
   return (
@@ -20,8 +21,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <SidebarProvider defaultOpen={true}>
+        <Router />
+        <Toaster />
+      </SidebarProvider>
     </QueryClientProvider>
   );
 }
