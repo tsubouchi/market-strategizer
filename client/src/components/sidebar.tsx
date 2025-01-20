@@ -21,6 +21,11 @@ const sidebarLinks = [
     href: "/",
   },
   {
+    title: "ダッシュボード",
+    icon: BarChart3,
+    href: "/dashboard",
+  },
+  {
     title: "深層検索エージェント",
     icon: Search,
     href: "/search",
@@ -46,20 +51,20 @@ const analysisLinks = [
   {
     title: "3C分析",
     icon: BarChart3,
-    href: "/analysis/new?type=3C",
-    description: "企業・顧客・競合の視点から戦略を立案（深層検索対応）",
+    href: "/analysis/new/3c",
+    description: "企業・顧客・競合の視点から戦略を立案",
   },
   {
     title: "4P分析",
     icon: PieChart,
-    href: "/analysis/new?type=4P",
-    description: "マーケティングミックスを体系的に分析（深層検索対応）",
+    href: "/analysis/new/4p",
+    description: "マーケティングミックスを体系的に分析",
   },
   {
     title: "PEST分析",
     icon: TrendingUp,
-    href: "/analysis/new?type=PEST",
-    description: "マクロ環境から事業機会とリスクを把握（深層検索対応）",
+    href: "/analysis/new/pest",
+    description: "マクロ環境から事業機会とリスクを把握",
   },
 ];
 

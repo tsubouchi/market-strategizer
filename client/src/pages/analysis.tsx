@@ -35,7 +35,7 @@ export default function AnalysisPage({ type }: AnalysisPageProps) {
     }
 
     return (
-      <div className="w-full">
+      <div className="container max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <Button
             variant="ghost"
