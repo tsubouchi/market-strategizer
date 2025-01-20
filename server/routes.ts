@@ -665,9 +665,12 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
         return res.status(400).json({ error: "検索クエリを入力してください" });
       }
 
-      // Perplexity APIの設定を確認
-      if (!process.env.PERPLEXITY_API_KEY) {
-        throw new Error("PERPLEXITY_API_KEY is not configured");
+      // 検索サービスが利用可能かチェック
+      if (!process.env.SEARCH_API_ENDPOINT) {
+        return res.status(503).json({
+          error: "検索サービスは現在ご利用いただけません",
+          details: "しばらく時間をおいて再度お試しください"
+        });
       }
 
       const controller = new AbortController();
@@ -676,75 +679,9 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
       }, 30000);
 
       try {
-        // 検索タイプに基づいてシステムプロンプトを設定
-        let systemPrompt = "深層的な情報検索を行い、結果を日本語で返してください。";
-        if (searchType === "news") {
-          systemPrompt += "特にニュース記事に焦点を当ててください。";
-        } else if (searchType === "academic") {
-          systemPrompt += "特に学術論文や研究に焦点を当ててください。";
-        } else if (searchType === "blog") {
-          systemPrompt += "特にブログや技術記事に焦点を当ててください。";
-        }
-
-        const response = await fetch("https://api.perplexity.ai/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: "llama-3.1-sonar-small-128k-online",
-            messages: [
-              {
-                role: "system",
-                content: systemPrompt
-              },
-              {
-                role: "user",
-                content: query
-              }
-            ],
-            temperature: 0.2,
-            max_tokens: 1000,
-            return_citations: true
-          }),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeout);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Perplexity API error:", errorText);
-          throw new Error(`検索APIエラー: ${response.statusText}`);
-        }
-
-        const searchResult = await response.json();
-
-        // 検索結果を整形
-        const results = [];
-        if (searchResult.choices && searchResult.choices.length > 0) {
-          const mainResult = {
-            title: "検索結果の要約",
-            summary: searchResult.choices[0].message.content,
-            citations: searchResult.citations || []
-          };
-          results.push(mainResult);
-
-          // 引用元の情報を別々の結果として追加
-          if (searchResult.citations?.length > 0) {
-            searchResult.citations.forEach((citation, index) => {
-              results.push({
-                title: `参考文献 ${index + 1}`,
-                url: citation,
-                summary: "引用元文献"
-              });
-            });
-          }
-        }
-
+        const results = await performDeepSearch(query, searchType, controller.signal);
         res.json(results);
-      } catch (error) {
+      } catch (error: any) {
         if (error.name === 'AbortError') {
           return res.status(504).json({
             error: "検索がタイムアウトしました",
@@ -757,14 +694,104 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
       }
     } catch (error) {
       console.error("Deep search error:", error);
-      const status = error.status || 502;
-      const message = error.message || "検索中に予期せぬエラーが発生しました";
-      res.status(status).json({
-        error: message,
-        details: error instanceof Error ? error.message : "Unknown error"
+      res.status(500).json({
+        error: "検索中に問題が発生しました",
+        details: "しばらく時間をおいて再度お試しください"
       });
     }
   });
+
+  async function performDeepSearch(query: string, searchType: string, signal: AbortSignal) {
+    let systemPrompt = "深層的な情報検索を行い、結果を日本語で返してください。";
+    if (searchType === "news") {
+      systemPrompt += "特にニュース記事に焦点を当ててください。";
+    } else if (searchType === "academic") {
+      systemPrompt += "特に学術論文や研究に焦点を当ててください。";
+    } else if (searchType === "blog") {
+      systemPrompt += "特にブログや技術記事に焦点を当ててください。";
+    }
+
+    try {
+      const apiEndpoint = process.env.SEARCH_API_ENDPOINT;
+      if (!apiEndpoint) {
+        console.error("Search service configuration error");
+        throw new Error("検索サービスの設定が不完全です");
+      }
+
+      const response = await fetch(apiEndpoint, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: query
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 1000,
+          return_citations: true
+        }),
+        signal
+      });
+
+      if (!response.ok) {
+        console.error("External service error:", response.status);
+        throw new Error("外部サービスでエラーが発生しました");
+      }
+
+      const searchResult = await response.json();
+      const results = [];
+
+      if (searchResult.choices && searchResult.choices.length > 0) {
+        results.push({
+          title: "検索結果の要約",
+          summary: searchResult.choices[0].message.content,
+          citations: searchResult.citations || []
+        });
+
+        if (searchResult.citations?.length > 0) {
+          searchResult.citations.forEach((citation: string, index: number) => {
+            results.push({
+              title: `参考文献 ${index + 1}`,
+              url: citation,
+              summary: "引用元文献"
+            });
+          });
+        }
+      }
+
+      if (results.length === 0) {
+        return [{
+          title: "検索結果",
+          summary: "検索結果が見つかりませんでした。検索条件を変更してお試しください。",
+          citations: []
+        }];
+      }
+
+      return results;
+    } catch (error) {
+      if (error instanceof Error) {
+        // タイムアウトエラーは上位で処理
+        if (error.name === 'AbortError') {
+          throw error;
+        }
+        // その他のエラーは一般的なメッセージに変換
+        console.error("Search service error occurred:", error.message);
+      } else {
+        console.error("Unknown search service error occurred");
+      }
+      throw new Error("検索サービスでエラーが発生しました");
+    }
+  }
 
   // 競合他社一覧の取得
   app.get("/api/competitors", async (req, res, next) => {
@@ -882,8 +909,15 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
         return res.status(404).send("Competitor not found");
       }
 
+      if (!process.env.SEARCH_API_ENDPOINT || !process.env.PERPLEXITY_API_KEY) {
+        return res.status(503).json({
+          error: "情報収集サービスは現在ご利用いただけません",
+          details: "しばらく時間をおいて再度お試しください"
+        });
+      }
+
       // 深層検索APIを使用して情報を収集
-      const searchResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+      const searchResponse = await fetch(process.env.SEARCH_API_ENDPOINT, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
@@ -894,16 +928,18 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
           messages: [
             {
               role: "system",
-              content: `${competitor.company_name}に関する最新の情報を収集し、以下のカテゴリーごとに分類してください。それぞれ「なし」か具体的な情報を記載してください：
-              products: 製品・サービス開発の情報
-              press: プレスリリース・ニュースの情報
-              tech: 技術革新の情報
-              market: 市場動向の情報
-              sustainability: サステナビリティ・環境対応の情報`
+              content: `${competitor.company_name}に関する最新の情報を収集し、以下のカテゴリーごとに分類してください：
+products: 製品・サービス開発の情報
+press: プレスリリース・ニュースの情報
+tech: 技術革新の情報
+market: 市場動向の情報
+sustainability: サステナビリティ・環境対応の情報`
             },
             {
               role: "user",
-              content: `${competitor.company_name}に関する最新の情報を、以下のキーワードに関連して詳しく教えてください：${competitor.monitoring_keywords.join(', ')}`
+              content: competitor.monitoring_keywords 
+                ? `${competitor.company_name}に関する最新の情報を、以下のキーワードに関連して詳しく教えてください：${competitor.monitoring_keywords.join(', ')}`
+                : `${competitor.company_name}に関する最新の情報を教えてください`
             }
           ],
           temperature: 0.2,
@@ -913,7 +949,7 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
       });
 
       if (!searchResponse.ok) {
-        throw new Error(`Search API error: ${searchResponse.statusText}`);
+        throw new Error("外部サービスでエラーが発生しました");
       }
 
       const result = await searchResponse.json();
@@ -946,7 +982,7 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
           }
         }
       } catch (error) {
-        console.error("Error parsing API response:", error);
+        console.error("Error parsing response:", error);
       }
 
       const importanceScore = determineImportance(content);
@@ -974,10 +1010,13 @@ ${Array.isArray(phase.tasks) ? `- タスク:\n${phase.tasks.map((task: string) =
         .set({ last_updated: new Date() })
         .where(eq(competitors.id, competitor.id));
 
-      res.json([update]);
+      res.json(update);
     } catch (error) {
-      console.error("Error refreshing competitor data:", error);
-      next(error);
+      console.error("Competitor update error:", error);
+      res.status(500).json({
+        error: "情報収集中に問題が発生しました",
+        details: "しばらく時間をおいて再度お試しください"
+      });
     }
   });
 
