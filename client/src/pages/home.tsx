@@ -1,8 +1,7 @@
 import { Link } from "wouter";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, BarChart3, PieChart, TrendingUp, ArrowRight } from "lucide-react";
-import { Header } from "@/components/header";
+import { BarChart3, PieChart, TrendingUp } from "lucide-react";
 
 export default function Home() {
   const analysisTypes = [
@@ -45,76 +44,35 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="container mx-auto py-8 px-4 sm:py-12 sm:px-6">
-        {/* Analysis Types Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-16 sm:mb-20">
-          {analysisTypes.map((type) => (
-            <Card key={type.id} className="transition-all hover:shadow-lg h-full flex flex-col">
-              <CardHeader>
-                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 mb-4">
-                  <type.icon className="w-6 h-6 text-primary" />
-                </div>
-                <CardTitle className="text-xl sm:text-2xl mb-2">{type.title}</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  {type.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                <ul className="space-y-2 mb-6 flex-1">
-                  {type.details.map((detail, index) => (
-                    <li key={index} className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground">
-                      <span className="block w-1 h-1 mt-2 rounded-full bg-primary/50" />
-                      {detail}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={`/analysis/new?type=${type.id}`}>
-                  <Button className="w-full mt-auto">
-                    この分析を開始
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Features Section */}
-        <div className="text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-8 sm:mb-12">特徴</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            <div className="p-4 sm:p-6">
-              <div className="mb-4 text-primary">
-                <BarChart3 className="w-8 h-8 sm:w-10 sm:h-10 mx-auto" />
-              </div>
-              <h3 className="text-lg sm:text-xl font-semibold mb-2">ステップ形式の分析</h3>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                各分析を段階的に進め、漏れのない戦略立案をサポート
-              </p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      {analysisTypes.map((type) => (
+        <Card key={type.id} className="transition-all hover:shadow-lg h-full flex flex-col">
+          <CardHeader>
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 mb-4">
+              <type.icon className="w-6 h-6 text-primary" />
             </div>
-            <div className="p-4 sm:p-6">
-              <div className="mb-4 text-primary">
-                <PieChart className="w-8 h-8 sm:w-10 sm:h-10 mx-auto" />
-              </div>
-              <h3 className="text-lg sm:text-xl font-semibold mb-2">多段階AI分析</h3>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                初期分析から深堀分析、具体的な提案まで、AIが段階的にサポート
-              </p>
-            </div>
-            <div className="p-4 sm:p-6">
-              <div className="mb-4 text-primary">
-                <TrendingUp className="w-8 h-8 sm:w-10 sm:h-10 mx-auto" />
-              </div>
-              <h3 className="text-lg sm:text-xl font-semibold mb-2">根拠に基づく分析</h3>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                参考URLや関連資料を添付し、より具体的な分析の根拠を残せます
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+            <CardTitle className="text-xl font-semibold mb-2">{type.title}</CardTitle>
+            <CardDescription className="text-sm">
+              {type.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col">
+            <ul className="space-y-2 mb-6 flex-1">
+              {type.details.map((detail, index) => (
+                <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="block w-1 h-1 mt-2 rounded-full bg-primary/50" />
+                  {detail}
+                </li>
+              ))}
+            </ul>
+            <Button className="w-full mt-auto" asChild>
+              <Link href={`/analysis/${type.id.toLowerCase()}`}>
+                この分析を開始
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
