@@ -4,15 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Home,
-  ListChecks,
+  Search,
+  Eye,
+  Lightbulb,
   Settings,
   BarChart3,
   PieChart,
   TrendingUp,
-  Lightbulb,
-  Search,
-  FileText,
-  Eye,
   Menu,
 } from "lucide-react";
 
@@ -23,29 +21,19 @@ const sidebarLinks = [
     href: "/",
   },
   {
-    title: "作成履歴",
-    icon: ListChecks,
-    href: "/dashboard",
-  },
-  {
     title: "深層検索エージェント",
     icon: Search,
-    href: "/deep-search",
+    href: "/search",
   },
   {
     title: "競合他社モニタリング",
     icon: Eye,
-    href: "/competitor-monitoring",
+    href: "/monitoring",
   },
   {
     title: "コンセプト生成",
     icon: Lightbulb,
-    href: "/concept-generator",
-  },
-  {
-    title: "要件書",
-    icon: FileText,
-    href: "/concepts",
+    href: "/concept",
   },
   {
     title: "設定",

@@ -13,9 +13,6 @@ import Analysis from "@/pages/analysis";
 import Dashboard from "@/pages/dashboard";
 import Concepts from "@/pages/concepts";
 import Settings from "@/pages/settings";
-import History from "@/pages/history";
-import Requirements from "@/pages/requirements";
-import RequirementsDetail from "@/pages/requirements-detail";
 
 function Router() {
   return (
@@ -23,13 +20,10 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/dashboard" component={Dashboard} />
-        <Route path="/history" component={History} />
         <Route path="/search" component={DeepSearch} />
         <Route path="/monitoring" component={CompetitorMonitoring} />
         <Route path="/concept" component={ConceptGenerator} />
         <Route path="/concepts" component={Concepts} />
-        <Route path="/requirements" component={Requirements} />
-        <Route path="/requirements/:id" component={RequirementsDetail} />
         <Route path="/settings" component={Settings} />
         {/* 分析関連のルート */}
         <Route path="/analysis/new" component={Analysis} />
