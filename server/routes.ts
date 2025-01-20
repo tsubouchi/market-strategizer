@@ -1018,12 +1018,22 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).send("Access denied");
       }
 
-      await db
-        .delete(product_requirements)
-        .where(eq(product_requirements.id, req.params.id));
+      // トランザクションで削除を実行
+      await db.transaction(async (tx) => {
+        // まず関連する分析との関連付けを削除
+        await tx
+          .delete(requirement_analyses)
+          .where(eq(requirement_analyses.requirement_id, req.params.id));
+
+        // 次に要件書を削除
+        await tx
+          .delete(product_requirements)
+          .where(eq(product_requirements.id, req.params.id));
+      });
 
       res.status(204).end();
     } catch (error) {
+      console.error("Error deleting requirement:", error);
       next(error);
     }
   });
@@ -1051,8 +1061,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // 他のルート設定は変更なし ...
-
+  // 他のルート設定は変更なし
   const httpServer = createServer(app);
   return httpServer;
 }

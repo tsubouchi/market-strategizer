@@ -47,6 +47,9 @@ export default function RequirementDetail({ params }: { params: { id: string } }
     mutationFn: async () => {
       const response = await fetch(`/api/requirements/${params.id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
