@@ -580,13 +580,15 @@ export default function CompetitorMonitoring() {
                               <TableCell>{update.update_type === "deep_search" ? "AI分析" : update.update_type}</TableCell>
                               <TableCell>
                                 <div className="space-y-4">
-                                  <p className="font-medium">{update.content.summary}</p>
+                                  <p className="font-medium">
+                                    {update.content?.summary || "No summary available"}
+                                  </p>
                                   <div className="space-y-2">
-                                    <CategoryInfo category="製品・サービス" content={update.content.categories.products} />
-                                    <CategoryInfo category="プレス情報" content={update.content.categories.press} />
-                                    <CategoryInfo category="技術革新" content={update.content.categories.tech} />
-                                    <CategoryInfo category="市場動向" content={update.content.categories.market} />
-                                    <CategoryInfo category="サステナビリティ" content={update.content.categories.sustainability} />
+                                    <CategoryInfo category="製品・サービス" content={update.content?.categories?.products} />
+                                    <CategoryInfo category="プレス情報" content={update.content?.categories?.press} />
+                                    <CategoryInfo category="技術革新" content={update.content?.categories?.tech} />
+                                    <CategoryInfo category="市場動向" content={update.content?.categories?.market} />
+                                    <CategoryInfo category="サステナビリティ" content={update.content?.categories?.sustainability} />
                                   </div>
                                 </div>
                               </TableCell>
