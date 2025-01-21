@@ -11,8 +11,8 @@ export const users = pgTable("users", {
 export const analyses = pgTable("analyses", {
   id: uuid("id").defaultRandom().primaryKey(),
   user_id: serial("user_id").references(() => users.id).notNull(),
-  title: text("title").notNull(), // タイトルを必須に変更
-  analysis_type: text("analysis_type").notNull(), // '3C', '4P', 'PEST'
+  title: text("title").notNull(),
+  analysis_type: text("analysis_type").notNull(),
   content: jsonb("content").notNull(),
   ai_feedback: text("ai_feedback"),
   reference_url: text("reference_url"),
@@ -29,7 +29,7 @@ export const concepts = pgTable("concepts", {
   value_proposition: text("value_proposition"),
   target_customer: text("target_customer"),
   advantage: text("advantage"),
-  raw_data: jsonb("raw_data"), // 多段推論の中間結果などを保存
+  raw_data: jsonb("raw_data"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -65,11 +65,11 @@ export const product_requirements = pgTable("product_requirements", {
   title: text("title").notNull(),
   overview: text("overview").notNull(),
   target_users: text("target_users").notNull(),
-  features: jsonb("features").notNull(), // 機能一覧、優先度などを含むJSON
-  tech_stack: jsonb("tech_stack"), // 技術スタック情報
-  ui_ux_requirements: jsonb("ui_ux_requirements"), // UI/UX要件
-  schedule: jsonb("schedule"), // 開発スケジュール
-  status: text("status").default("draft"), // draft, final など
+  features: jsonb("features").notNull(),
+  tech_stack: jsonb("tech_stack"),
+  ui_ux_requirements: jsonb("ui_ux_requirements"),
+  schedule: jsonb("schedule"),
+  status: text("status").default("draft"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -81,7 +81,6 @@ export const requirement_analyses = pgTable("requirement_analyses", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-// 競合他社モニタリングテーブル
 export const competitors = pgTable("competitors", {
   id: uuid("id").defaultRandom().primaryKey(),
   user_id: serial("user_id").references(() => users.id).notNull(),
@@ -95,12 +94,45 @@ export const competitors = pgTable("competitors", {
 export const competitor_updates = pgTable("competitor_updates", {
   id: uuid("id").defaultRandom().primaryKey(),
   competitor_id: uuid("competitor_id").references(() => competitors.id).notNull(),
-  update_type: text("update_type").notNull(), // 'news', 'product', 'social'
+  update_type: text("update_type").notNull(),
   content: jsonb("content").notNull(),
   source_url: text("source_url"),
   importance_score: text("importance_score"),
   is_notified: boolean("is_notified").default(false),
   created_at: timestamp("created_at").defaultNow(),
+});
+
+// Add new error logging tables
+export const error_logs = pgTable("error_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  level: text("level").notNull(),
+  message: text("message").notNull(),
+  stack_trace: text("stack_trace"),
+  metadata: jsonb("metadata").$type<{
+    url?: string,
+    user_agent?: string,
+    request_path?: string,
+    request_method?: string,
+    request_body?: unknown,
+    component?: string,
+    additional_info?: Record<string, unknown>
+  }>(),
+  is_resolved: boolean("is_resolved").default(false),
+  resolved_by: serial("resolved_by").references(() => users.id),
+  resolution_notes: text("resolution_notes"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const error_notifications = pgTable("error_notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  user_id: serial("user_id").references(() => users.id).notNull(),
+  notify_on_error: boolean("notify_on_error").default(true),
+  notify_on_warning: boolean("notify_on_warning").default(false),
+  email_notifications: boolean("email_notifications").default(true),
+  in_app_notifications: boolean("in_app_notifications").default(true),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -184,7 +216,6 @@ export const requirementAnalysesRelations = relations(requirement_analyses, ({ o
   }),
 }));
 
-// Relations
 export const competitorsRelations = relations(competitors, ({ one, many }) => ({
   user: one(users, {
     fields: [competitors.user_id],
@@ -199,6 +230,22 @@ export const competitorUpdatesRelations = relations(competitor_updates, ({ one }
     references: [competitors.id],
   }),
 }));
+
+// Add relations
+export const errorLogsRelations = relations(error_logs, ({ one }) => ({
+  resolver: one(users, {
+    fields: [error_logs.resolved_by],
+    references: [users.id],
+  }),
+}));
+
+export const errorNotificationsRelations = relations(error_notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [error_notifications.user_id],
+    references: [users.id],
+  }),
+}));
+
 
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -249,3 +296,14 @@ export const insertCompetitorUpdateSchema = createInsertSchema(competitor_update
 export const selectCompetitorUpdateSchema = createSelectSchema(competitor_updates);
 export type CompetitorUpdate = typeof competitor_updates.$inferSelect;
 export type NewCompetitorUpdate = typeof competitor_updates.$inferInsert;
+
+// Add Zod schemas for the new tables
+export const insertErrorLogSchema = createInsertSchema(error_logs);
+export const selectErrorLogSchema = createSelectSchema(error_logs);
+export type ErrorLog = typeof error_logs.$inferSelect;
+export type NewErrorLog = typeof error_logs.$inferInsert;
+
+export const insertErrorNotificationSchema = createInsertSchema(error_notifications);
+export const selectErrorNotificationSchema = createSelectSchema(error_notifications);
+export type ErrorNotification = typeof error_notifications.$inferSelect;
+export type NewErrorNotification = typeof error_notifications.$inferInsert;

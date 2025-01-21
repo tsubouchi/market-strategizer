@@ -14,9 +14,11 @@ import {
   competitors,
   competitor_updates,
   product_requirements,
-  requirement_analyses
+  requirement_analyses,
+  error_logs,
+  error_notifications
 } from "@db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { 
   analyze3C, 
   analyze4P, 
@@ -27,6 +29,7 @@ import {
   generateWebAppRequirements
 } from "./lib/openai";
 import type { WebAppRequirement } from './lib/openai';
+import { errorLogger, errorHandler } from "./middleware/error-handler";
 
 // Configure multer for file upload
 const upload = multer({
@@ -1639,6 +1642,155 @@ sustainability: サステナビリティ・環境対応の情報`
         ui_ux_requirements: uiUxRequirements,
         schedule
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Error logging routes
+  app.get("/api/errors", async (req, res, next) => {
+    try {
+      const errors = await db
+        .select()
+        .from(error_logs)
+        .orderBy(desc(error_logs.created_at))
+        .limit(100);
+
+      res.json(errors);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/errors/:id/resolve", async (req, res, next) => {
+    try {
+      const { resolution_notes } = req.body;
+      const [updated] = await db
+        .update(error_logs)
+        .set({
+          is_resolved: true,
+          resolved_by: req.user?.id || 1,
+          resolution_notes,
+          updated_at: new Date(),
+        })
+        .where(eq(error_logs.id, req.params.id))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/error-notifications/settings", async (req, res, next) => {
+    try {
+      const [settings] = await db
+        .select()
+        .from(error_notifications)
+        .where(eq(error_notifications.user_id, req.user?.id || 1))
+        .limit(1);
+
+      res.json(settings || {
+        notify_on_error: true,
+        notify_on_warning: false,
+        email_notifications: true,
+        in_app_notifications: true,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/error-notifications/settings", async (req, res, next) => {
+    try {
+      const {
+        notify_on_error,
+        notify_on_warning,
+        email_notifications,
+        in_app_notifications,
+      } = req.body;
+
+      const [settings] = await db
+        .insert(error_notifications)
+        .values({
+          user_id: req.user?.id || 1,
+          notify_on_error,
+          notify_on_warning,
+          email_notifications,
+          in_app_notifications,
+        })
+        .onConflictDoUpdate({
+          target: [error_notifications.user_id],
+          set: {
+            notify_on_error,
+            notify_on_warning,
+            email_notifications,
+            in_app_notifications,
+            updated_at: new Date(),
+          },
+        })
+        .returning();
+
+      res.json(settings);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Register error handling middleware
+  app.use(errorLogger);
+  app.use(errorHandler);
+
+  // Add the refresh competitor endpoint
+  app.post("/api/competitors/:id/refresh", async (req, res, next) => {
+    try {
+      const [competitor] = await db
+        .select()
+        .from(competitors)
+        .where(eq(competitors.id, req.params.id))
+        .limit(1);
+
+      if (!competitor) {
+        return res.status(404).send("Competitor not found");
+      }
+
+      // Log the refresh attempt
+      await db.insert(error_logs).values({
+        level: "info",
+        message: `Competitor refresh requested for ${competitor.company_name}`,
+        metadata: {
+          request_path: req.path,
+          request_method: req.method,
+          competitor_id: competitor.id
+        }
+      });
+
+      // Create a mock update for demonstration
+      const [update] = await db.insert(competitor_updates).values({
+        competitor_id: competitor.id,
+        update_type: "deep_search",
+        content: {
+          summary: "最新の分析結果です",
+          categories: {
+            products: "新製品の発表はありません",
+            press: "プレスリリースの更新はありません",
+            tech: "技術関連の更新はありません",
+            market: "市場動向の変化はありません",
+            sustainability: "サステナビリティに関する更新はありません"
+          },
+          sources: []
+        },
+        importance_score: "low",
+        source_url: null
+      }).returning();
+
+      // Update the last_updated timestamp
+      await db
+        .update(competitors)
+        .set({ last_updated: new Date() })
+        .where(eq(competitors.id, competitor.id));
+
+      res.json(update);
     } catch (error) {
       next(error);
     }
