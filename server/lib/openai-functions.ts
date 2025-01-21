@@ -36,23 +36,34 @@ export async function analyzeBusinessStrategy(
   }
 }
 
-// 他の既存の関数はそのまま維持
 export async function analyze3C(content: Record<string, any>): Promise<Record<string, any>> {
-  const completion = await openai.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content: "3C分析の専門家として、以下の情報を分析し、JSONで回答してください。"
-      },
-      {
-        role: "user",
-        content: JSON.stringify(content)
-      }
-    ],
-    model: "gpt-4-1106-preview",
-  });
+  try {
+    const completion = await openai.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "3C分析の専門家として、以下の情報を分析し、JSONで回答してください。"
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            type: "3C",
+            data: content
+          })
+        }
+      ],
+      model: "gpt-4-1106-preview",
+      response_format: { type: "json_object" }
+    });
 
-  return JSON.parse(completion.choices[0].message.content || '{}');
+    return JSON.parse(completion.choices[0].message.content || '{}');
+  } catch (error) {
+    console.error('3C Analysis error:', error);
+    return {
+      error: "3C分析中にエラーが発生しました",
+      details: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
 }
 
 export async function analyze4P(content: Record<string, any>): Promise<Record<string, any>> {

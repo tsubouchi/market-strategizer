@@ -3,14 +3,6 @@ import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { jest } from '@jest/globals';
 
-// Mock window.location
-Object.defineProperty(window, 'location', {
-  value: {
-    href: ''
-  },
-  writable: true
-});
-
 // Mock wouter
 jest.mock('wouter', () => ({
   useLocation: () => ['/', jest.fn()],
