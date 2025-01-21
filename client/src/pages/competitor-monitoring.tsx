@@ -597,7 +597,7 @@ export default function CompetitorMonitoring() {
                               </TableCell>
                               <TableCell>{new Date(update.created_at).toLocaleDateString("ja-JP")}</TableCell>
                               <TableCell>
-                                {update.content.sources && update.content.sources.length > 0 && (
+                                {update.content?.sources && update.content.sources.length > 0 && (
                                   <div className="space-y-1">
                                     {update.content.sources.map((source, index) => (
                                       <a
